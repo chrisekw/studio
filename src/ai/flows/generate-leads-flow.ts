@@ -9,8 +9,7 @@
 
 import {ai} from '@/ai/genkit';
 import {z} from 'zod';
-import { db } from '@/lib/firebase';
-import { doc, getDoc, runTransaction } from 'firebase/firestore';
+import { adminDb } from '@/lib/firebase-admin';
 import { format } from 'date-fns';
 
 const LeadSchema = z.object({
@@ -80,32 +79,32 @@ const generateLeadsFlow = ai.defineFlow(
   async (input) => {
     const { userId, numLeads, ...promptInput } = input;
 
-    const userRef = doc(db, 'users', userId);
-    const userSnap = await getDoc(userRef);
-    if (!userSnap.exists()) {
+    const userRef = adminDb.collection('users').doc(userId);
+    const userSnap = await userRef.get();
+    if (!userSnap.exists) {
       throw new Error('User profile not found. Please try again.');
     }
-    const userPlan = userSnap.data().plan || 'Free';
+    const userPlan = userSnap.data()?.plan || 'Free';
     const limits = PLAN_LIMITS[userPlan as keyof typeof PLAN_LIMITS];
 
     const today = format(new Date(), 'yyyy-MM-dd');
     const currentMonth = format(new Date(), 'yyyy-MM');
-    const userUsageRef = doc(db, 'userLeadUsage', userId);
+    const userUsageRef = adminDb.collection('userLeadUsage').doc(userId);
 
     try {
-      await runTransaction(db, async (transaction) => {
+      await adminDb.runTransaction(async (transaction) => {
         const userUsageDoc = await transaction.get(userUsageRef);
-        const usageData = userUsageDoc.exists() ? userUsageDoc.data() : {};
+        const usageData = userUsageDoc.exists ? userUsageDoc.data() : {};
 
         if (limits.daily) {
-          let dailyCount = usageData.lastGeneratedDate === today ? usageData.dailyCount || 0 : 0;
+          let dailyCount = usageData?.lastGeneratedDate === today ? usageData.dailyCount || 0 : 0;
           if (dailyCount + numLeads > limits.daily) {
             const remaining = limits.daily - dailyCount;
             if (remaining <= 0) throw new Error(`LIMIT_EXCEEDED: You have exceeded your daily limit of ${limits.daily} leads. Please upgrade your plan or try again tomorrow.`);
             throw new Error(`LIMIT_EXCEEDED: Your request exceeds your daily limit. You have ${remaining} leads remaining. Please request fewer leads or upgrade your plan.`);
           }
         } else if (limits.monthly) {
-          let monthlyCount = usageData.lastGeneratedMonth === currentMonth ? usageData.monthlyCount || 0 : 0;
+          let monthlyCount = usageData?.lastGeneratedMonth === currentMonth ? usageData.monthlyCount || 0 : 0;
           if (monthlyCount + numLeads > limits.monthly) {
             const remaining = limits.monthly - monthlyCount;
             if (remaining <= 0) throw new Error(`LIMIT_EXCEEDED: You have exceeded your monthly limit of ${limits.monthly} leads. Please upgrade your plan or wait until next month.`);
@@ -125,17 +124,17 @@ const generateLeadsFlow = ai.defineFlow(
     }
     const generatedLeads = output;
 
-    await runTransaction(db, async (transaction) => {
+    await adminDb.runTransaction(async (transaction) => {
       const userUsageDoc = await transaction.get(userUsageRef);
-      const usageData = userUsageDoc.exists() ? userUsageDoc.data() : {};
+      const usageData = userUsageDoc.exists ? userUsageDoc.data() : {};
       const updates: { [key: string]: any } = {};
 
       if (limits.daily) {
-        let dailyCount = usageData.lastGeneratedDate === today ? usageData.dailyCount || 0 : 0;
+        let dailyCount = usageData?.lastGeneratedDate === today ? usageData.dailyCount || 0 : 0;
         updates.dailyCount = dailyCount + generatedLeads.length;
         updates.lastGeneratedDate = today;
       } else if (limits.monthly) {
-        let monthlyCount = usageData.lastGeneratedMonth === currentMonth ? usageData.monthlyCount || 0 : 0;
+        let monthlyCount = usageData?.lastGeneratedMonth === currentMonth ? usageData.monthlyCount || 0 : 0;
         updates.monthlyCount = monthlyCount + generatedLeads.length;
         updates.lastGeneratedMonth = currentMonth;
       }
