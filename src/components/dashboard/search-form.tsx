@@ -36,6 +36,14 @@ import type { Lead } from '@/lib/types';
 import { Checkbox } from '@/components/ui/checkbox';
 import { useAuth } from '@/context/auth-context';
 
+interface SearchFormProps {
+  setIsLoading: Dispatch<SetStateAction<boolean>>;
+  setLeads: Dispatch<SetStateAction<Lead[]>>;
+  setSearchQuery: Dispatch<SetStateAction<string>>;
+  setShowSuggestions: Dispatch<SetStateAction<boolean>>;
+  selectedSuggestion: string;
+}
+
 export function SearchForm({ setIsLoading, setLeads, setSearchQuery, setShowSuggestions, selectedSuggestion }: SearchFormProps) {
   const [isGenerating, setIsGenerating] = useState(false);
   const { toast } = useToast();
