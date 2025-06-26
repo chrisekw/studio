@@ -6,6 +6,7 @@ import { z } from 'zod';
 import { useState, type Dispatch, type SetStateAction, useEffect, useMemo, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
+import { Check, ChevronsUpDown, Loader2, Search } from 'lucide-react';
 
 import {
   Card,
@@ -23,22 +24,28 @@ import {
   FormMessage,
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Button } from '@/components/ui/button';
-import { Loader2, Search } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { ToastAction } from '@/components/ui/toast';
 import { generateLeads } from '@/ai/flows/generate-leads-flow';
 import type { Lead } from '@/lib/types';
 import { Checkbox } from '@/components/ui/checkbox';
 import { useAuth } from '@/context/auth-context';
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from '@/components/ui/popover';
+import {
+  Command,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+  CommandList,
+} from '@/components/ui/command';
+import { cn } from '@/lib/utils';
 
 interface SearchFormProps {
   setIsLoading: Dispatch<SetStateAction<boolean>>;
@@ -48,8 +55,28 @@ interface SearchFormProps {
   selectedSuggestion: string;
 }
 
+const industries = [
+  { value: 'technology', label: 'Technology' },
+  { value: 'healthcare', label: 'Healthcare' },
+  { value: 'finance', label: 'Finance' },
+  { value: 'real-estate', label: 'Real Estate' },
+  { value: 'ecommerce', label: 'E-commerce' },
+  { value: 'education', label: 'Education' },
+  { value: 'marketing', label: 'Marketing' },
+  { value: 'manufacturing', label: 'Manufacturing' },
+  { value: 'hospitality', label: 'Hospitality' },
+  { value: 'automotive', label: 'Automotive' },
+  { value: 'construction', label: 'Construction' },
+  { value: 'retail', label: 'Retail' },
+  { value: 'non-profit', label: 'Non-profit' },
+  { value: 'legal', label: 'Legal' },
+  { value: 'consulting', label: 'Consulting' },
+];
+
+
 export function SearchForm({ setIsLoading, setLeads, setSearchQuery, setShowSuggestions, selectedSuggestion }: SearchFormProps) {
   const [isGenerating, setIsGenerating] = useState(false);
+  const [openIndustry, setOpenIndustry] = useState(false);
   const router = useRouter();
   const { toast } = useToast();
   const { user, userProfile } = useAuth();
@@ -125,7 +152,8 @@ export function SearchForm({ setIsLoading, setLeads, setSearchQuery, setShowSugg
     setSearchQuery(values.keyword);
     
     try {
-      const fullQuery = values.industry ? `${values.keyword} in the ${values.industry} industry` : values.keyword;
+      const industryLabel = industries.find(i => i.value === values.industry)?.label;
+      const fullQuery = values.industry && industryLabel ? `${values.keyword} in the ${industryLabel} industry` : values.keyword;
       const result = await generateLeads({
         query: fullQuery,
         numLeads: values.numLeads,
@@ -202,22 +230,60 @@ export function SearchForm({ setIsLoading, setLeads, setSearchQuery, setShowSugg
                 control={form.control}
                 name="industry"
                 render={({ field }) => (
-                  <FormItem>
+                  <FormItem className="flex flex-col">
                     <FormLabel>Industry / Category (Optional)</FormLabel>
-                    <Select onValueChange={field.onChange} defaultValue={field.value}>
-                      <FormControl>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select an industry" />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        <SelectItem value="technology">Technology</SelectItem>
-                        <SelectItem value="healthcare">Healthcare</SelectItem>
-                        <SelectItem value="finance">Finance</SelectItem>
-                        <SelectItem value="real-estate">Real Estate</SelectItem>
-                        <SelectItem value="ecommerce">E-commerce</SelectItem>
-                      </SelectContent>
-                    </Select>
+                    <Popover open={openIndustry} onOpenChange={setOpenIndustry}>
+                      <PopoverTrigger asChild>
+                        <FormControl>
+                          <Button
+                            variant="outline"
+                            role="combobox"
+                            className={cn(
+                              "w-full justify-between",
+                              !field.value && "text-muted-foreground"
+                            )}
+                          >
+                            {field.value
+                              ? industries.find(
+                                  (industry) => industry.value === field.value
+                                )?.label
+                              : "Select an industry"}
+                            <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                          </Button>
+                        </FormControl>
+                      </PopoverTrigger>
+                      <PopoverContent className="w-[var(--radix-popover-trigger-width)] p-0">
+                        <Command>
+                          <CommandInput placeholder="Search industry..." />
+                          <CommandList>
+                            <CommandEmpty>No industry found.</CommandEmpty>
+                            <CommandGroup>
+                              {industries.map((industry) => (
+                                <CommandItem
+                                  value={industry.label}
+                                  key={industry.value}
+                                  onSelect={() => {
+                                    form.setValue("industry", industry.value === field.value ? undefined : industry.value);
+                                    setOpenIndustry(false);
+                                  }}
+                                >
+                                  <Check
+                                    className={cn(
+                                      "mr-2 h-4 w-4",
+                                      industry.value === field.value
+                                        ? "opacity-100"
+                                        : "opacity-0"
+                                    )}
+                                  />
+                                  {industry.label}
+                                </CommandItem>
+                              ))}
+                            </CommandGroup>
+                          </CommandList>
+                        </Command>
+                      </PopoverContent>
+                    </Popover>
+                    <FormMessage />
                   </FormItem>
                 )}
               />
