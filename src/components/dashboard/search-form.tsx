@@ -17,6 +17,7 @@ import {
   FormField,
   FormItem,
   FormLabel,
+  FormMessage,
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import {
@@ -37,7 +38,10 @@ import { Checkbox } from '@/components/ui/checkbox';
 const formSchema = z.object({
   keyword: z.string().min(3, { message: 'Keyword must be at least 3 characters.' }),
   industry: z.string().optional(),
-  numLeads: z.string(),
+  numLeads: z.coerce
+    .number({ invalid_type_error: 'Please enter a valid number.' })
+    .min(1, { message: 'Please generate at least 1 lead.' })
+    .max(50, { message: 'You can generate a maximum of 50 leads.' }),
   radius: z.enum(['local', 'broad']),
   includeAddress: z.boolean().default(false).optional(),
   includeLinkedIn: z.boolean().default(false).optional(),
@@ -60,7 +64,7 @@ export function SearchForm({ setIsLoading, setLeads, setSearchQuery, setShowSugg
     defaultValues: {
       keyword: 'Marketing agencies in London',
       radius: 'broad',
-      numLeads: '10',
+      numLeads: 10,
       includeAddress: true,
       includeLinkedIn: true,
     },
@@ -83,7 +87,7 @@ export function SearchForm({ setIsLoading, setLeads, setSearchQuery, setShowSugg
       const fullQuery = values.industry ? `${values.keyword} in the ${values.industry} industry` : values.keyword;
       const result = await generateLeads({
         query: fullQuery,
-        numLeads: parseInt(values.numLeads, 10),
+        numLeads: values.numLeads,
         includeAddress: values.includeAddress,
         includeLinkedIn: values.includeLinkedIn,
       });
@@ -134,6 +138,7 @@ export function SearchForm({ setIsLoading, setLeads, setSearchQuery, setShowSugg
                     <FormControl>
                       <Input placeholder="e.g., 'SaaS companies in New York'" {...field} />
                     </FormControl>
+                    <FormMessage />
                   </FormItem>
                 )}
               />
@@ -166,18 +171,10 @@ export function SearchForm({ setIsLoading, setLeads, setSearchQuery, setShowSugg
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Number of Leads</FormLabel>
-                    <Select onValueChange={field.onChange} defaultValue={field.value}>
-                      <FormControl>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select amount" />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        <SelectItem value="10">10</SelectItem>
-                        <SelectItem value="25">25</SelectItem>
-                        <SelectItem value="50">50</SelectItem>
-                      </SelectContent>
-                    </Select>
+                    <FormControl>
+                      <Input type="number" placeholder="10" {...field} onChange={event => field.onChange(+event.target.value)} />
+                    </FormControl>
+                    <FormMessage />
                   </FormItem>
                 )}
               />
