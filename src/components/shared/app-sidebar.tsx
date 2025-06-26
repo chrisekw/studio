@@ -10,9 +10,12 @@ import {
 import { AppSidebarNav } from './app-sidebar-nav';
 import { useSidebar } from '@/components/ui/sidebar';
 import { QuotaDisplay } from './quota-display';
+import { Button } from '@/components/ui/button';
+import { PanelLeftClose, PanelLeftOpen } from 'lucide-react';
 
 export function AppSidebar() {
-  const { state } = useSidebar();
+  const { state, toggleSidebar } = useSidebar();
+  const isCollapsed = state === 'collapsed';
 
   return (
     <Sidebar collapsible="icon" variant="sidebar" side="left">
@@ -67,6 +70,13 @@ export function AppSidebar() {
       <SidebarFooter>
         <SidebarSeparator />
         <QuotaDisplay />
+        <SidebarSeparator />
+        <div className="hidden md:flex p-2 pt-2">
+            <Button onClick={toggleSidebar} variant="ghost" className="w-full justify-start p-2 h-auto">
+                {isCollapsed ? <PanelLeftOpen /> : <PanelLeftClose />}
+                <span className="group-data-[collapsible=icon]:hidden ml-2">Collapse</span>
+            </Button>
+        </div>
       </SidebarFooter>
     </Sidebar>
   );
