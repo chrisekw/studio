@@ -2,7 +2,7 @@
 
 import { SidebarTrigger } from '../ui/sidebar';
 import Link from 'next/link';
-import { CircleUser, LogOut } from 'lucide-react';
+import { CircleUser, LogOut, Menu } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
   DropdownMenu,
@@ -44,8 +44,11 @@ export function AppHeader() {
     <header className="flex h-14 items-center gap-4 border-b bg-background/60 px-4 backdrop-blur-sm sm:px-6 sticky top-0 z-10">
       <div className="flex items-center gap-2 md:hidden">
         <SidebarTrigger>
-           <svg
-            className="h-6 w-6 text-primary"
+           <Menu className="h-6 w-6" />
+        </SidebarTrigger>
+        <Link href="/dashboard" className="flex items-center gap-2 font-semibold">
+          <svg
+            className="h-8 w-8 text-primary"
             viewBox="0 0 24 24"
             fill="none"
             xmlns="http://www.w3.org/2000/svg"
@@ -81,8 +84,6 @@ export function AppHeader() {
                 strokeLinejoin="round"
             />
             </svg>
-        </SidebarTrigger>
-        <Link href="/dashboard" className="flex items-center gap-2 font-semibold">
           <span className="font-headline text-lg font-bold">Leadgen</span>
         </Link>
       </div>
