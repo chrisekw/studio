@@ -104,7 +104,7 @@ export function SearchForm() {
                       <FormControl>
                         <SelectTrigger>
                           <SelectValue placeholder="Select an industry" />
-                        </Trigger>
+                        </SelectTrigger>
                       </FormControl>
                       <SelectContent>
                         <SelectItem value="technology">Technology</SelectItem>
@@ -127,7 +127,7 @@ export function SearchForm() {
                       <FormControl>
                         <SelectTrigger>
                           <SelectValue placeholder="Select amount" />
-                        </Trigger>
+                        </SelectTrigger>
                       </FormControl>
                       <SelectContent>
                         <SelectItem value="10">10</SelectItem>
