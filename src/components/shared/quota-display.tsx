@@ -75,12 +75,12 @@ export function QuotaDisplay() {
   return (
     <div className="p-2 space-y-3 group-data-[collapsible=icon]:hidden">
         <div className="flex justify-between items-center px-2">
-            <p className="text-sm font-medium text-foreground">Current Plan</p>
+            <p className="text-sm font-medium text-sidebar-foreground">Current Plan</p>
             <Badge variant={planBadgeVariant}>{plan}</Badge>
         </div>
         
         {plan === 'Agency' ? (
-             <div className="text-xs text-muted-foreground px-2 pt-1">
+             <div className="text-xs text-sidebar-foreground/80 px-2 pt-1">
                 You have unlimited leads. Enjoy!
             </div>
         ) : (
@@ -88,10 +88,10 @@ export function QuotaDisplay() {
                 <div className="px-2 pt-1">
                     <Progress value={percentage} className="h-2" />
                 </div>
-                <div className="text-xs text-muted-foreground px-2">
-                    <p><span className="font-semibold text-foreground">{remaining.toLocaleString()}</span> leads left {period}.</p>
+                <div className="text-xs text-sidebar-foreground/80 px-2">
+                    <p><span className="font-semibold text-sidebar-foreground">{remaining.toLocaleString()}</span> leads left {period}.</p>
                 </div>
-                <Button variant="outline" size="sm" className="w-full" asChild>
+                <Button variant="outline" size="sm" className="w-full bg-transparent text-sidebar-foreground border-sidebar-border hover:bg-sidebar-accent hover:text-sidebar-accent-foreground" asChild>
                     <Link href="/pricing">Upgrade Plan</Link>
                 </Button>
             </>
