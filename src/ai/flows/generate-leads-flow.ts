@@ -15,11 +15,15 @@ const LeadSchema = z.object({
   email: z.string().describe('A contact email for the company.'),
   phone: z.string().describe('A contact phone number for the company.'),
   website: z.string().describe('The full company website URL, including the protocol (e.g., https://example.com).'),
+  address: z.string().optional().describe('The physical address of the company.'),
+  linkedin: z.string().optional().describe('The LinkedIn profile URL of the company.'),
 });
 
 const GenerateLeadsInputSchema = z.object({
   query: z.string().describe('The search query for lead generation, e.g., "Marketing agencies in London".'),
   numLeads: z.number().describe('The number of leads to generate.'),
+  includeAddress: z.boolean().optional().describe('Whether to include the physical address.'),
+  includeLinkedIn: z.boolean().optional().describe('Whether to include the LinkedIn profile URL.'),
 });
 export type GenerateLeadsInput = z.infer<typeof GenerateLeadsInputSchema>;
 
@@ -38,7 +42,14 @@ const prompt = ai.definePrompt({
 
   Generate exactly {{{numLeads}}} leads based on the following query: "{{{query}}}"
 
-  For each lead, provide a fictional but realistic-looking company name, email address, phone number, and website URL. Ensure the generated data is plausible for the given query.
+  For each lead, provide a fictional but realistic-looking company name, email address, phone number, and a full website URL including the protocol (e.g. https://example.com).
+  {{#if includeAddress}}
+  Also include a physical address for each company.
+  {{/if}}
+  {{#if includeLinkedIn}}
+  Also include a LinkedIn profile URL for each company.
+  {{/if}}
+  Ensure the generated data is plausible for the given query.
   
   Return the list of leads in the specified JSON format.
   `,

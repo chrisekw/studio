@@ -32,12 +32,15 @@ import { Loader2, Search } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { generateLeads } from '@/ai/flows/generate-leads-flow';
 import type { Lead } from '@/lib/types';
+import { Checkbox } from '@/components/ui/checkbox';
 
 const formSchema = z.object({
   keyword: z.string().min(3, { message: 'Keyword must be at least 3 characters.' }),
   industry: z.string().optional(),
   numLeads: z.string(),
   radius: z.enum(['local', 'broad']),
+  includeAddress: z.boolean().default(false).optional(),
+  includeLinkedIn: z.boolean().default(false).optional(),
 });
 
 interface SearchFormProps {
@@ -57,6 +60,8 @@ export function SearchForm({ setIsLoading, setLeads, setSearchQuery, setShowSugg
       keyword: 'Marketing agencies in London',
       radius: 'broad',
       numLeads: '10',
+      includeAddress: false,
+      includeLinkedIn: false,
     },
   });
 
@@ -72,6 +77,8 @@ export function SearchForm({ setIsLoading, setLeads, setSearchQuery, setShowSugg
       const result = await generateLeads({
         query: fullQuery,
         numLeads: parseInt(values.numLeads, 10),
+        includeAddress: values.includeAddress,
+        includeLinkedIn: values.includeLinkedIn,
       });
 
       const newLeads = result.map((lead, index) => ({
@@ -104,7 +111,7 @@ export function SearchForm({ setIsLoading, setLeads, setSearchQuery, setShowSugg
       <CardHeader>
         <CardTitle className="font-headline">Generate New Leads</CardTitle>
         <CardDescription>
-          Enter a keyword to start scraping for potential business leads.
+          Enter a keyword and select options to start scraping for potential business leads.
         </CardDescription>
       </CardHeader>
       <CardContent>
@@ -201,6 +208,51 @@ export function SearchForm({ setIsLoading, setLeads, setSearchQuery, setShowSugg
                 </FormItem>
               )}
             />
+            <div>
+              <FormLabel>Additional Information</FormLabel>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-2">
+                <FormField
+                  control={form.control}
+                  name="includeAddress"
+                  render={({ field }) => (
+                    <FormItem className="flex flex-row items-center space-x-3 space-y-0 rounded-md border p-3">
+                      <FormControl>
+                        <Checkbox
+                          checked={field.value}
+                          onCheckedChange={field.onChange}
+                          id="includeAddress"
+                        />
+                      </FormControl>
+                      <div className="space-y-1 leading-none">
+                        <label htmlFor="includeAddress" className="cursor-pointer text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
+                          Include Address
+                        </label>
+                      </div>
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="includeLinkedIn"
+                  render={({ field }) => (
+                    <FormItem className="flex flex-row items-center space-x-3 space-y-0 rounded-md border p-3">
+                      <FormControl>
+                        <Checkbox
+                          checked={field.value}
+                          onCheckedChange={field.onChange}
+                          id="includeLinkedIn"
+                        />
+                      </FormControl>
+                      <div className="space-y-1 leading-none">
+                        <label htmlFor="includeLinkedIn" className="cursor-pointer text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
+                          Include LinkedIn
+                        </label>
+                      </div>
+                    </FormItem>
+                  )}
+                />
+              </div>
+            </div>
             <div className="flex justify-end">
               <Button type="submit" disabled={isGenerating}>
                 {isGenerating ? (

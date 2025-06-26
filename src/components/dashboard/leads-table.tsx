@@ -24,6 +24,8 @@ import {
   Mail,
   Phone,
   Globe,
+  MapPin,
+  Linkedin,
 } from 'lucide-react';
 import { type Lead } from '@/lib/types';
 import { Skeleton } from '../ui/skeleton';
@@ -69,9 +71,16 @@ export function LeadsTable({ leads, isLoading }: LeadsTableProps) {
   const exportToCSV = () => {
     if (leads.length === 0) return;
     let csvContent = 'data:text/csv;charset=utf-8,';
-    csvContent += 'Name,Email,Phone,Website\n';
+    csvContent += 'Name,Email,Phone,Website,Address,LinkedIn\n';
     leads.forEach((lead) => {
-      const row = [lead.name, lead.email, lead.phone, lead.website].join(',');
+       const row = [
+        lead.name,
+        lead.email,
+        lead.phone,
+        lead.website,
+        lead.address,
+        lead.linkedin,
+      ].map(field => `"${(field || '').replace(/"/g, '""')}"`).join(',');
       csvContent += row + '\r\n';
     });
 
@@ -105,6 +114,8 @@ export function LeadsTable({ leads, isLoading }: LeadsTableProps) {
              <Skeleton className="h-4 w-40" />
              <Skeleton className="h-4 w-32" />
              <Skeleton className="h-4 w-28" />
+             <Skeleton className="h-4 w-36" />
+             <Skeleton className="h-4 w-24" />
           </CardContent>
         </Card>
       ))}
@@ -161,6 +172,20 @@ export function LeadsTable({ leads, isLoading }: LeadsTableProps) {
                 {getHostname(lead.website)}
               </a>
             </div>
+            {lead.address && (
+              <div className="flex items-center text-sm text-muted-foreground">
+                <MapPin className="mr-3 h-4 w-4 flex-shrink-0" />
+                <span className="truncate">{lead.address}</span>
+              </div>
+            )}
+            {lead.linkedin && (
+              <div className="flex items-center text-sm text-muted-foreground">
+                <Linkedin className="mr-3 h-4 w-4 flex-shrink-0" />
+                <a href={getFullUrl(lead.linkedin)} target="_blank" rel="noopener noreferrer" className="hover:underline text-accent-foreground/80 truncate">
+                  {getHostname(lead.linkedin)}
+                </a>
+              </div>
+            )}
           </CardContent>
         </Card>
       ))}
