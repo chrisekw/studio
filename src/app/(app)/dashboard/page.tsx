@@ -3,7 +3,7 @@ import { LeadsTable } from '@/components/dashboard/leads-table';
 
 export default function DashboardPage() {
   return (
-    <div className="flex flex-col gap-8">
+    <div className="space-y-8 py-6">
       <SearchForm />
       <LeadsTable />
     </div>

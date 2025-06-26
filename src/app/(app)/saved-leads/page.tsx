@@ -3,16 +3,18 @@ import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/com
 
 export default function SavedLeadsPage() {
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle className="font-headline">Saved Leads</CardTitle>
-        <CardDescription>
-          View, manage, and export your saved business leads.
-        </CardDescription>
-      </CardHeader>
-      <CardContent>
-        <SavedLeadsTable />
-      </CardContent>
-    </Card>
+    <div className="py-6">
+      <Card>
+        <CardHeader>
+          <CardTitle className="font-headline">Saved Leads</CardTitle>
+          <CardDescription>
+            View, manage, and export your saved business leads.
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <SavedLeadsTable />
+        </CardContent>
+      </Card>
+    </div>
   );
 }

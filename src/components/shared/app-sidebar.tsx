@@ -1,25 +1,32 @@
+'use client';
 import Link from 'next/link';
 import {
   Settings,
 } from 'lucide-react';
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipTrigger,
-  TooltipProvider
-} from '@/components/ui/tooltip';
+import { 
+  Sidebar,
+  SidebarHeader,
+  SidebarContent,
+  SidebarFooter,
+  SidebarMenu,
+  SidebarMenuItem,
+  SidebarMenuButton,
+} from '@/components/ui/sidebar';
 import { AppSidebarNav } from './app-sidebar-nav';
+import { useSidebar } from '@/components/ui/sidebar';
 
 export function AppSidebar() {
+  const { state } = useSidebar();
+
   return (
-    <aside className="fixed inset-y-0 left-0 z-10 hidden w-14 flex-col border-r bg-background sm:flex">
-      <nav className="flex flex-col items-center gap-4 px-2 sm:py-5">
+    <Sidebar collapsible="icon" variant="sidebar" side="left">
+      <SidebarHeader>
         <Link
           href="/dashboard"
-          className="group flex h-9 w-9 shrink-0 items-center justify-center gap-2 rounded-full bg-primary text-lg font-semibold text-primary-foreground md:h-8 md:w-8 md:text-base"
+          className="group flex w-full items-center justify-center gap-2 rounded-md p-2 text-lg font-semibold text-primary-foreground md:text-base"
         >
           <svg
-            className="h-4 w-4 transition-all group-hover:scale-110"
+            className="h-8 w-8 text-primary transition-all group-hover:scale-110"
             viewBox="0 0 24 24"
             fill="none"
             xmlns="http://www.w3.org/2000/svg"
@@ -55,26 +62,22 @@ export function AppSidebar() {
               strokeLinejoin="round"
             />
           </svg>
-          <span className="sr-only">ProspectIQ</span>
+          <span className={state === 'collapsed' ? 'hidden': 'font-headline text-lg text-foreground font-bold'}>ProspectIQ</span>
         </Link>
+      </SidebarHeader>
+      <SidebarContent>
         <AppSidebarNav />
-      </nav>
-      <nav className="mt-auto flex flex-col items-center gap-4 px-2 sm:py-5">
-         <TooltipProvider>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Link
-                  href="#"
-                  className="flex h-9 w-9 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:text-foreground md:h-8 md:w-8"
-                >
-                  <Settings className="h-5 w-5" />
-                  <span className="sr-only">Settings</span>
-                </Link>
-              </TooltipTrigger>
-              <TooltipContent side="right">Settings</TooltipContent>
-            </Tooltip>
-        </TooltipProvider>
-      </nav>
-    </aside>
+      </SidebarContent>
+      <SidebarFooter>
+        <SidebarMenu>
+          <SidebarMenuItem>
+            <SidebarMenuButton tooltip={{children: 'Settings'}}>
+              <Settings />
+              <span>Settings</span>
+            </SidebarMenuButton>
+          </SidebarMenuItem>
+        </SidebarMenu>
+      </SidebarFooter>
+    </Sidebar>
   );
 }

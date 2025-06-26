@@ -2,54 +2,37 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from '@/components/ui/tooltip';
 import { LayoutDashboard, Save } from 'lucide-react';
-import { cn } from '@/lib/utils';
+import { 
+  SidebarMenu,
+  SidebarMenuItem,
+  SidebarMenuButton,
+} from '@/components/ui/sidebar';
 
 const navItems = [
   { href: '/dashboard', icon: LayoutDashboard, label: 'Dashboard' },
   { href: '/saved-leads', icon: Save, label: 'Saved Leads' },
 ];
 
-interface AppSidebarNavProps {
-  isMobile?: boolean;
-}
-
-export function AppSidebarNav({ isMobile = false }: AppSidebarNavProps) {
+export function AppSidebarNav() {
   const pathname = usePathname();
 
   return (
-    <TooltipProvider>
+    <SidebarMenu>
       {navItems.map((item) => {
-        const isActive = pathname.startsWith(item.href);
-        const linkClasses = cn(
-          'flex h-9 w-9 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:text-foreground md:h-8 md:w-8',
-          isActive && 'bg-accent text-accent-foreground',
-          isMobile && 'w-full h-auto justify-start gap-4 px-2.5 py-2 text-base'
-        );
+        const isActive = pathname === item.href;
         const Icon = item.icon;
-
-        if (isMobile) {
-          return (
-             <Link key={item.href} href={item.href} className={linkClasses}>
-              <Icon className="h-5 w-5" />
-              {item.label}
-            </Link>
-          )
-        }
-
         return (
-          <Tooltip key={item.href}>
-            <TooltipTrigger asChild>
-              <Link href={item.href} className={linkClasses}>
-                <Icon className="h-5 w-5" />
-                <span className="sr-only">{item.label}</span>
+          <SidebarMenuItem key={item.href}>
+             <SidebarMenuButton asChild isActive={isActive} tooltip={{children: item.label}}>
+              <Link href={item.href}>
+                <Icon />
+                <span>{item.label}</span>
               </Link>
-            </TooltipTrigger>
-            <TooltipContent side="right">{item.label}</TooltipContent>
-          </Tooltip>
+            </SidebarMenuButton>
+          </SidebarMenuItem>
         );
       })}
-    </TooltipProvider>
+    </SidebarMenu>
   );
 }
