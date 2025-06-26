@@ -81,32 +81,33 @@ const generateLeadsFlow = ai.defineFlow(
   async (input) => {
     const { userId, numLeads, ...promptInput } = input;
 
-    const userRef = adminDb.collection('users').doc(userId);
-    const userSnap = await userRef.get();
-    if (!userSnap.exists) {
-      throw new Error('User profile not found. Please try again.');
-    }
-    const userPlan = userSnap.data()?.plan || 'Free';
-    const limits = PLAN_LIMITS[userPlan as keyof typeof PLAN_LIMITS];
-
-    const today = format(new Date(), 'yyyy-MM-dd');
-    const currentMonth = format(new Date(), 'yyyy-MM');
-    const userUsageRef = adminDb.collection('userLeadUsage').doc(userId);
-
     try {
+      const userRef = adminDb.collection('users').doc(userId);
+      const userSnap = await userRef.get();
+      if (!userSnap.exists) {
+        throw new Error('User profile not found. Please try again.');
+      }
+      const userPlan = userSnap.data()?.plan || 'Free';
+      const limits = PLAN_LIMITS[userPlan as keyof typeof PLAN_LIMITS];
+
+      const today = format(new Date(), 'yyyy-MM-dd');
+      const currentMonth = format(new Date(), 'yyyy-MM');
+      const userUsageRef = adminDb.collection('userLeadUsage').doc(userId);
+
+      // Check usage limits within a transaction
       await adminDb.runTransaction(async (transaction) => {
         const userUsageDoc = await transaction.get(userUsageRef);
         const usageData = userUsageDoc.exists ? userUsageDoc.data() : {};
 
         if (limits.daily) {
-          let dailyCount = usageData?.lastGeneratedDate === today ? usageData.dailyCount || 0 : 0;
+          const dailyCount = usageData?.lastGeneratedDate === today ? usageData.dailyCount || 0 : 0;
           if (dailyCount + numLeads > limits.daily) {
             const remaining = limits.daily - dailyCount;
             if (remaining <= 0) throw new Error(`LIMIT_EXCEEDED: You have exceeded your daily limit of ${limits.daily} leads. Please upgrade your plan or try again tomorrow.`);
             throw new Error(`LIMIT_EXCEEDED: Your request exceeds your daily limit. You have ${remaining} leads remaining. Please request fewer leads or upgrade your plan.`);
           }
         } else if (limits.monthly) {
-          let monthlyCount = usageData?.lastGeneratedMonth === currentMonth ? usageData.monthlyCount || 0 : 0;
+          const monthlyCount = usageData?.lastGeneratedMonth === currentMonth ? usageData.monthlyCount || 0 : 0;
           if (monthlyCount + numLeads > limits.monthly) {
             const remaining = limits.monthly - monthlyCount;
             if (remaining <= 0) throw new Error(`LIMIT_EXCEEDED: You have exceeded your monthly limit of ${limits.monthly} leads. Please upgrade your plan or wait until next month.`);
@@ -114,50 +115,51 @@ const generateLeadsFlow = ai.defineFlow(
           }
         }
       });
-    } catch (error: any) {
-      if (error.message?.startsWith('LIMIT_EXCEEDED:')) throw error;
-      console.error('Firebase transaction error:', error);
-      throw new Error('Failed to verify lead usage. Please try again.');
-    }
 
-    let promptResult;
-    try {
-      promptResult = await prompt(promptInput);
-    } catch (error: any) {
-      console.error('AI lead generation failed:', {
-        message: error.message,
-        stack: error.stack,
-        cause: error.cause,
-      });
-      throw new Error(
-        'The AI service failed to respond. This might be a temporary issue with the provider. Please try again later.'
-      );
-    }
+      const promptResult = await prompt(promptInput);
 
-    const { output } = promptResult;
-
-    if (!output) {
-      return [];
-    }
-    const generatedLeads = output;
-
-    await adminDb.runTransaction(async (transaction) => {
-      const userUsageDoc = await transaction.get(userUsageRef);
-      const usageData = userUsageDoc.exists ? userUsageDoc.data() : {};
-      const updates: { [key: string]: any } = {};
-
-      if (limits.daily) {
-        let dailyCount = usageData?.lastGeneratedDate === today ? usageData.dailyCount || 0 : 0;
-        updates.dailyCount = dailyCount + generatedLeads.length;
-        updates.lastGeneratedDate = today;
-      } else if (limits.monthly) {
-        let monthlyCount = usageData?.lastGeneratedMonth === currentMonth ? usageData.monthlyCount || 0 : 0;
-        updates.monthlyCount = monthlyCount + generatedLeads.length;
-        updates.lastGeneratedMonth = currentMonth;
+      const { output } = promptResult;
+      if (!output) {
+        return [];
       }
-      transaction.set(userUsageRef, updates, { merge: true });
-    });
+      const generatedLeads = output;
 
-    return generatedLeads;
+      // Update usage count in a transaction
+      await adminDb.runTransaction(async (transaction) => {
+        const userUsageDoc = await transaction.get(userUsageRef);
+        const usageData = userUsageDoc.exists ? userUsageDoc.data() : {};
+        const updates: { [key: string]: any } = {};
+
+        if (limits.daily) {
+          const dailyCount = usageData?.lastGeneratedDate === today ? usageData.dailyCount || 0 : 0;
+          updates.dailyCount = dailyCount + generatedLeads.length;
+          updates.lastGeneratedDate = today;
+        } else if (limits.monthly) {
+          const monthlyCount = usageData?.lastGeneratedMonth === currentMonth ? usageData.monthlyCount || 0 : 0;
+          updates.monthlyCount = monthlyCount + generatedLeads.length;
+          updates.lastGeneratedMonth = currentMonth;
+        }
+        transaction.set(userUsageRef, updates, { merge: true });
+      });
+
+      return generatedLeads;
+    } catch (error: any) {
+      if (error.message?.startsWith('LIMIT_EXCEEDED:')) {
+        throw error;
+      }
+
+      console.error('Error in generateLeadsFlow:', {
+        message: error.message,
+        code: error.code,
+        details: error.details,
+        stack: error.stack,
+      });
+
+      if (error.code === 'PERMISSION_DENIED' || (error.details && error.details.includes('permission_denied'))) {
+        throw new Error('Database permission error. Please check server credentials and Firestore rules.');
+      }
+
+      throw new Error('An unexpected error occurred while generating leads. Please try again later.');
+    }
   }
 );
