@@ -48,6 +48,27 @@ export function LeadsTable({ leads, isLoading }: LeadsTableProps) {
       description: `${lead.name} has been added to your saved leads.`,
     });
   };
+  
+  const getHostname = (url: string) => {
+    if (!url) return '';
+    try {
+      if (!/^https?:\/\//i.test(url)) {
+        url = 'https://' + url;
+      }
+      return new URL(url).hostname;
+    } catch (e) {
+      console.error('Invalid URL provided:', url);
+      return url.replace(/^https?:\/\//, '').split('/')[0];
+    }
+  };
+  
+  const getFullUrl = (url: string) => {
+    if (!url) return '#';
+    if (!/^https?:\/\//i.test(url)) {
+        return 'https://' + url;
+    }
+    return url;
+  }
 
   const exportToCSV = () => {
     if (leads.length === 0) return;
@@ -131,7 +152,7 @@ export function LeadsTable({ leads, isLoading }: LeadsTableProps) {
                       alt={`${lead.name} logo`}
                       className="aspect-square rounded-md object-cover"
                       height="48"
-                      src={`https://logo.clearbit.com/${new URL(lead.website).hostname}`}
+                      src={`https://logo.clearbit.com/${getHostname(lead.website)}`}
                       width="48"
                       onError={(e) => {
                         const target = e.target as HTMLImageElement;
@@ -149,8 +170,8 @@ export function LeadsTable({ leads, isLoading }: LeadsTableProps) {
                     <div className="text-xs text-muted-foreground/80">{lead.phone}</div>
                   </TableCell>
                   <TableCell className="hidden md:table-cell">
-                    <a href={lead.website} target="_blank" rel="noopener noreferrer" className="hover:underline text-accent-foreground/80">
-                      {new URL(lead.website).hostname}
+                    <a href={getFullUrl(lead.website)} target="_blank" rel="noopener noreferrer" className="hover:underline text-accent-foreground/80">
+                      {getHostname(lead.website)}
                     </a>
                   </TableCell>
                   <TableCell>

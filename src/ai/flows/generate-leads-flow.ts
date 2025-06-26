@@ -14,7 +14,7 @@ const LeadSchema = z.object({
   name: z.string().describe('The name of the company.'),
   email: z.string().describe('A contact email for the company.'),
   phone: z.string().describe('A contact phone number for the company.'),
-  website: z.string().describe('The company website URL.'),
+  website: z.string().describe('The full company website URL, including the protocol (e.g., https://example.com).'),
 });
 
 const GenerateLeadsInputSchema = z.object({
