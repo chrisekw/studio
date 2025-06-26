@@ -29,6 +29,7 @@ export async function suggestAlternateQueries(input: SuggestAlternateQueriesInpu
 
 const suggestAlternateQueriesPrompt = ai.definePrompt({
   name: 'suggestAlternateQueriesPrompt',
+  model: 'googleai/gemini-pro',
   input: {schema: SuggestAlternateQueriesInputSchema},
   output: {schema: SuggestAlternateQueriesOutputSchema},
   prompt: `You are an expert in generating alternative search queries.
