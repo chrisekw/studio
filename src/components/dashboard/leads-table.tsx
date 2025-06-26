@@ -27,17 +27,19 @@ import {
   MapPin,
   Linkedin,
 } from 'lucide-react';
-import { type Lead } from '@/lib/types';
+import { type Lead, type UserProfile } from '@/lib/types';
 import { Skeleton } from '../ui/skeleton';
 import { useToast } from '@/hooks/use-toast';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '../ui/tooltip';
 
 interface LeadsTableProps {
   leads: Lead[];
   isLoading: boolean;
+  userProfile: UserProfile | null;
 }
 
-export function LeadsTable({ leads, isLoading }: LeadsTableProps) {
+export function LeadsTable({ leads, isLoading, userProfile }: LeadsTableProps) {
   const { toast } = useToast();
 
   const handleSaveLead = (lead: Lead) => {
@@ -96,6 +98,8 @@ export function LeadsTable({ leads, isLoading }: LeadsTableProps) {
       description: `Leads have been exported to CSV.`,
     });
   };
+
+  const canExport = userProfile?.plan !== 'Free';
   
   const renderSkeleton = () => (
     <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
@@ -210,15 +214,29 @@ export function LeadsTable({ leads, isLoading }: LeadsTableProps) {
             Review the generated leads. Save or export them as needed.
           </CardDescription>
         </div>
-        <Button
-          size="sm"
-          variant="outline"
-          onClick={exportToCSV}
-          disabled={isLoading || leads.length === 0}
-        >
-          <Download className="mr-2 h-4 w-4" />
-          Export to CSV
-        </Button>
+        <TooltipProvider>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <div tabIndex={0}>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={exportToCSV}
+                  disabled={isLoading || leads.length === 0 || !canExport}
+                  className={!canExport ? 'cursor-not-allowed' : ''}
+                >
+                  <Download className="mr-2 h-4 w-4" />
+                  Export to CSV
+                </Button>
+              </div>
+            </TooltipTrigger>
+            {!canExport && (
+              <TooltipContent>
+                <p>Export is a paid feature. Please upgrade your plan.</p>
+              </TooltipContent>
+            )}
+          </Tooltip>
+        </TooltipProvider>
       </CardHeader>
       <CardContent>
         {isLoading

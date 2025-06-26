@@ -5,6 +5,7 @@ import { SearchForm } from '@/components/dashboard/search-form';
 import { LeadsTable } from '@/components/dashboard/leads-table';
 import { type Lead } from '@/lib/types';
 import { SuggestedQueries } from '@/components/dashboard/suggested-queries';
+import { useAuth } from '@/context/auth-context';
 
 export default function DashboardPage() {
   const [leads, setLeads] = useState<Lead[]>([]);
@@ -12,6 +13,7 @@ export default function DashboardPage() {
   const [searchQuery, setSearchQuery] = useState('');
   const [showSuggestions, setShowSuggestions] = useState(false);
   const [selectedSuggestion, setSelectedSuggestion] = useState('');
+  const { userProfile } = useAuth();
 
   const handleSuggestionClick = (suggestion: string) => {
     setSelectedSuggestion(suggestion);
@@ -26,7 +28,7 @@ export default function DashboardPage() {
         setShowSuggestions={setShowSuggestions}
         selectedSuggestion={selectedSuggestion}
       />
-      <LeadsTable leads={leads} isLoading={isLoading} />
+      <LeadsTable leads={leads} isLoading={isLoading} userProfile={userProfile} />
       {showSuggestions && <SuggestedQueries query={searchQuery} onSuggestionClick={handleSuggestionClick} />}
     </div>
   );

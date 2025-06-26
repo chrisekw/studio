@@ -3,7 +3,7 @@
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
-import { useState, type Dispatch, type SetStateAction, useEffect } from 'react';
+import { useState, type Dispatch, type SetStateAction, useEffect, useMemo } from 'react';
 import {
   Card,
   CardContent,
@@ -36,30 +36,28 @@ import type { Lead } from '@/lib/types';
 import { Checkbox } from '@/components/ui/checkbox';
 import { useAuth } from '@/context/auth-context';
 
-const formSchema = z.object({
-  keyword: z.string().min(3, { message: 'Keyword must be at least 3 characters.' }),
-  industry: z.string().optional(),
-  numLeads: z.coerce
-    .number({ invalid_type_error: 'Please enter a valid number.' })
-    .min(1, { message: 'Please generate at least 1 lead.' })
-    .max(5, { message: 'Free plan users can generate a maximum of 5 leads per search.' }),
-  radius: z.enum(['local', 'broad']),
-  includeAddress: z.boolean().default(false).optional(),
-  includeLinkedIn: z.boolean().default(false).optional(),
-});
-
-interface SearchFormProps {
-  setIsLoading: Dispatch<SetStateAction<boolean>>;
-  setLeads: Dispatch<SetStateAction<Lead[]>>;
-  setSearchQuery: Dispatch<SetStateAction<string>>;
-  setShowSuggestions: Dispatch<SetStateAction<boolean>>;
-  selectedSuggestion: string;
-}
-
 export function SearchForm({ setIsLoading, setLeads, setSearchQuery, setShowSuggestions, selectedSuggestion }: SearchFormProps) {
   const [isGenerating, setIsGenerating] = useState(false);
   const { toast } = useToast();
-  const { user } = useAuth();
+  const { user, userProfile } = useAuth();
+
+  const formSchema = useMemo(() => {
+    const planLimits = { Free: 5, Starter: 20, Pro: 50, Agency: 100 };
+    const planName = userProfile?.plan || 'Free';
+    const maxLeads = planLimits[planName as keyof typeof planLimits];
+    
+    return z.object({
+      keyword: z.string().min(3, { message: 'Keyword must be at least 3 characters.' }),
+      industry: z.string().optional(),
+      numLeads: z.coerce
+        .number({ invalid_type_error: 'Please enter a valid number.' })
+        .min(1, { message: 'Please generate at least 1 lead.' })
+        .max(maxLeads, { message: `Your ${planName} plan allows up to ${maxLeads} leads per search.` }),
+      radius: z.enum(['local', 'broad']),
+      includeAddress: z.boolean().default(false).optional(),
+      includeLinkedIn: z.boolean().default(false).optional(),
+    });
+  }, [userProfile]);
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -77,6 +75,16 @@ export function SearchForm({ setIsLoading, setLeads, setSearchQuery, setShowSugg
       form.setValue('keyword', selectedSuggestion);
     }
   }, [selectedSuggestion, form]);
+  
+  useEffect(() => {
+    // Reset numLeads if it exceeds the new limit when the plan changes
+    const planLimits = { Free: 5, Starter: 20, Pro: 50, Agency: 100 };
+    const planName = userProfile?.plan || 'Free';
+    const maxLeads = planLimits[planName as keyof typeof planLimits];
+    if (form.getValues('numLeads') > maxLeads) {
+      form.setValue('numLeads', maxLeads);
+    }
+  }, [userProfile, form]);
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
     if (!user) {
