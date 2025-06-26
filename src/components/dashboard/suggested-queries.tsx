@@ -8,9 +8,10 @@ import { Skeleton } from '../ui/skeleton';
 
 interface SuggestedQueriesProps {
   query: string;
+  onSuggestionClick: (suggestion: string) => void;
 }
 
-export function SuggestedQueries({ query }: SuggestedQueriesProps) {
+export function SuggestedQueries({ query, onSuggestionClick }: SuggestedQueriesProps) {
   const [suggestions, setSuggestions] = useState<string[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -59,6 +60,7 @@ export function SuggestedQueries({ query }: SuggestedQueriesProps) {
               key={index}
               variant="outline"
               className="cursor-pointer border-accent/80 bg-background text-accent-foreground/80 hover:bg-accent/10 py-1 px-3 text-sm"
+              onClick={() => onSuggestionClick(suggestion)}
             >
               <Zap className="mr-2 h-3 w-3" />
               {suggestion}

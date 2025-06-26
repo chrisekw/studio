@@ -11,6 +11,11 @@ export default function DashboardPage() {
   const [isLoading, setIsLoading] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [showSuggestions, setShowSuggestions] = useState(false);
+  const [selectedSuggestion, setSelectedSuggestion] = useState('');
+
+  const handleSuggestionClick = (suggestion: string) => {
+    setSelectedSuggestion(suggestion);
+  };
 
   return (
     <div className="space-y-8 py-6">
@@ -19,9 +24,10 @@ export default function DashboardPage() {
         setLeads={setLeads}
         setSearchQuery={setSearchQuery}
         setShowSuggestions={setShowSuggestions}
+        selectedSuggestion={selectedSuggestion}
       />
       <LeadsTable leads={leads} isLoading={isLoading} />
-      {showSuggestions && <SuggestedQueries query={searchQuery} />}
+      {showSuggestions && <SuggestedQueries query={searchQuery} onSuggestionClick={handleSuggestionClick} />}
     </div>
   );
 }

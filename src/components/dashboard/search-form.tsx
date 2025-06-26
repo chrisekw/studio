@@ -3,7 +3,7 @@
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
-import { useState, type Dispatch, type SetStateAction } from 'react';
+import { useState, type Dispatch, type SetStateAction, useEffect } from 'react';
 import {
   Card,
   CardContent,
@@ -48,9 +48,10 @@ interface SearchFormProps {
   setLeads: Dispatch<SetStateAction<Lead[]>>;
   setSearchQuery: Dispatch<SetStateAction<string>>;
   setShowSuggestions: Dispatch<SetStateAction<boolean>>;
+  selectedSuggestion: string;
 }
 
-export function SearchForm({ setIsLoading, setLeads, setSearchQuery, setShowSuggestions }: SearchFormProps) {
+export function SearchForm({ setIsLoading, setLeads, setSearchQuery, setShowSuggestions, selectedSuggestion }: SearchFormProps) {
   const [isGenerating, setIsGenerating] = useState(false);
   const { toast } = useToast();
 
@@ -60,10 +61,16 @@ export function SearchForm({ setIsLoading, setLeads, setSearchQuery, setShowSugg
       keyword: 'Marketing agencies in London',
       radius: 'broad',
       numLeads: '10',
-      includeAddress: false,
-      includeLinkedIn: false,
+      includeAddress: true,
+      includeLinkedIn: true,
     },
   });
+
+  useEffect(() => {
+    if (selectedSuggestion) {
+      form.setValue('keyword', selectedSuggestion);
+    }
+  }, [selectedSuggestion, form]);
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
     setIsGenerating(true);
