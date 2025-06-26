@@ -5,6 +5,7 @@ import { useForm } from 'react-hook-form';
 import { z } from 'zod';
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
+import { signInWithEmailAndPassword } from 'firebase/auth';
 
 import { Button } from '@/components/ui/button';
 import {
@@ -18,6 +19,7 @@ import {
 import { Input } from '@/components/ui/input';
 import { Loader2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import { auth } from '@/lib/firebase';
 
 const formSchema = z.object({
   email: z.string().email({ message: 'Please enter a valid email.' }),
@@ -39,22 +41,24 @@ export function LoginForm() {
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
     setIsLoading(true);
-    // Mock Firebase auth call
-    await new Promise(resolve => setTimeout(resolve, 1500));
-
-    // Simulate success/error
-    if (values.email === 'test@example.com' && values.password === 'password') {
+    try {
+      await signInWithEmailAndPassword(auth, values.email, values.password);
       toast({
         title: 'Login Successful',
         description: "Welcome back! Redirecting you to the dashboard.",
       });
       router.push('/dashboard');
-    } else {
+    } catch (error: any) {
+      let description = 'An unexpected error occurred. Please try again.';
+      if (error.code === 'auth/invalid-credential') {
+        description = 'Invalid email or password. Please try again.';
+      }
       toast({
         variant: 'destructive',
         title: 'Login Failed',
-        description: 'Invalid email or password. Please try again.',
+        description: description,
       });
+    } finally {
       setIsLoading(false);
     }
   }

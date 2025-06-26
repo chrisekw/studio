@@ -1,7 +1,10 @@
 'use client';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
+import { signOut } from 'firebase/auth';
 import {
   Settings,
+  LogOut,
 } from 'lucide-react';
 import { 
   Sidebar,
@@ -14,9 +17,30 @@ import {
 } from '@/components/ui/sidebar';
 import { AppSidebarNav } from './app-sidebar-nav';
 import { useSidebar } from '@/components/ui/sidebar';
+import { useToast } from '@/hooks/use-toast';
+import { auth } from '@/lib/firebase';
 
 export function AppSidebar() {
   const { state } = useSidebar();
+  const router = useRouter();
+  const { toast } = useToast();
+
+  const handleLogout = async () => {
+    try {
+      await signOut(auth);
+      toast({
+        title: 'Logged Out',
+        description: 'You have been successfully logged out.',
+      });
+      router.push('/login');
+    } catch (error) {
+      toast({
+        variant: 'destructive',
+        title: 'Logout Failed',
+        description: 'An error occurred during logout. Please try again.',
+      });
+    }
+  };
 
   return (
     <Sidebar collapsible="icon" variant="sidebar" side="left">
@@ -74,6 +98,12 @@ export function AppSidebar() {
             <SidebarMenuButton tooltip={{children: 'Settings'}}>
               <Settings />
               <span>Settings</span>
+            </SidebarMenuButton>
+          </SidebarMenuItem>
+          <SidebarMenuItem>
+            <SidebarMenuButton onClick={handleLogout} tooltip={{children: 'Logout'}}>
+              <LogOut />
+              <span>Logout</span>
             </SidebarMenuButton>
           </SidebarMenuItem>
         </SidebarMenu>

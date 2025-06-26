@@ -5,6 +5,7 @@ import { useForm } from 'react-hook-form';
 import { z } from 'zod';
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
+import { createUserWithEmailAndPassword } from 'firebase/auth';
 
 import { Button } from '@/components/ui/button';
 import {
@@ -18,6 +19,7 @@ import {
 import { Input } from '@/components/ui/input';
 import { Loader2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import { auth } from '@/lib/firebase';
 
 const formSchema = z.object({
   email: z.string().email({ message: 'Please enter a valid email.' }),
@@ -39,15 +41,26 @@ export function RegisterForm() {
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
     setIsLoading(true);
-    // Mock Firebase auth call
-    await new Promise(resolve => setTimeout(resolve, 1500));
-    
-    toast({
-      title: 'Account Created',
-      description: "Welcome to ProspectIQ! We're redirecting you to the dashboard.",
-    });
-
-    router.push('/dashboard');
+    try {
+      await createUserWithEmailAndPassword(auth, values.email, values.password);
+      toast({
+        title: 'Account Created',
+        description: "Welcome to ProspectIQ! We're redirecting you to the dashboard.",
+      });
+      router.push('/dashboard');
+    } catch (error: any) {
+      let description = 'An unexpected error occurred. Please try again.';
+      if (error.code === 'auth/email-already-in-use') {
+        description = 'This email is already associated with an account.';
+      }
+      toast({
+        variant: 'destructive',
+        title: 'Registration Failed',
+        description: description,
+      });
+    } finally {
+      setIsLoading(false);
+    }
   }
 
   return (
