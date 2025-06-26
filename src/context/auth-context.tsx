@@ -1,11 +1,12 @@
 'use client';
 
 import { createContext, useContext, useEffect, useState, type ReactNode } from 'react';
-import { onAuthStateChanged, type User } from 'firebase/auth';
+import { onAuthStateChanged, signOut, type User } from 'firebase/auth';
 import { doc, setDoc, onSnapshot } from 'firebase/firestore';
 import { auth, db } from '@/lib/firebase';
 import { Loader2 } from 'lucide-react';
 import type { UserProfile, UserUsage } from '@/lib/types';
+import { useToast } from '@/hooks/use-toast';
 
 interface AuthContextType {
   user: User | null;
@@ -26,6 +27,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
   const [userUsage, setUserUsage] = useState<UserUsage | null>(null);
   const [loading, setLoading] = useState(true);
+  const { toast } = useToast();
 
   useEffect(() => {
     let unsubscribeProfile: (() => void) | undefined;
@@ -38,27 +40,46 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setUser(user);
       if (user) {
         const userDocRef = doc(db, 'users', user.uid);
-        unsubscribeProfile = onSnapshot(userDocRef, async (docSnap) => {
-          if (docSnap.exists()) {
-            setUserProfile(docSnap.data() as UserProfile);
-          } else {
-            const newProfile: UserProfile = { 
-              email: user.email, 
-              plan: 'Free',
-              defaultIncludeAddress: true,
-              defaultIncludeLinkedIn: true,
-            };
-            await setDoc(userDocRef, newProfile);
-            setUserProfile(newProfile);
+        unsubscribeProfile = onSnapshot(
+          userDocRef,
+          async (docSnap) => {
+            if (docSnap.exists()) {
+              setUserProfile(docSnap.data() as UserProfile);
+            } else {
+              const newProfile: UserProfile = {
+                email: user.email,
+                plan: 'Free',
+                defaultIncludeAddress: true,
+                defaultIncludeLinkedIn: true,
+              };
+              await setDoc(userDocRef, newProfile);
+              setUserProfile(newProfile);
+            }
+            setLoading(false);
+          },
+          (error) => {
+            console.error('Firebase profile listener error:', error);
+            toast({
+              variant: 'destructive',
+              title: 'Could not load profile',
+              description: 'There was a problem loading your user data. Please try logging in again.',
+              duration: 5000,
+            });
+            signOut(auth);
           }
-          setLoading(false);
-        });
+        );
 
         const userUsageRef = doc(db, 'userLeadUsage', user.uid);
-        unsubscribeUsage = onSnapshot(userUsageRef, (docSnap) => {
-          setUserUsage(docSnap.exists() ? (docSnap.data() as UserUsage) : {});
-        });
-
+        unsubscribeUsage = onSnapshot(
+          userUsageRef,
+          (docSnap) => {
+            setUserUsage(docSnap.exists() ? (docSnap.data() as UserUsage) : {});
+          },
+          (error) => {
+            console.error('Firebase usage listener error:', error);
+            setUserUsage(null);
+          }
+        );
       } else {
         setUserProfile(null);
         setUserUsage(null);
@@ -71,8 +92,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       if (unsubscribeProfile) unsubscribeProfile();
       if (unsubscribeUsage) unsubscribeUsage();
     };
-  }, []);
-
+  }, [toast]);
 
   if (loading) {
     return (
