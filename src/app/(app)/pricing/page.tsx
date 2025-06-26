@@ -32,7 +32,7 @@ const plans = [
       'AI-powered email & phone extraction',
     ],
     buttonText: 'Choose Starter',
-    paymentLink: '#', // Placeholder
+    paymentLink: 'https://flutterwave.com/pay/ynsnxtinxodm',
     isFeatured: true,
   },
   {
@@ -48,7 +48,7 @@ const plans = [
       'Priority scraping queue',
     ],
     buttonText: 'Choose Pro',
-    paymentLink: '#', // Placeholder
+    paymentLink: 'https://flutterwave.com/pay/2oaxhcai6ava',
     isFeatured: false,
   },
   {
@@ -64,15 +64,15 @@ const plans = [
       'Webhook & Zapier support',
     ],
     buttonText: 'Choose Agency',
-    paymentLink: '#', // Placeholder
+    paymentLink: 'https://flutterwave.com/pay/fz56pnsdsp84',
     isFeatured: false,
   },
 ];
 
 const addons = [
-    { leads: 100, price: '$10' },
-    { leads: 500, price: '$50' },
-    { leads: 2000, price: '$100' },
+    { leads: 100, price: '$10', paymentLink: 'https://flutterwave.com/pay/zv88crtaygau' },
+    { leads: 500, price: '$50', paymentLink: 'https://flutterwave.com/pay/aimxygwrocsa' },
+    { leads: 2000, price: '$100', paymentLink: 'https://flutterwave.com/pay/cszswcfjeqjf' },
 ]
 
 export default function PricingPage() {
@@ -133,7 +133,7 @@ export default function PricingPage() {
                                 <p className="font-medium">{addon.leads.toLocaleString()} leads</p>
                             </div>
                             <Button asChild size="sm">
-                                <Link href="#">Buy for {addon.price}</Link>
+                                <Link href={addon.paymentLink} target="_blank">Buy for {addon.price}</Link>
                             </Button>
                          </li>
                     ))}
