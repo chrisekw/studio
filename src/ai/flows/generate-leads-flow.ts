@@ -12,9 +12,9 @@ import {z} from 'zod';
 
 const LeadSchema = z.object({
   name: z.string().describe('The name of the company.'),
-  email: z.string().email().describe('A contact email for the company.'),
+  email: z.string().describe('A contact email for the company.'),
   phone: z.string().describe('A contact phone number for the company.'),
-  website: z.string().url().describe('The company website URL.'),
+  website: z.string().describe('The company website URL.'),
 });
 
 const GenerateLeadsInputSchema = z.object({
