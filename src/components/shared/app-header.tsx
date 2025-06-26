@@ -2,7 +2,7 @@
 
 import { SidebarTrigger } from '../ui/sidebar';
 import Link from 'next/link';
-import { CircleUser, LogOut, Menu } from 'lucide-react';
+import { CircleUser, LogOut, Menu, Settings } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
   DropdownMenu,
@@ -104,6 +104,12 @@ export function AppHeader() {
             <DropdownMenuLabel>My Account</DropdownMenuLabel>
             <DropdownMenuSeparator />
             <DropdownMenuItem disabled>{user.email}</DropdownMenuItem>
+             <DropdownMenuItem asChild>
+                <Link href="/settings">
+                    <Settings className="mr-2 h-4 w-4" />
+                    Settings
+                </Link>
+            </DropdownMenuItem>
             <DropdownMenuSeparator />
             <DropdownMenuItem onClick={handleLogout}>
               <LogOut className="mr-2 h-4 w-4" />

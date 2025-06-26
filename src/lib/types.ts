@@ -3,6 +3,8 @@ export type UserPlan = 'Free' | 'Starter' | 'Pro' | 'Agency';
 export interface UserProfile {
   plan: UserPlan;
   email?: string | null;
+  defaultIncludeAddress?: boolean;
+  defaultIncludeLinkedIn?: boolean;
 }
 
 export interface UserUsage {

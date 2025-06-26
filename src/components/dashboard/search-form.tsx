@@ -3,7 +3,7 @@
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
-import { useState, type Dispatch, type SetStateAction, useEffect, useMemo } from 'react';
+import { useState, type Dispatch, type SetStateAction, useEffect, useMemo, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 
@@ -53,6 +53,7 @@ export function SearchForm({ setIsLoading, setLeads, setSearchQuery, setShowSugg
   const router = useRouter();
   const { toast } = useToast();
   const { user, userProfile } = useAuth();
+  const defaultsSet = useRef(false);
 
   const formSchema = useMemo(() => {
     const planLimits = { Free: 5, Starter: 20, Pro: 50, Agency: 100 };
@@ -82,6 +83,14 @@ export function SearchForm({ setIsLoading, setLeads, setSearchQuery, setShowSugg
       includeLinkedIn: true,
     },
   });
+
+  useEffect(() => {
+    if (userProfile && !defaultsSet.current) {
+      form.setValue('includeAddress', userProfile.defaultIncludeAddress ?? true);
+      form.setValue('includeLinkedIn', userProfile.defaultIncludeLinkedIn ?? true);
+      defaultsSet.current = true;
+    }
+  }, [userProfile, form]);
 
   useEffect(() => {
     if (selectedSuggestion) {

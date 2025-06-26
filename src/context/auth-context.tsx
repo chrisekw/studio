@@ -42,7 +42,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           if (docSnap.exists()) {
             setUserProfile(docSnap.data() as UserProfile);
           } else {
-            const newProfile: UserProfile = { email: user.email, plan: 'Free' };
+            const newProfile: UserProfile = { 
+              email: user.email, 
+              plan: 'Free',
+              defaultIncludeAddress: true,
+              defaultIncludeLinkedIn: true,
+            };
             await setDoc(userDocRef, newProfile);
             setUserProfile(newProfile);
           }

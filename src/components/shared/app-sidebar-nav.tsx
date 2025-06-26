@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { LayoutDashboard, Save, CreditCard } from 'lucide-react';
+import { LayoutDashboard, Save, CreditCard, Settings } from 'lucide-react';
 import { 
   SidebarMenu,
   SidebarMenuItem,
@@ -13,6 +13,7 @@ const navItems = [
   { href: '/dashboard', icon: LayoutDashboard, label: 'Dashboard' },
   { href: '/saved-leads', icon: Save, label: 'Saved Leads' },
   { href: '/pricing', icon: CreditCard, label: 'Pricing' },
+  { href: '/settings', icon: Settings, label: 'Settings' },
 ];
 
 export function AppSidebarNav() {
