@@ -5,9 +5,11 @@ import {
   SidebarHeader,
   SidebarContent,
   SidebarFooter,
+  SidebarSeparator,
 } from '@/components/ui/sidebar';
 import { AppSidebarNav } from './app-sidebar-nav';
 import { useSidebar } from '@/components/ui/sidebar';
+import { QuotaDisplay } from './quota-display';
 
 export function AppSidebar() {
   const { state } = useSidebar();
@@ -63,7 +65,8 @@ export function AppSidebar() {
         <AppSidebarNav />
       </SidebarContent>
       <SidebarFooter>
-        {/* Footer content can go here */}
+        <SidebarSeparator />
+        <QuotaDisplay />
       </SidebarFooter>
     </Sidebar>
   );
