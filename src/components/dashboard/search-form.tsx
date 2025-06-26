@@ -34,6 +34,7 @@ import { useToast } from '@/hooks/use-toast';
 import { generateLeads } from '@/ai/flows/generate-leads-flow';
 import type { Lead } from '@/lib/types';
 import { Checkbox } from '@/components/ui/checkbox';
+import { useAuth } from '@/context/auth-context';
 
 const formSchema = z.object({
   keyword: z.string().min(3, { message: 'Keyword must be at least 3 characters.' }),
@@ -41,7 +42,7 @@ const formSchema = z.object({
   numLeads: z.coerce
     .number({ invalid_type_error: 'Please enter a valid number.' })
     .min(1, { message: 'Please generate at least 1 lead.' })
-    .max(50, { message: 'You can generate a maximum of 50 leads.' }),
+    .max(5, { message: 'Free plan users can generate a maximum of 5 leads per search.' }),
   radius: z.enum(['local', 'broad']),
   includeAddress: z.boolean().default(false).optional(),
   includeLinkedIn: z.boolean().default(false).optional(),
@@ -58,13 +59,14 @@ interface SearchFormProps {
 export function SearchForm({ setIsLoading, setLeads, setSearchQuery, setShowSuggestions, selectedSuggestion }: SearchFormProps) {
   const [isGenerating, setIsGenerating] = useState(false);
   const { toast } = useToast();
+  const { user } = useAuth();
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
       keyword: 'Marketing agencies in London',
       radius: 'broad',
-      numLeads: 10,
+      numLeads: 5,
       includeAddress: true,
       includeLinkedIn: true,
     },
@@ -77,6 +79,15 @@ export function SearchForm({ setIsLoading, setLeads, setSearchQuery, setShowSugg
   }, [selectedSuggestion, form]);
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
+    if (!user) {
+      toast({
+        variant: 'destructive',
+        title: 'Authentication Error',
+        description: 'You must be logged in to generate leads.',
+      });
+      return;
+    }
+    
     setIsGenerating(true);
     setIsLoading(true);
     setLeads([]);
@@ -90,6 +101,7 @@ export function SearchForm({ setIsLoading, setLeads, setSearchQuery, setShowSugg
         numLeads: values.numLeads,
         includeAddress: values.includeAddress,
         includeLinkedIn: values.includeLinkedIn,
+        userId: user.uid,
       });
 
       const newLeads = result.map((lead, index) => ({
@@ -103,12 +115,12 @@ export function SearchForm({ setIsLoading, setLeads, setSearchQuery, setShowSugg
         title: 'Search Complete',
         description: `We've found ${newLeads.length} potential leads for "${values.keyword}".`,
       });
-    } catch (error) {
+    } catch (error: any) {
        console.error('Failed to generate leads:', error);
        toast({
         variant: 'destructive',
         title: 'An Error Occurred',
-        description: 'Failed to generate leads. Please try again.',
+        description: error.message || 'Failed to generate leads. Please try again.',
       });
     } finally {
       setIsGenerating(false);
@@ -172,7 +184,7 @@ export function SearchForm({ setIsLoading, setLeads, setSearchQuery, setShowSugg
                   <FormItem>
                     <FormLabel>Number of Leads</FormLabel>
                     <FormControl>
-                      <Input type="number" placeholder="10" {...field} onChange={event => field.onChange(+event.target.value)} />
+                      <Input type="number" placeholder="5" {...field} onChange={event => field.onChange(+event.target.value)} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>

@@ -9,6 +9,9 @@
 
 import {ai} from '@/ai/genkit';
 import {z} from 'zod';
+import { db } from '@/lib/firebase';
+import { doc, runTransaction } from 'firebase/firestore';
+import { format } from 'date-fns';
 
 const LeadSchema = z.object({
   name: z.string().describe('The name of the company.'),
@@ -24,6 +27,7 @@ const GenerateLeadsInputSchema = z.object({
   numLeads: z.number().describe('The number of leads to generate.'),
   includeAddress: z.boolean().optional().describe('Whether to include the physical address.'),
   includeLinkedIn: z.boolean().optional().describe('Whether to include the LinkedIn profile URL.'),
+  userId: z.string().describe('The ID of the user requesting the leads.'),
 });
 export type GenerateLeadsInput = z.infer<typeof GenerateLeadsInputSchema>;
 
@@ -36,7 +40,12 @@ export async function generateLeads(input: GenerateLeadsInput): Promise<Generate
 
 const prompt = ai.definePrompt({
   name: 'generateLeadsPrompt',
-  input: {schema: GenerateLeadsInputSchema},
+  input: {schema: z.object({
+    query: GenerateLeadsInputSchema.shape.query,
+    numLeads: GenerateLeadsInputSchema.shape.numLeads,
+    includeAddress: GenerateLeadsInputSchema.shape.includeAddress,
+    includeLinkedIn: GenerateLeadsInputSchema.shape.includeLinkedIn,
+  })},
   output: {schema: GenerateLeadsOutputSchema},
   prompt: `You are an expert business development assistant. Your task is to generate a list of business leads based on a given query.
 
@@ -55,14 +64,68 @@ const prompt = ai.definePrompt({
   `,
 });
 
+const FREE_PLAN_DAILY_LIMIT = 5;
+
 const generateLeadsFlow = ai.defineFlow(
   {
     name: 'generateLeadsFlow',
     inputSchema: GenerateLeadsInputSchema,
     outputSchema: GenerateLeadsOutputSchema,
   },
-  async input => {
-    const {output} = await prompt(input);
-    return output!;
+  async (input) => {
+    const { userId, numLeads, ...promptInput } = input;
+    const today = format(new Date(), 'yyyy-MM-dd');
+    const userUsageRef = doc(db, 'userLeadUsage', userId);
+
+    try {
+      await runTransaction(db, async (transaction) => {
+        const userUsageDoc = await transaction.get(userUsageRef);
+        
+        let currentCount = 0;
+        if (userUsageDoc.exists()) {
+          const data = userUsageDoc.data();
+          if (data.lastGeneratedDate === today) {
+            currentCount = data.dailyCount;
+          }
+        }
+
+        if (currentCount + numLeads > FREE_PLAN_DAILY_LIMIT) {
+          const remaining = FREE_PLAN_DAILY_LIMIT - currentCount;
+          if (remaining <= 0) {
+            throw new Error(`You have exceeded your daily limit of 5 leads. Please upgrade to a paid plan or try again tomorrow.`);
+          }
+          throw new Error(`You have ${remaining} leads remaining today. Please request a smaller number of leads or upgrade to a paid plan.`);
+        }
+      });
+    } catch (error: any) {
+      if (error.message.includes('leads remaining') || error.message.includes('exceeded your daily limit')) {
+        throw error;
+      }
+      console.error('Firebase transaction error:', error);
+      throw new Error('Failed to verify lead usage. Please try again.');
+    }
+
+    const { output } = await prompt(promptInput);
+    
+    if (!output) {
+      return [];
+    }
+
+    const generatedLeads = output;
+
+    await runTransaction(db, async (transaction) => {
+      const userUsageDoc = await transaction.get(userUsageRef);
+      let currentCount = 0;
+      if (userUsageDoc.exists() && userUsageDoc.data().lastGeneratedDate === today) {
+        currentCount = userUsageDoc.data().dailyCount;
+      }
+
+      transaction.set(userUsageRef, {
+        dailyCount: currentCount + generatedLeads.length,
+        lastGeneratedDate: today
+      }, { merge: true });
+    });
+
+    return generatedLeads;
   }
 );
