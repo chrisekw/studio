@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import {
   Table,
   TableHeader,
@@ -15,10 +15,8 @@ import {
   CardTitle,
   CardDescription,
   CardContent,
-  CardFooter,
 } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -33,26 +31,15 @@ import {
   Save,
   Trash2,
 } from 'lucide-react';
-import { type Lead, MOCK_LEADS } from '@/lib/data';
-import { Checkbox } from '../ui/checkbox';
+import { type Lead } from '@/lib/types';
 import { Skeleton } from '../ui/skeleton';
 import { useToast } from '@/hooks/use-toast';
 
 export function LeadsTable() {
   const [leads, setLeads] = useState<Lead[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
 
-  useEffect(() => {
-    // Simulate API call to fetch leads
-    const timer = setTimeout(() => {
-      setLeads(MOCK_LEADS);
-      setIsLoading(false);
-    }, 2000);
-
-    return () => clearTimeout(timer);
-  }, []);
-  
   const handleSaveLead = (lead: Lead) => {
     toast({
       title: 'Lead Saved',
