@@ -35,6 +35,7 @@ import { SuggestedQueries } from './suggested-queries';
 const formSchema = z.object({
   keyword: z.string().min(3, { message: 'Keyword must be at least 3 characters.' }),
   industry: z.string().optional(),
+  numLeads: z.string(),
   radius: z.enum(['local', 'broad']),
 });
 
@@ -48,6 +49,7 @@ export function SearchForm() {
     defaultValues: {
       keyword: 'Marketing agencies in London',
       radius: 'broad',
+      numLeads: '10',
     },
   });
 
@@ -79,7 +81,7 @@ export function SearchForm() {
       <CardContent>
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="grid gap-6">
-            <div className="grid md:grid-cols-2 gap-4">
+            <div className="grid md:grid-cols-3 gap-4">
               <FormField
                 control={form.control}
                 name="keyword"
@@ -102,7 +104,7 @@ export function SearchForm() {
                       <FormControl>
                         <SelectTrigger>
                           <SelectValue placeholder="Select an industry" />
-                        </SelectTrigger>
+                        </Trigger>
                       </FormControl>
                       <SelectContent>
                         <SelectItem value="technology">Technology</SelectItem>
@@ -110,6 +112,27 @@ export function SearchForm() {
                         <SelectItem value="finance">Finance</SelectItem>
                         <SelectItem value="real-estate">Real Estate</SelectItem>
                         <SelectItem value="ecommerce">E-commerce</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </FormItem>
+                )}
+              />
+               <FormField
+                control={form.control}
+                name="numLeads"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Number of Leads</FormLabel>
+                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select amount" />
+                        </Trigger>
+                      </FormControl>
+                      <SelectContent>
+                        <SelectItem value="10">10</SelectItem>
+                        <SelectItem value="25">25</SelectItem>
+                        <SelectItem value="50">50</SelectItem>
                       </SelectContent>
                     </Select>
                   </FormItem>
