@@ -6,6 +6,7 @@
  * - GenerateLeadsInput - The input type for the generateLeads function.
  * - GenerateLeadsOutput - The return type for the generateLeads function.
  */
+import 'dotenv/config'; // Ensure environment variables are loaded for server actions.
 
 import {ai} from '@/ai/genkit';
 import {z} from 'zod';
@@ -119,7 +120,22 @@ const generateLeadsFlow = ai.defineFlow(
       throw new Error('Failed to verify lead usage. Please try again.');
     }
 
-    const { output } = await prompt(promptInput);
+    let promptResult;
+    try {
+      promptResult = await prompt(promptInput);
+    } catch (error: any) {
+      console.error('AI lead generation failed:', {
+        message: error.message,
+        stack: error.stack,
+        cause: error.cause,
+      });
+      throw new Error(
+        'The AI service failed to respond. This might be a temporary issue with the provider. Please try again later.'
+      );
+    }
+
+    const { output } = promptResult;
+
     if (!output) {
       return [];
     }
