@@ -25,9 +25,9 @@
     --ring: 262.1 83.3% 57.8%;
     --radius: 0.5rem;
 
-    --sidebar: hsl(var(--card));
-    --sidebar-foreground: hsl(var(--card-foreground));
-    --sidebar-border: hsl(var(--border));
+    --sidebar: 240 5.9% 10%;
+    --sidebar-foreground: 0 0% 98%;
+    --sidebar-border: 240 3.7% 15.9%;
     --sidebar-accent: hsl(var(--primary));
     --sidebar-accent-foreground: hsl(var(--primary-foreground));
     --sidebar-ring: hsl(var(--ring));
