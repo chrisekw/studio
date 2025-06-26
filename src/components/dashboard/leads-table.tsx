@@ -1,6 +1,5 @@
 'use client';
 
-import { useState } from 'react';
 import {
   Table,
   TableHeader,
@@ -35,9 +34,12 @@ import { type Lead } from '@/lib/types';
 import { Skeleton } from '../ui/skeleton';
 import { useToast } from '@/hooks/use-toast';
 
-export function LeadsTable() {
-  const [leads, setLeads] = useState<Lead[]>([]);
-  const [isLoading, setIsLoading] = useState(false);
+interface LeadsTableProps {
+  leads: Lead[];
+  isLoading: boolean;
+}
+
+export function LeadsTable({ leads, isLoading }: LeadsTableProps) {
   const { toast } = useToast();
 
   const handleSaveLead = (lead: Lead) => {
@@ -48,6 +50,7 @@ export function LeadsTable() {
   };
 
   const exportToCSV = () => {
+    if (leads.length === 0) return;
     let csvContent = "data:text/csv;charset=utf-8,";
     csvContent += "Name,Email,Phone,Website\n";
     leads.forEach(lead => {

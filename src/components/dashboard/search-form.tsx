@@ -3,7 +3,7 @@
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
-import { useState } from 'react';
+import { useState, type Dispatch, type SetStateAction } from 'react';
 import {
   Card,
   CardContent,
@@ -30,7 +30,8 @@ import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Button } from '@/components/ui/button';
 import { Loader2, Search } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import { SuggestedQueries } from './suggested-queries';
+import { generateLeads } from '@/ai/flows/generate-leads-flow';
+import type { Lead } from '@/lib/types';
 
 const formSchema = z.object({
   keyword: z.string().min(3, { message: 'Keyword must be at least 3 characters.' }),
@@ -39,9 +40,15 @@ const formSchema = z.object({
   radius: z.enum(['local', 'broad']),
 });
 
-export function SearchForm() {
-  const [isLoading, setIsLoading] = useState(false);
-  const [showSuggestions, setShowSuggestions] = useState(false);
+interface SearchFormProps {
+  setIsLoading: Dispatch<SetStateAction<boolean>>;
+  setLeads: Dispatch<SetStateAction<Lead[]>>;
+  setSearchQuery: Dispatch<SetStateAction<string>>;
+  setShowSuggestions: Dispatch<SetStateAction<boolean>>;
+}
+
+export function SearchForm({ setIsLoading, setLeads, setSearchQuery, setShowSuggestions }: SearchFormProps) {
+  const [isGenerating, setIsGenerating] = useState(false);
   const { toast } = useToast();
 
   const form = useForm<z.infer<typeof formSchema>>({
@@ -54,20 +61,42 @@ export function SearchForm() {
   });
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
+    setIsGenerating(true);
     setIsLoading(true);
+    setLeads([]);
     setShowSuggestions(false);
+    setSearchQuery(values.keyword);
     
-    // Mock scraping and AI processing
-    await new Promise(resolve => setTimeout(resolve, 2000));
-    
-    toast({
-      title: 'Search Complete',
-      description: `We've found potential leads for "${values.keyword}".`,
-    });
-    
-    setIsLoading(false);
-    setShowSuggestions(true);
-    // In a real app, you would trigger a re-fetch of the leads table here.
+    try {
+      const fullQuery = values.industry ? `${values.keyword} in the ${values.industry} industry` : values.keyword;
+      const result = await generateLeads({
+        query: fullQuery,
+        numLeads: parseInt(values.numLeads, 10),
+      });
+
+      const newLeads = result.map((lead, index) => ({
+        ...lead,
+        id: `${Date.now()}-${index}`,
+      }));
+
+      setLeads(newLeads);
+      
+      toast({
+        title: 'Search Complete',
+        description: `We've found ${newLeads.length} potential leads for "${values.keyword}".`,
+      });
+    } catch (error) {
+       console.error('Failed to generate leads:', error);
+       toast({
+        variant: 'destructive',
+        title: 'An Error Occurred',
+        description: 'Failed to generate leads. Please try again.',
+      });
+    } finally {
+      setIsGenerating(false);
+      setIsLoading(false);
+      setShowSuggestions(true);
+    }
   }
 
   return (
@@ -173,8 +202,8 @@ export function SearchForm() {
               )}
             />
             <div className="flex justify-end">
-              <Button type="submit" disabled={isLoading}>
-                {isLoading ? (
+              <Button type="submit" disabled={isGenerating}>
+                {isGenerating ? (
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                 ) : (
                   <Search className="mr-2 h-4 w-4" />
@@ -184,7 +213,6 @@ export function SearchForm() {
             </div>
           </form>
         </Form>
-        {showSuggestions && <SuggestedQueries query={form.getValues('keyword')} />}
       </CardContent>
     </Card>
   );
