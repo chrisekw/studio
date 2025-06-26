@@ -4,6 +4,9 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
 import { useState, type Dispatch, type SetStateAction, useEffect, useMemo } from 'react';
+import { useRouter } from 'next/navigation';
+import Link from 'next/link';
+
 import {
   Card,
   CardContent,
@@ -31,6 +34,7 @@ import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Button } from '@/components/ui/button';
 import { Loader2, Search } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import { ToastAction } from '@/components/ui/toast';
 import { generateLeads } from '@/ai/flows/generate-leads-flow';
 import type { Lead } from '@/lib/types';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -46,6 +50,7 @@ interface SearchFormProps {
 
 export function SearchForm({ setIsLoading, setLeads, setSearchQuery, setShowSuggestions, selectedSuggestion }: SearchFormProps) {
   const [isGenerating, setIsGenerating] = useState(false);
+  const router = useRouter();
   const { toast } = useToast();
   const { user, userProfile } = useAuth();
 
@@ -133,11 +138,25 @@ export function SearchForm({ setIsLoading, setLeads, setSearchQuery, setShowSugg
       });
     } catch (error: any) {
        console.error('Failed to generate leads:', error);
-       toast({
-        variant: 'destructive',
-        title: 'An Error Occurred',
-        description: error.message || 'Failed to generate leads. Please try again.',
-      });
+       if (error.message?.startsWith('LIMIT_EXCEEDED:')) {
+        toast({
+          variant: 'destructive',
+          title: 'Plan Limit Reached',
+          description: error.message.replace('LIMIT_EXCEEDED: ', ''),
+          action: (
+            <ToastAction asChild altText="Upgrade Plan">
+              <Link href="/pricing">Upgrade</Link>
+            </ToastAction>
+          ),
+          duration: 10000,
+        });
+       } else {
+         toast({
+          variant: 'destructive',
+          title: 'An Error Occurred',
+          description: error.message || 'Failed to generate leads. Please try again.',
+        });
+       }
     } finally {
       setIsGenerating(false);
       setIsLoading(false);

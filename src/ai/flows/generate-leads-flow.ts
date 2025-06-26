@@ -101,20 +101,20 @@ const generateLeadsFlow = ai.defineFlow(
           let dailyCount = usageData.lastGeneratedDate === today ? usageData.dailyCount || 0 : 0;
           if (dailyCount + numLeads > limits.daily) {
             const remaining = limits.daily - dailyCount;
-            if (remaining <= 0) throw new Error(`You have exceeded your daily limit of ${limits.daily} leads. Please upgrade or try again tomorrow.`);
-            throw new Error(`You have ${remaining} leads remaining today. Please request fewer leads or upgrade.`);
+            if (remaining <= 0) throw new Error(`LIMIT_EXCEEDED: You have exceeded your daily limit of ${limits.daily} leads. Please upgrade your plan or try again tomorrow.`);
+            throw new Error(`LIMIT_EXCEEDED: Your request exceeds your daily limit. You have ${remaining} leads remaining. Please request fewer leads or upgrade your plan.`);
           }
         } else if (limits.monthly) {
           let monthlyCount = usageData.lastGeneratedMonth === currentMonth ? usageData.monthlyCount || 0 : 0;
           if (monthlyCount + numLeads > limits.monthly) {
             const remaining = limits.monthly - monthlyCount;
-            if (remaining <= 0) throw new Error(`You have exceeded your monthly limit of ${limits.monthly} leads. Please upgrade or wait until next month.`);
-            throw new Error(`Request exceeds monthly limit. You have ${remaining} leads remaining this month.`);
+            if (remaining <= 0) throw new Error(`LIMIT_EXCEEDED: You have exceeded your monthly limit of ${limits.monthly} leads. Please upgrade your plan or wait until next month.`);
+            throw new Error(`LIMIT_EXCEEDED: Your request exceeds your monthly limit. You have ${remaining} leads remaining. Please request fewer leads or upgrade your plan.`);
           }
         }
       });
     } catch (error: any) {
-      if (error.message.includes('limit')) throw error;
+      if (error.message?.startsWith('LIMIT_EXCEEDED:')) throw error;
       console.error('Firebase transaction error:', error);
       throw new Error('Failed to verify lead usage. Please try again.');
     }
