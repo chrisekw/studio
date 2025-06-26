@@ -46,7 +46,7 @@ export function RegisterForm() {
       await createUserWithEmailAndPassword(auth, values.email, values.password);
       toast({
         title: 'Account Created',
-        description: "Welcome to ProspectIQ! We're redirecting you to the dashboard.",
+        description: "Welcome to Leadgen! We're redirecting you to the dashboard.",
       });
       router.push('/dashboard');
     } catch (error: any) {
@@ -71,7 +71,7 @@ export function RegisterForm() {
       await signInWithPopup(auth, provider);
       toast({
         title: 'Account Created',
-        description: "Welcome to ProspectIQ! We're redirecting you to the dashboard.",
+        description: "Welcome to Leadgen! We're redirecting you to the dashboard.",
       });
       router.push('/dashboard');
     } catch (error: any) {

@@ -63,7 +63,7 @@ export function SavedLeadsTable() {
     const encodedUri = encodeURI(csvContent);
     const link = document.createElement("a");
     link.setAttribute("href", encodedUri);
-    link.setAttribute("download", "prospectiq_saved_leads.csv");
+    link.setAttribute("download", "leadgen_saved_leads.csv");
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);

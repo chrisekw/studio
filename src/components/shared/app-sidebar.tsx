@@ -85,7 +85,7 @@ export function AppSidebar() {
               strokeLinejoin="round"
             />
           </svg>
-          <span className={state === 'collapsed' ? 'hidden': 'font-headline text-lg text-foreground font-bold'}>ProspectIQ</span>
+          <span className={state === 'collapsed' ? 'hidden': 'font-headline text-lg text-foreground font-bold'}>Leadgen</span>
         </Link>
       </SidebarHeader>
       <SidebarContent>

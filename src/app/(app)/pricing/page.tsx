@@ -16,7 +16,7 @@ const plans = [
       'CSV export',
     ],
     buttonText: 'Choose Starter',
-    paymentLink: 'https://flutterwave.com/pay/prospectiq-starter',
+    paymentLink: 'https://flutterwave.com/pay/leadgen-starter',
   },
   {
     name: 'Pro',
@@ -31,7 +31,7 @@ const plans = [
       'API access (coming soon)',
     ],
     buttonText: 'Choose Pro',
-    paymentLink: 'https://flutterwave.com/pay/prospectiq-pro',
+    paymentLink: 'https://flutterwave.com/pay/leadgen-pro',
     isFeatured: true,
   },
   {
@@ -47,7 +47,7 @@ const plans = [
       '24/7 priority support',
     ],
     buttonText: 'Contact Sales',
-    paymentLink: 'mailto:sales@prospectiq.com',
+    paymentLink: 'mailto:sales@leadgen.com',
   },
 ];
 

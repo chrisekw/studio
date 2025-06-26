@@ -56,7 +56,7 @@ export default function AuthLayout({
                 strokeLinejoin="round"
             />
             </svg>
-            <span className="text-4xl font-headline font-bold text-foreground">ProspectIQ</span>
+            <span className="text-4xl font-headline font-bold text-foreground">Leadgen</span>
         </Link>
         <Image 
           src="https://placehold.co/600x400.png"
