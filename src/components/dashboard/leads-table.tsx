@@ -182,7 +182,7 @@ export function LeadsTable({ leads, isLoading }: LeadsTableProps) {
               <div className="flex items-center text-sm text-muted-foreground">
                 <Linkedin className="mr-3 h-4 w-4 flex-shrink-0" />
                 <a href={getFullUrl(lead.linkedin)} target="_blank" rel="noopener noreferrer" className="hover:underline text-accent-foreground/80 truncate">
-                  {getHostname(lead.linkedin)}
+                  {lead.linkedin.replace(/^https?:\/\/(www\.)?linkedin\.com\//, '').replace(/\/$/, '')}
                 </a>
               </div>
             )}

@@ -16,7 +16,7 @@ const LeadSchema = z.object({
   phone: z.string().describe('A contact phone number for the company.'),
   website: z.string().describe('The full company website URL, including the protocol (e.g., https://example.com).'),
   address: z.string().optional().describe('The physical address of the company.'),
-  linkedin: z.string().optional().describe('The LinkedIn profile URL of the company.'),
+  linkedin: z.string().optional().describe('The specific LinkedIn company profile URL (e.g., https://www.linkedin.com/company/company-name).'),
 });
 
 const GenerateLeadsInputSchema = z.object({
@@ -47,7 +47,7 @@ const prompt = ai.definePrompt({
   Also include a physical address for each company.
   {{/if}}
   {{#if includeLinkedIn}}
-  Also include a LinkedIn profile URL for each company.
+  Also include a specific, realistic-looking LinkedIn company profile URL for each company (e.g., https://www.linkedin.com/company/some-company). Do not just use "www.linkedin.com".
   {{/if}}
   Ensure the generated data is plausible for the given query.
   
