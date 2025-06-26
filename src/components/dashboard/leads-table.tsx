@@ -1,14 +1,6 @@
 'use client';
 
 import {
-  Table,
-  TableHeader,
-  TableRow,
-  TableHead,
-  TableBody,
-  TableCell,
-} from '@/components/ui/table';
-import {
   Card,
   CardHeader,
   CardTitle,
@@ -29,10 +21,14 @@ import {
   MoreHorizontal,
   Save,
   Trash2,
+  Mail,
+  Phone,
+  Globe,
 } from 'lucide-react';
 import { type Lead } from '@/lib/types';
 import { Skeleton } from '../ui/skeleton';
 import { useToast } from '@/hooks/use-toast';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 
 interface LeadsTableProps {
   leads: Lead[];
@@ -48,7 +44,7 @@ export function LeadsTable({ leads, isLoading }: LeadsTableProps) {
       description: `${lead.name} has been added to your saved leads.`,
     });
   };
-  
+
   const getHostname = (url: string) => {
     if (!url) return '';
     try {
@@ -61,36 +57,124 @@ export function LeadsTable({ leads, isLoading }: LeadsTableProps) {
       return url.replace(/^https?:\/\//, '').split('/')[0];
     }
   };
-  
+
   const getFullUrl = (url: string) => {
     if (!url) return '#';
     if (!/^https?:\/\//i.test(url)) {
-        return 'https://' + url;
+      return 'https://' + url;
     }
     return url;
-  }
+  };
 
   const exportToCSV = () => {
     if (leads.length === 0) return;
-    let csvContent = "data:text/csv;charset=utf-8,";
-    csvContent += "Name,Email,Phone,Website\n";
-    leads.forEach(lead => {
-      const row = [lead.name, lead.email, lead.phone, lead.website].join(",");
-      csvContent += row + "\r\n";
+    let csvContent = 'data:text/csv;charset=utf-8,';
+    csvContent += 'Name,Email,Phone,Website\n';
+    leads.forEach((lead) => {
+      const row = [lead.name, lead.email, lead.phone, lead.website].join(',');
+      csvContent += row + '\r\n';
     });
-    
+
     const encodedUri = encodeURI(csvContent);
-    const link = document.createElement("a");
-    link.setAttribute("href", encodedUri);
-    link.setAttribute("download", "prospectiq_leads.csv");
+    const link = document.createElement('a');
+    link.setAttribute('href', encodedUri);
+    link.setAttribute('download', 'prospectiq_leads.csv');
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
-     toast({
+    toast({
       title: 'Export Successful',
       description: `Leads have been exported to CSV.`,
     });
   };
+  
+  const renderSkeleton = () => (
+    <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+      {Array.from({ length: 6 }).map((_, index) => (
+        <Card key={index} className="flex flex-col">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+             <div className="flex items-center gap-4">
+              <Skeleton className="h-12 w-12 rounded-full" />
+              <div className="space-y-2">
+                <Skeleton className="h-5 w-32" />
+              </div>
+            </div>
+            <Skeleton className="h-8 w-8 rounded-full" />
+          </CardHeader>
+          <CardContent className="flex-grow space-y-4 pt-4">
+             <Skeleton className="h-4 w-40" />
+             <Skeleton className="h-4 w-32" />
+             <Skeleton className="h-4 w-28" />
+          </CardContent>
+        </Card>
+      ))}
+    </div>
+  );
+
+  const renderLeads = () => (
+    <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+      {leads.map((lead) => (
+        <Card key={lead.id} className="flex flex-col transition-all hover:shadow-lg">
+          <CardHeader className="flex flex-row items-start justify-between space-y-0 pb-4">
+            <div className="flex items-center gap-4">
+              <Avatar className="h-12 w-12">
+                <AvatarImage
+                  src={`https://logo.clearbit.com/${getHostname(lead.website)}`}
+                  alt={`${lead.name} logo`}
+                  data-ai-hint="company logo"
+                />
+                <AvatarFallback>{lead.name.split(' ').map(n => n[0]).join('').substring(0,2)}</AvatarFallback>
+              </Avatar>
+              <CardTitle className="text-lg font-medium">{lead.name}</CardTitle>
+            </div>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button aria-haspopup="true" size="icon" variant="ghost">
+                  <MoreHorizontal className="h-4 w-4" />
+                  <span className="sr-only">Toggle menu</span>
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuLabel>Actions</DropdownMenuLabel>
+                <DropdownMenuItem onClick={() => handleSaveLead(lead)}>
+                  <Save className="mr-2 h-4 w-4" /> Save Lead
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem className="text-destructive">
+                  <Trash2 className="mr-2 h-4 w-4" /> Delete
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </CardHeader>
+          <CardContent className="flex-grow space-y-3">
+            <div className="flex items-center text-sm text-muted-foreground">
+              <Mail className="mr-3 h-4 w-4 flex-shrink-0" />
+              <span className="truncate">{lead.email}</span>
+            </div>
+            <div className="flex items-center text-sm text-muted-foreground">
+              <Phone className="mr-3 h-4 w-4 flex-shrink-0" />
+              <span className="truncate">{lead.phone}</span>
+            </div>
+            <div className="flex items-center text-sm text-muted-foreground">
+              <Globe className="mr-3 h-4 w-4 flex-shrink-0" />
+              <a href={getFullUrl(lead.website)} target="_blank" rel="noopener noreferrer" className="hover:underline text-accent-foreground/80 truncate">
+                {getHostname(lead.website)}
+              </a>
+            </div>
+          </CardContent>
+        </Card>
+      ))}
+    </div>
+  );
+
+  const renderEmptyState = () => (
+    <div className="flex items-center justify-center h-48 rounded-lg border border-dashed">
+      <div className="text-center">
+        <p className="text-muted-foreground">No leads generated yet.</p>
+        <p className="text-sm text-muted-foreground/80">Start a new search to see results here.</p>
+      </div>
+    </div>
+  );
 
   return (
     <Card>
@@ -101,114 +185,22 @@ export function LeadsTable({ leads, isLoading }: LeadsTableProps) {
             Review the generated leads. Save or export them as needed.
           </CardDescription>
         </div>
-        <Button size="sm" variant="outline" onClick={exportToCSV} disabled={isLoading || leads.length === 0}>
+        <Button
+          size="sm"
+          variant="outline"
+          onClick={exportToCSV}
+          disabled={isLoading || leads.length === 0}
+        >
           <Download className="mr-2 h-4 w-4" />
           Export to CSV
         </Button>
       </CardHeader>
       <CardContent>
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead className="hidden w-[100px] sm:table-cell">
-                <span className="sr-only">Image</span>
-              </TableHead>
-              <TableHead>Company</TableHead>
-              <TableHead>Contact</TableHead>
-              <TableHead className="hidden md:table-cell">Website</TableHead>
-              <TableHead>
-                <span className="sr-only">Actions</span>
-              </TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {isLoading ? (
-              Array.from({ length: 5 }).map((_, index) => (
-                <TableRow key={index}>
-                  <TableCell className="hidden sm:table-cell">
-                    <Skeleton className="h-12 w-12 rounded-md" />
-                  </TableCell>
-                  <TableCell>
-                    <Skeleton className="h-5 w-32" />
-                    <Skeleton className="mt-2 h-4 w-24" />
-                  </TableCell>
-                  <TableCell>
-                     <Skeleton className="h-4 w-40" />
-                     <Skeleton className="mt-2 h-4 w-32" />
-                  </TableCell>
-                  <TableCell className="hidden md:table-cell">
-                     <Skeleton className="h-4 w-28" />
-                  </TableCell>
-                  <TableCell>
-                    <Skeleton className="h-8 w-8" />
-                  </TableCell>
-                </TableRow>
-              ))
-            ) : leads.length > 0 ? (
-              leads.map((lead) => (
-                <TableRow key={lead.id}>
-                  <TableCell className="hidden sm:table-cell">
-                    <img
-                      alt={`${lead.name} logo`}
-                      className="aspect-square rounded-md object-cover"
-                      height="48"
-                      src={`https://logo.clearbit.com/${getHostname(lead.website)}`}
-                      width="48"
-                      onError={(e) => {
-                        const target = e.target as HTMLImageElement;
-                        target.onerror = null; 
-                        target.src="https://placehold.co/48x48.png";
-                      }}
-                      data-ai-hint="company logo"
-                    />
-                  </TableCell>
-                  <TableCell className="font-medium">{lead.name}</TableCell>
-                  <TableCell>
-                    <div className="text-sm text-muted-foreground">
-                      {lead.email}
-                    </div>
-                    <div className="text-xs text-muted-foreground/80">{lead.phone}</div>
-                  </TableCell>
-                  <TableCell className="hidden md:table-cell">
-                    <a href={getFullUrl(lead.website)} target="_blank" rel="noopener noreferrer" className="hover:underline text-accent-foreground/80">
-                      {getHostname(lead.website)}
-                    </a>
-                  </TableCell>
-                  <TableCell>
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
-                        <Button
-                          aria-haspopup="true"
-                          size="icon"
-                          variant="ghost"
-                        >
-                          <MoreHorizontal className="h-4 w-4" />
-                          <span className="sr-only">Toggle menu</span>
-                        </Button>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent align="end">
-                        <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                        <DropdownMenuItem onClick={() => handleSaveLead(lead)}>
-                          <Save className="mr-2 h-4 w-4" /> Save Lead
-                        </DropdownMenuItem>
-                        <DropdownMenuSeparator />
-                        <DropdownMenuItem className="text-destructive">
-                          <Trash2 className="mr-2 h-4 w-4" /> Delete
-                        </DropdownMenuItem>
-                      </DropdownMenuContent>
-                    </DropdownMenu>
-                  </TableCell>
-                </TableRow>
-              ))
-            ) : (
-              <TableRow>
-                <TableCell colSpan={5} className="text-center h-24">
-                  No leads generated yet. Start a new search.
-                </TableCell>
-              </TableRow>
-            )}
-          </TableBody>
-        </Table>
+        {isLoading
+          ? renderSkeleton()
+          : leads.length > 0
+          ? renderLeads()
+          : renderEmptyState()}
       </CardContent>
     </Card>
   );
