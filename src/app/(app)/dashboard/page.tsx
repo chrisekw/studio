@@ -6,6 +6,7 @@ import { LeadsTable } from '@/components/dashboard/leads-table';
 import { type Lead } from '@/lib/types';
 import { SuggestedQueries } from '@/components/dashboard/suggested-queries';
 import { useAuth } from '@/context/auth-context';
+import { BulkUploadForm } from '@/components/dashboard/bulk-upload-form';
 
 export default function DashboardPage() {
   const [leads, setLeads] = useState<Lead[]>([]);
@@ -28,6 +29,12 @@ export default function DashboardPage() {
         setShowSuggestions={setShowSuggestions}
         selectedSuggestion={selectedSuggestion}
       />
+      {userProfile?.plan === 'Agency' && (
+        <BulkUploadForm 
+          setIsLoading={setIsLoading}
+          setLeads={setLeads}
+        />
+      )}
       <LeadsTable leads={leads} isLoading={isLoading} userProfile={userProfile} />
       {showSuggestions && <SuggestedQueries query={searchQuery} onSuggestionClick={handleSuggestionClick} />}
     </div>
