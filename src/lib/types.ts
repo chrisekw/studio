@@ -7,6 +7,8 @@ export interface UserProfile {
   defaultIncludeLinkedIn?: boolean;
   leadsGeneratedToday?: number;
   lastLeadGenerationDate?: string;
+  leadsGeneratedThisMonth?: number;
+  lastLeadGenerationMonth?: string;
 }
 
 export interface Lead {

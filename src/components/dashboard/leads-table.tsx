@@ -32,6 +32,9 @@ import { Skeleton } from '../ui/skeleton';
 import { useToast } from '@/hooks/use-toast';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '../ui/tooltip';
+import { useAuth } from '@/context/auth-context';
+import { addDoc, collection } from 'firebase/firestore';
+import { db } from '@/lib/firebase';
 
 interface LeadsTableProps {
   leads: Lead[];
@@ -41,12 +44,45 @@ interface LeadsTableProps {
 
 export function LeadsTable({ leads, isLoading, userProfile }: LeadsTableProps) {
   const { toast } = useToast();
+  const { user } = useAuth();
 
-  const handleSaveLead = (lead: Lead) => {
-    toast({
-      title: 'Lead Saved',
-      description: `${lead.name} has been added to your saved leads.`,
-    });
+  const handleSaveLead = async (leadToSave: Lead) => {
+    if (!user) {
+      toast({
+        variant: 'destructive',
+        title: 'Not Logged In',
+        description: 'You must be logged in to save leads.',
+      });
+      return;
+    }
+
+    if (userProfile?.plan === 'Free') {
+        toast({
+            variant: 'destructive',
+            title: 'Upgrade to Save',
+            description: 'Saving leads is a premium feature. Please upgrade your plan.',
+        });
+        return;
+    }
+
+    try {
+      // Omit id from lead before saving, as Firestore will generate one.
+      const { id, ...leadData } = leadToSave;
+      const savedLeadsCollection = collection(db, 'users', user.uid, 'savedLeads');
+      await addDoc(savedLeadsCollection, leadData);
+      
+      toast({
+        title: 'Lead Saved',
+        description: `${leadToSave.name} has been added to your saved leads.`,
+      });
+    } catch (error) {
+        console.error("Error saving lead: ", error);
+        toast({
+            variant: 'destructive',
+            title: 'Error',
+            description: 'Could not save the lead. Please try again.',
+        });
+    }
   };
 
   const getHostname = (url: string) => {
@@ -100,6 +136,7 @@ export function LeadsTable({ leads, isLoading, userProfile }: LeadsTableProps) {
   };
 
   const canExport = userProfile?.plan !== 'Free';
+  const canSave = userProfile?.plan !== 'Free';
   
   const renderSkeleton = () => (
     <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
@@ -151,7 +188,7 @@ export function LeadsTable({ leads, isLoading, userProfile }: LeadsTableProps) {
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end">
                 <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                <DropdownMenuItem onClick={() => handleSaveLead(lead)}>
+                <DropdownMenuItem onClick={() => handleSaveLead(lead)} disabled={!canSave}>
                   <Save className="mr-2 h-4 w-4" /> Save Lead
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
@@ -162,14 +199,18 @@ export function LeadsTable({ leads, isLoading, userProfile }: LeadsTableProps) {
             </DropdownMenu>
           </CardHeader>
           <CardContent className="flex-grow space-y-3">
-            <div className="flex items-center text-sm text-muted-foreground">
-              <Mail className="mr-3 h-4 w-4 flex-shrink-0" />
-              <span className="truncate">{lead.email}</span>
-            </div>
-            <div className="flex items-center text-sm text-muted-foreground">
-              <Phone className="mr-3 h-4 w-4 flex-shrink-0" />
-              <span className="truncate">{lead.phone}</span>
-            </div>
+            {lead.email && (
+              <div className="flex items-center text-sm text-muted-foreground">
+                <Mail className="mr-3 h-4 w-4 flex-shrink-0" />
+                <span className="truncate">{lead.email}</span>
+              </div>
+            )}
+            {lead.phone && (
+              <div className="flex items-center text-sm text-muted-foreground">
+                <Phone className="mr-3 h-4 w-4 flex-shrink-0" />
+                <span className="truncate">{lead.phone}</span>
+              </div>
+            )}
             <div className="flex items-center text-sm text-muted-foreground">
               <Globe className="mr-3 h-4 w-4 flex-shrink-0" />
               <a href={getFullUrl(lead.website)} target="_blank" rel="noopener noreferrer" className="hover:underline text-accent-foreground/80 truncate">

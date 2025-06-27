@@ -48,6 +48,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                 defaultIncludeLinkedIn: true,
                 leadsGeneratedToday: 0,
                 lastLeadGenerationDate: '',
+                leadsGeneratedThisMonth: 0,
+                lastLeadGenerationMonth: '',
               };
               await setDoc(userDocRef, newProfile);
               setUserProfile(newProfile);

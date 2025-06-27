@@ -1,6 +1,5 @@
 'use client';
 
-import { useState } from 'react';
 import {
   Table,
   TableHeader,
@@ -23,7 +22,7 @@ import {
   Tag,
   Trash2,
 } from 'lucide-react';
-import { type Lead, MOCK_LEADS } from '@/lib/data';
+import type { Lead } from '@/lib/types';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -37,26 +36,53 @@ import {
 } from '@/components/ui/alert-dialog';
 import { useToast } from '@/hooks/use-toast';
 import { Badge } from '../ui/badge';
+import { useAuth } from '@/context/auth-context';
+import { db } from '@/lib/firebase';
+import { deleteDoc, doc } from 'firebase/firestore';
 
-export function SavedLeadsTable() {
-  const [leads, setLeads] = useState<Lead[]>(MOCK_LEADS.slice(0, 5));
+interface SavedLeadsTableProps {
+  leads: Lead[];
+}
+
+export function SavedLeadsTable({ leads }: SavedLeadsTableProps) {
+  const { user } = useAuth();
   const { toast } = useToast();
 
-  const handleDelete = (leadToDelete: Lead) => {
-    setLeads(leads.filter((lead) => lead.id !== leadToDelete.id));
-    toast({
-      variant: 'destructive',
-      title: 'Lead Deleted',
-      description: `${leadToDelete.name} has been removed from your saved leads.`,
-    });
+  const handleDelete = async (leadToDelete: Lead) => {
+    if (!user) {
+      toast({ variant: 'destructive', title: 'Error', description: 'You must be logged in to perform this action.' });
+      return;
+    }
+
+    try {
+      const leadDocRef = doc(db, 'users', user.uid, 'savedLeads', leadToDelete.id);
+      await deleteDoc(leadDocRef);
+      toast({
+        variant: 'destructive',
+        title: 'Lead Deleted',
+        description: `${leadToDelete.name} has been removed from your saved leads.`,
+      });
+    } catch (error) {
+      console.error('Error deleting lead:', error);
+      toast({ variant: 'destructive', title: 'Error', description: 'Could not delete the lead. Please try again.' });
+    }
   };
   
   const exportToCSV = () => {
+    if (leads.length === 0) return;
     let csvContent = "data:text/csv;charset=utf-8,";
-    csvContent += "Name,Email,Phone,Website,Tags\n";
+    csvContent += "Name,Email,Phone,Website,Address,LinkedIn,Tags\n";
     leads.forEach(lead => {
       const tags = lead.tags ? lead.tags.join(';') : '';
-      const row = [lead.name, lead.email, lead.phone, lead.website, `"${tags}"`].join(",");
+      const row = [
+        lead.name,
+        lead.email,
+        lead.phone,
+        lead.website,
+        lead.address,
+        lead.linkedin,
+        `"${tags}"`
+      ].map(field => `"${(field || '').replace(/"/g, '""')}"`).join(',');
       csvContent += row + "\r\n";
     });
     

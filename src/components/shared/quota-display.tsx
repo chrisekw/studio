@@ -14,6 +14,13 @@ const PLAN_BADGE_VARIANTS: { [key: string]: BadgeProps['variant'] } = {
     Agency: 'destructive',
 };
 
+const PLAN_LIMITS = {
+    Free: 5, // Daily
+    Starter: 200, // Monthly
+    Pro: 1000, // Monthly
+    Agency: 5000, // Monthly
+};
+
 export function QuotaDisplay() {
   const { userProfile, loading } = useAuth();
 
@@ -34,12 +41,16 @@ export function QuotaDisplay() {
 
   const { plan } = userProfile;
   const planBadgeVariant = PLAN_BADGE_VARIANTS[plan];
-
   const isFreePlan = plan === 'Free';
-  const dailyLimit = 5;
+  const planLimit = PLAN_LIMITS[plan];
+
   const today = new Date().toISOString().split('T')[0];
   const leadsUsedToday = (isFreePlan && userProfile.lastLeadGenerationDate === today) ? userProfile.leadsGeneratedToday ?? 0 : 0;
-  const usagePercentage = isFreePlan ? (leadsUsedToday / dailyLimit) * 100 : 0;
+  const dailyUsagePercentage = isFreePlan ? (leadsUsedToday / planLimit) * 100 : 0;
+
+  const currentMonth = new Date().toISOString().slice(0, 7);
+  const leadsUsedThisMonth = (!isFreePlan && userProfile.lastLeadGenerationMonth === currentMonth) ? userProfile.leadsGeneratedThisMonth ?? 0 : 0;
+  const monthlyUsagePercentage = !isFreePlan ? (leadsUsedThisMonth / planLimit) * 100 : 0;
 
   return (
     <div className="p-2 space-y-3 group-data-[collapsible=icon]:hidden">
@@ -52,13 +63,17 @@ export function QuotaDisplay() {
              <div className="px-2 pt-1 space-y-2">
                 <div className="text-xs text-sidebar-foreground/80 flex justify-between">
                     <span>Daily Lead Quota</span>
-                    <span>{leadsUsedToday} / {dailyLimit}</span>
+                    <span>{leadsUsedToday} / {planLimit}</span>
                 </div>
-                <Progress value={usagePercentage} className="h-2" />
+                <Progress value={dailyUsagePercentage} className="h-2" />
             </div>
         ) : (
-             <div className="text-xs text-sidebar-foreground/80 px-2 pt-1">
-                You are on the <span className="font-semibold text-sidebar-foreground">{plan}</span> plan.
+             <div className="px-2 pt-1 space-y-2">
+                <div className="text-xs text-sidebar-foreground/80 flex justify-between">
+                    <span>Monthly Lead Quota</span>
+                    <span>{leadsUsedThisMonth.toLocaleString()} / {planLimit.toLocaleString()}</span>
+                </div>
+                <Progress value={monthlyUsagePercentage} className="h-2" />
             </div>
         )}
 

@@ -75,6 +75,13 @@ const industries = [
   { value: 'consulting', label: 'Consulting' },
 ];
 
+const PLAN_LIMITS = {
+  Free: 5, // Daily
+  Starter: 200, // Monthly
+  Pro: 1000, // Monthly
+  Agency: 5000, // Monthly
+};
+
 const formSchema = z.object({
   keyword: z.string().min(3, { message: 'Keyword must be at least 3 characters.' }),
   industry: z.string().optional(),
@@ -97,11 +104,20 @@ export function SearchForm({ setIsLoading, setLeads, setSearchQuery, setShowSugg
   const defaultsSet = useRef(false);
 
   const isFreePlan = userProfile?.plan === 'Free';
-  const dailyLimit = 5;
+  const planLimit = userProfile ? PLAN_LIMITS[userProfile.plan] : 0;
 
   const today = new Date().toISOString().split('T')[0];
+  const currentMonth = new Date().toISOString().slice(0, 7); // YYYY-MM
+
   const leadsUsedToday = (isFreePlan && userProfile?.lastLeadGenerationDate === today) ? userProfile.leadsGeneratedToday ?? 0 : 0;
-  const remainingLeadsToday = dailyLimit - leadsUsedToday;
+  const remainingLeadsToday = isFreePlan ? planLimit - leadsUsedToday : Infinity;
+  
+  const leadsUsedThisMonth = (!isFreePlan && userProfile?.lastLeadGenerationMonth === currentMonth) ? userProfile.leadsGeneratedThisMonth ?? 0 : 0;
+  const remainingLeadsThisMonth = !isFreePlan ? planLimit - leadsUsedThisMonth : Infinity;
+
+  const remainingLeads = isFreePlan ? remainingLeadsToday : remainingLeadsThisMonth;
+  const maxLeadsPerSearch = 100;
+  const userCanGenerate = remainingLeads > 0;
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -118,12 +134,11 @@ export function SearchForm({ setIsLoading, setLeads, setSearchQuery, setShowSugg
     if (userProfile && !defaultsSet.current) {
       form.setValue('includeAddress', userProfile.defaultIncludeAddress ?? true);
       form.setValue('includeLinkedIn', userProfile.defaultIncludeLinkedIn ?? true);
-      if (isFreePlan) {
-        form.setValue('numLeads', Math.max(1, Math.min(5, remainingLeadsToday)));
-      }
+      const defaultLeads = isFreePlan ? Math.min(5, remainingLeads) : Math.min(10, remainingLeads);
+      form.setValue('numLeads', Math.max(1, defaultLeads));
       defaultsSet.current = true;
     }
-  }, [userProfile, form, isFreePlan, remainingLeadsToday]);
+  }, [userProfile, form, isFreePlan, remainingLeads]);
 
   useEffect(() => {
     if (selectedSuggestion) {
@@ -133,7 +148,7 @@ export function SearchForm({ setIsLoading, setLeads, setSearchQuery, setShowSugg
   
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
-    if (!user) {
+    if (!user || !userProfile) {
       toast({
         variant: 'destructive',
         title: 'Authentication Error',
@@ -142,11 +157,11 @@ export function SearchForm({ setIsLoading, setLeads, setSearchQuery, setShowSugg
       return;
     }
 
-    if (isFreePlan && values.numLeads > remainingLeadsToday) {
+    if (values.numLeads > remainingLeads) {
       toast({
         variant: 'destructive',
-        title: 'Daily Limit Exceeded',
-        description: `You only have ${remainingLeadsToday} leads remaining today. Please request ${remainingLeadsToday} or fewer.`,
+        title: isFreePlan ? 'Daily Limit Exceeded' : 'Monthly Limit Exceeded',
+        description: `You only have ${remainingLeads} leads remaining. Please request ${remainingLeads} or fewer.`,
       });
       return;
     }
@@ -165,6 +180,7 @@ export function SearchForm({ setIsLoading, setLeads, setSearchQuery, setShowSugg
         numLeads: values.numLeads,
         includeAddress: values.includeAddress,
         includeLinkedIn: values.includeLinkedIn,
+        extractContactInfo: !isFreePlan,
       });
 
       const newLeads = result.map((lead, index) => ({
@@ -174,12 +190,18 @@ export function SearchForm({ setIsLoading, setLeads, setSearchQuery, setShowSugg
 
       setLeads(newLeads);
       
+      const userDocRef = doc(db, 'users', user.uid);
       if (isFreePlan) {
-        const userDocRef = doc(db, 'users', user.uid);
         const newTotal = leadsUsedToday + newLeads.length;
         await updateDoc(userDocRef, {
           leadsGeneratedToday: newTotal,
           lastLeadGenerationDate: today,
+        });
+      } else {
+         const newTotal = leadsUsedThisMonth + newLeads.length;
+        await updateDoc(userDocRef, {
+          leadsGeneratedThisMonth: newTotal,
+          lastLeadGenerationMonth: currentMonth,
         });
       }
 
@@ -314,11 +336,15 @@ export function SearchForm({ setIsLoading, setLeads, setSearchQuery, setShowSugg
                         placeholder="5"
                         {...field}
                         onChange={event => field.onChange(+event.target.value)}
-                        max={isFreePlan ? remainingLeadsToday : 100}
+                        max={Math.min(maxLeadsPerSearch, remainingLeads)}
                         min={1}
                       />
                     </FormControl>
-                     {isFreePlan && <FormDescription>You have {remainingLeadsToday} leads remaining today.</FormDescription>}
+                     {userProfile && (
+                       <FormDescription>
+                         {isFreePlan ? `You have ${remainingLeadsToday} leads remaining today.` : `You have ${remainingLeadsThisMonth} leads remaining this month.`}
+                       </FormDescription>
+                     )}
                     <FormMessage />
                   </FormItem>
                 )}
@@ -403,7 +429,7 @@ export function SearchForm({ setIsLoading, setLeads, setSearchQuery, setShowSugg
               </div>
             </div>
             <div className="flex justify-end">
-              <Button type="submit" disabled={isGenerating || (isFreePlan && remainingLeadsToday <= 0)}>
+              <Button type="submit" disabled={isGenerating || !userCanGenerate}>
                 {isGenerating ? (
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                 ) : (

@@ -11,8 +11,8 @@ import {z} from 'zod';
 
 const LeadSchema = z.object({
   name: z.string().describe('The name of the company.'),
-  email: z.string().describe('A contact email for the company.'),
-  phone: z.string().describe('A contact phone number for the company.'),
+  email: z.string().describe('A contact email for the company. Should be an empty string if contact extraction is disabled.'),
+  phone: z.string().describe('A contact phone number for the company. Should be an empty string if contact extraction is disabled.'),
   website: z.string().describe('The full company website URL, including the protocol (e.g., https://example.com).'),
   address: z.string().optional().describe('The physical address of the company.'),
   linkedin: z.string().optional().describe('The specific LinkedIn company profile URL (e.g., https://www.linkedin.com/company/company-name).'),
@@ -23,6 +23,7 @@ const GenerateLeadsInputSchema = z.object({
   numLeads: z.number().describe('The number of leads to generate.'),
   includeAddress: z.boolean().optional().describe('Whether to include the physical address.'),
   includeLinkedIn: z.boolean().optional().describe('Whether to include the LinkedIn profile URL.'),
+  extractContactInfo: z.boolean().optional().describe('Whether to extract email and phone number. Defaults to true.'),
 });
 export type GenerateLeadsInput = z.infer<typeof GenerateLeadsInputSchema>;
 
@@ -42,7 +43,13 @@ const prompt = ai.definePrompt({
 
   Generate exactly {{{numLeads}}} leads based on the following query: "{{{query}}}"
 
-  For each lead, provide a fictional but realistic-looking company name, email address, phone number, and a full website URL including the protocol (e.g. https://example.com).
+  For each lead, provide a fictional but realistic-looking company name, and a full website URL including the protocol (e.g. https://example.com).
+  {{#if extractContactInfo}}
+  Also provide an email address and phone number.
+  {{else}}
+  For the email and phone fields, return an empty string.
+  {{/if}}
+  
   {{#if includeAddress}}
   Also include a physical address for each company.
   {{/if}}
