@@ -40,7 +40,7 @@ export async function generateLeads(input: GenerateLeadsInput): Promise<Generate
 
 const prompt = ai.definePrompt({
   name: 'generateLeadsPrompt',
-  model: 'googleai/gemini-pro',
+  model: 'googleai/gemini-1.5-flash-latest',
   input: {schema: z.object({
     query: GenerateLeadsInputSchema.shape.query,
     numLeads: GenerateLeadsInputSchema.shape.numLeads,

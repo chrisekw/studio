@@ -11,6 +11,7 @@
  * @param {string} query - The input query string.
  * @returns {string[]} - An array of suggested alternative queries.
  */
+import 'dotenv/config';
 
 import {ai} from '@/ai/genkit';
 import {z} from 'genkit';
@@ -29,7 +30,7 @@ export async function suggestAlternateQueries(input: SuggestAlternateQueriesInpu
 
 const suggestAlternateQueriesPrompt = ai.definePrompt({
   name: 'suggestAlternateQueriesPrompt',
-  model: 'googleai/gemini-pro',
+  model: 'googleai/gemini-1.5-flash-latest',
   input: {schema: SuggestAlternateQueriesInputSchema},
   output: {schema: SuggestAlternateQueriesOutputSchema},
   prompt: `You are an expert in generating alternative search queries.
