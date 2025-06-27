@@ -6,6 +6,7 @@ import { z } from 'zod';
 import { useState, type Dispatch, type SetStateAction, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { Check, ChevronsUpDown, Loader2, Search } from 'lucide-react';
+import { doc, updateDoc } from 'firebase/firestore';
 
 import {
   Card,
@@ -17,6 +18,7 @@ import {
 import {
   Form,
   FormControl,
+  FormDescription,
   FormField,
   FormItem,
   FormLabel,
@@ -44,6 +46,8 @@ import {
   CommandList,
 } from '@/components/ui/command';
 import { cn } from '@/lib/utils';
+import { db } from '@/lib/firebase';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '../ui/tooltip';
 
 interface SearchFormProps {
   setIsLoading: Dispatch<SetStateAction<boolean>>;
@@ -92,6 +96,13 @@ export function SearchForm({ setIsLoading, setLeads, setSearchQuery, setShowSugg
   const { user, userProfile } = useAuth();
   const defaultsSet = useRef(false);
 
+  const isFreePlan = userProfile?.plan === 'Free';
+  const dailyLimit = 5;
+
+  const today = new Date().toISOString().split('T')[0];
+  const leadsUsedToday = (isFreePlan && userProfile?.lastLeadGenerationDate === today) ? userProfile.leadsGeneratedToday ?? 0 : 0;
+  const remainingLeadsToday = dailyLimit - leadsUsedToday;
+
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
@@ -107,9 +118,12 @@ export function SearchForm({ setIsLoading, setLeads, setSearchQuery, setShowSugg
     if (userProfile && !defaultsSet.current) {
       form.setValue('includeAddress', userProfile.defaultIncludeAddress ?? true);
       form.setValue('includeLinkedIn', userProfile.defaultIncludeLinkedIn ?? true);
+      if (isFreePlan) {
+        form.setValue('numLeads', Math.max(1, Math.min(5, remainingLeadsToday)));
+      }
       defaultsSet.current = true;
     }
-  }, [userProfile, form]);
+  }, [userProfile, form, isFreePlan, remainingLeadsToday]);
 
   useEffect(() => {
     if (selectedSuggestion) {
@@ -124,6 +138,15 @@ export function SearchForm({ setIsLoading, setLeads, setSearchQuery, setShowSugg
         variant: 'destructive',
         title: 'Authentication Error',
         description: 'You must be logged in to generate leads.',
+      });
+      return;
+    }
+
+    if (isFreePlan && values.numLeads > remainingLeadsToday) {
+      toast({
+        variant: 'destructive',
+        title: 'Daily Limit Exceeded',
+        description: `You only have ${remainingLeadsToday} leads remaining today. Please request ${remainingLeadsToday} or fewer.`,
       });
       return;
     }
@@ -151,6 +174,15 @@ export function SearchForm({ setIsLoading, setLeads, setSearchQuery, setShowSugg
 
       setLeads(newLeads);
       
+      if (isFreePlan) {
+        const userDocRef = doc(db, 'users', user.uid);
+        const newTotal = leadsUsedToday + newLeads.length;
+        await updateDoc(userDocRef, {
+          leadsGeneratedToday: newTotal,
+          lastLeadGenerationDate: today,
+        });
+      }
+
       toast({
         title: 'Search Complete',
         description: `We've found ${newLeads.length} potential leads for "${values.keyword}".`,
@@ -200,57 +232,72 @@ export function SearchForm({ setIsLoading, setLeads, setSearchQuery, setShowSugg
                 render={({ field }) => (
                   <FormItem className="flex flex-col">
                     <FormLabel>Industry / Category (Optional)</FormLabel>
-                    <Popover open={openIndustry} onOpenChange={setOpenIndustry}>
-                      <PopoverTrigger asChild>
-                        <FormControl>
-                          <Button
-                            variant="outline"
-                            role="combobox"
-                            className={cn(
-                              "w-full justify-between",
-                              !field.value && "text-muted-foreground"
-                            )}
-                          >
-                            {field.value
-                              ? industries.find(
-                                  (industry) => industry.value === field.value
-                                )?.label
-                              : "Select an industry"}
-                            <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-                          </Button>
-                        </FormControl>
-                      </PopoverTrigger>
-                      <PopoverContent className="w-[var(--radix-popover-trigger-width)] p-0">
-                        <Command>
-                          <CommandInput placeholder="Search industry..." />
-                          <CommandList>
-                            <CommandEmpty>No industry found.</CommandEmpty>
-                            <CommandGroup>
-                              {industries.map((industry) => (
-                                <CommandItem
-                                  value={industry.label}
-                                  key={industry.value}
-                                  onSelect={() => {
-                                    form.setValue("industry", industry.value === field.value ? undefined : industry.value);
-                                    setOpenIndustry(false);
-                                  }}
-                                >
-                                  <Check
+                    <TooltipProvider>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                           <div tabIndex={isFreePlan ? 0 : -1}>
+                            <Popover open={openIndustry} onOpenChange={setOpenIndustry}>
+                              <PopoverTrigger asChild>
+                                <FormControl>
+                                  <Button
+                                    variant="outline"
+                                    role="combobox"
+                                    disabled={isFreePlan}
                                     className={cn(
-                                      "mr-2 h-4 w-4",
-                                      industry.value === field.value
-                                        ? "opacity-100"
-                                        : "opacity-0"
+                                      "w-full justify-between",
+                                      !field.value && "text-muted-foreground",
+                                      isFreePlan && 'cursor-not-allowed opacity-70'
                                     )}
-                                  />
-                                  {industry.label}
-                                </CommandItem>
-                              ))}
-                            </CommandGroup>
-                          </CommandList>
-                        </Command>
-                      </PopoverContent>
-                    </Popover>
+                                  >
+                                    {field.value
+                                      ? industries.find(
+                                          (industry) => industry.value === field.value
+                                        )?.label
+                                      : "Select an industry"}
+                                    <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                                  </Button>
+                                </FormControl>
+                              </PopoverTrigger>
+                              <PopoverContent className="w-[var(--radix-popover-trigger-width)] p-0">
+                                <Command>
+                                  <CommandInput placeholder="Search industry..." />
+                                  <CommandList>
+                                    <CommandEmpty>No industry found.</CommandEmpty>
+                                    <CommandGroup>
+                                      {industries.map((industry) => (
+                                        <CommandItem
+                                          value={industry.label}
+                                          key={industry.value}
+                                          onSelect={() => {
+                                            form.setValue("industry", industry.value === field.value ? undefined : industry.value);
+                                            setOpenIndustry(false);
+                                          }}
+                                        >
+                                          <Check
+                                            className={cn(
+                                              "mr-2 h-4 w-4",
+                                              industry.value === field.value
+                                                ? "opacity-100"
+                                                : "opacity-0"
+                                            )}
+                                          />
+                                          {industry.label}
+                                        </CommandItem>
+                                      ))}
+                                    </CommandGroup>
+                                  </CommandList>
+                                </Command>
+                              </PopoverContent>
+                            </Popover>
+                          </div>
+                        </TooltipTrigger>
+                        {isFreePlan && (
+                           <TooltipContent>
+                            <p>Industry filter is a premium feature. Please upgrade.</p>
+                          </TooltipContent>
+                        )}
+                      </Tooltip>
+                    </TooltipProvider>
                     <FormMessage />
                   </FormItem>
                 )}
@@ -262,8 +309,16 @@ export function SearchForm({ setIsLoading, setLeads, setSearchQuery, setShowSugg
                   <FormItem>
                     <FormLabel>Number of Leads</FormLabel>
                     <FormControl>
-                      <Input type="number" placeholder="5" {...field} onChange={event => field.onChange(+event.target.value)} />
+                      <Input
+                        type="number"
+                        placeholder="5"
+                        {...field}
+                        onChange={event => field.onChange(+event.target.value)}
+                        max={isFreePlan ? remainingLeadsToday : 100}
+                        min={1}
+                      />
                     </FormControl>
+                     {isFreePlan && <FormDescription>You have {remainingLeadsToday} leads remaining today.</FormDescription>}
                     <FormMessage />
                   </FormItem>
                 )}
@@ -348,7 +403,7 @@ export function SearchForm({ setIsLoading, setLeads, setSearchQuery, setShowSugg
               </div>
             </div>
             <div className="flex justify-end">
-              <Button type="submit" disabled={isGenerating}>
+              <Button type="submit" disabled={isGenerating || (isFreePlan && remainingLeadsToday <= 0)}>
                 {isGenerating ? (
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                 ) : (

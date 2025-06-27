@@ -46,6 +46,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                 plan: 'Free',
                 defaultIncludeAddress: true,
                 defaultIncludeLinkedIn: true,
+                leadsGeneratedToday: 0,
+                lastLeadGenerationDate: '',
               };
               await setDoc(userDocRef, newProfile);
               setUserProfile(newProfile);

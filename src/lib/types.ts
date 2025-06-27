@@ -5,6 +5,8 @@ export interface UserProfile {
   email?: string | null;
   defaultIncludeAddress?: boolean;
   defaultIncludeLinkedIn?: boolean;
+  leadsGeneratedToday?: number;
+  lastLeadGenerationDate?: string;
 }
 
 export interface Lead {
