@@ -38,7 +38,7 @@ import { useToast } from '@/hooks/use-toast';
 import { Badge } from '../ui/badge';
 import { useAuth } from '@/context/auth-context';
 import { db } from '@/lib/firebase';
-import { deleteDoc, doc } from 'firebase/firestore';
+import { deleteDoc, doc, increment, updateDoc } from 'firebase/firestore';
 
 interface SavedLeadsTableProps {
   leads: Lead[];
@@ -55,8 +55,16 @@ export function SavedLeadsTable({ leads }: SavedLeadsTableProps) {
     }
 
     try {
-      const leadDocRef = doc(db, 'users', user.uid, 'savedLeads', leadToDelete.id);
+      const userDocRef = doc(db, 'users', user.uid);
+      const leadDocRef = doc(userDocRef, 'savedLeads', leadToDelete.id);
+      
       await deleteDoc(leadDocRef);
+
+      // Decrement saved leads count
+      await updateDoc(userDocRef, {
+        savedLeadsCount: increment(-1)
+      });
+
       toast({
         variant: 'destructive',
         title: 'Lead Deleted',

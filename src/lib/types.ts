@@ -10,6 +10,7 @@ export interface UserProfile {
   leadsGeneratedThisMonth?: number;
   lastLeadGenerationMonth?: string;
   addonCredits?: number;
+  savedLeadsCount?: number;
 }
 
 export interface Lead {

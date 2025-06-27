@@ -11,12 +11,12 @@ import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/com
 import { Skeleton } from '@/components/ui/skeleton';
 
 export default function SavedLeadsPage() {
-  const { user, userProfile } = useAuth();
+  const { user } = useAuth();
   const [savedLeads, setSavedLeads] = useState<Lead[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    if (user && userProfile?.plan !== 'Free') {
+    if (user) {
       const savedLeadsQuery = query(collection(db, 'users', user.uid, 'savedLeads'));
       const unsubscribe = onSnapshot(savedLeadsQuery, (querySnapshot) => {
         const leadsData = querySnapshot.docs.map(doc => ({
@@ -35,7 +35,7 @@ export default function SavedLeadsPage() {
       setIsLoading(false);
       setSavedLeads([]);
     }
-  }, [user, userProfile]);
+  }, [user]);
 
   const renderContent = () => {
     if (isLoading) {
@@ -51,15 +51,6 @@ export default function SavedLeadsPage() {
             </div>
         </div>
       );
-    }
-    
-    if (userProfile?.plan === 'Free') {
-        return (
-            <div className="text-center py-12">
-                <h3 className="text-lg font-medium">Feature Unavailable</h3>
-                <p className="text-muted-foreground mt-1">Saving leads is a premium feature. Please upgrade your plan to access your saved leads.</p>
-            </div>
-        )
     }
 
     return <SavedLeadsTable leads={savedLeads} />;

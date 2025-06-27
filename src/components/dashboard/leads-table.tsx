@@ -35,7 +35,7 @@ import { useToast } from '@/hooks/use-toast';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '../ui/tooltip';
 import { useAuth } from '@/context/auth-context';
-import { addDoc, collection } from 'firebase/firestore';
+import { addDoc, collection, doc, increment, updateDoc } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 
 interface LeadsTableProps {
@@ -49,7 +49,7 @@ export function LeadsTable({ leads, isLoading, userProfile }: LeadsTableProps) {
   const { user } = useAuth();
 
   const handleSaveLead = async (leadToSave: Lead) => {
-    if (!user) {
+    if (!user || !userProfile) {
       toast({
         variant: 'destructive',
         title: 'Not Logged In',
@@ -57,21 +57,29 @@ export function LeadsTable({ leads, isLoading, userProfile }: LeadsTableProps) {
       });
       return;
     }
-
-    if (userProfile?.plan === 'Free') {
-        toast({
-            variant: 'destructive',
-            title: 'Upgrade to Save',
-            description: 'Saving leads is a premium feature. Please upgrade your plan.',
-        });
-        return;
+    
+    // Free plan check
+    if (userProfile.plan === 'Free' && (userProfile.savedLeadsCount ?? 0) >= 20) {
+      toast({
+        variant: 'destructive',
+        title: 'Save Limit Reached',
+        description: 'You have reached your limit of 20 saved leads. Please upgrade to save more.',
+      });
+      return;
     }
 
     try {
+      const userDocRef = doc(db, 'users', user.uid);
+      const savedLeadsCollection = collection(userDocRef, 'savedLeads');
+      
       // Omit id from lead before saving, as Firestore will generate one.
       const { id, ...leadData } = leadToSave;
-      const savedLeadsCollection = collection(db, 'users', user.uid, 'savedLeads');
       await addDoc(savedLeadsCollection, leadData);
+
+      // Increment saved leads count
+      await updateDoc(userDocRef, {
+        savedLeadsCount: increment(1)
+      });
       
       toast({
         title: 'Lead Saved',
@@ -139,7 +147,6 @@ export function LeadsTable({ leads, isLoading, userProfile }: LeadsTableProps) {
   };
 
   const canExport = userProfile?.plan !== 'Free';
-  const canSave = userProfile?.plan !== 'Free';
   
   const renderSkeleton = () => (
     <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3">
@@ -167,7 +174,7 @@ export function LeadsTable({ leads, isLoading, userProfile }: LeadsTableProps) {
     <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3">
       {leads.map((lead) => (
         <Card key={lead.id} className="border-primary/10 bg-card/60 backdrop-blur-xl transition-all hover:border-primary/30 flex flex-col">
-          <CardHeader className="flex flex-row items-start justify-between space-y-0 p-4 pb-2">
+          <CardHeader className="p-4 pb-2 flex flex-row items-start justify-between space-y-0">
             <div className="flex items-center gap-4">
               <Avatar className="h-12 w-12 border-2 border-primary/20">
                 <AvatarImage
@@ -188,7 +195,7 @@ export function LeadsTable({ leads, isLoading, userProfile }: LeadsTableProps) {
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end">
                 <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                <DropdownMenuItem onClick={() => handleSaveLead(lead)} disabled={!canSave}>
+                <DropdownMenuItem onClick={() => handleSaveLead(lead)}>
                   <Save className="mr-2 h-4 w-4" /> Save Lead
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
