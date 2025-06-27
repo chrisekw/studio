@@ -84,10 +84,14 @@ function SuccessPageContent() {
           setTimeout(() => router.replace('/dashboard'), 3000);
         }).catch(error => {
           console.error("Error updating user plan: ", error);
+          let errorMessage = 'Your payment was successful, but we failed to update your plan. Please contact support.';
+          if (error.code === 'permission-denied' || (error.message && error.message.toLowerCase().includes('permission'))) {
+            errorMessage = 'Your payment was successful, but we failed to award referral points due to a permissions issue. Please contact support to have them applied manually.';
+          }
           toast({
             variant: 'destructive',
             title: 'Update Failed',
-            description: 'Your payment was successful, but we failed to update your plan. Please contact support.',
+            description: errorMessage,
           });
           setTimeout(() => router.replace('/pricing'), 3000);
         });
