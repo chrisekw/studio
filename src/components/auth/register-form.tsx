@@ -53,6 +53,8 @@ export function RegisterForm() {
       let description = 'An unexpected error occurred. Please try again.';
       if (error.code === 'auth/email-already-in-use') {
         description = 'This email is already associated with an account.';
+      } else if (error.code === 'auth/operation-not-allowed') {
+        description = 'Email/password sign-in is not enabled. Please enable it in the Authentication > Sign-in method tab of your Firebase console.';
       }
       toast({
         variant: 'destructive',

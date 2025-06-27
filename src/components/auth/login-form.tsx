@@ -53,6 +53,8 @@ export function LoginForm() {
       let description = 'An unexpected error occurred. Please try again.';
       if (error.code === 'auth/invalid-credential') {
         description = 'Invalid email or password. Please try again.';
+      } else if (error.code === 'auth/operation-not-allowed') {
+        description = 'Email/password sign-in is not enabled. Please enable it in the Authentication > Sign-in method tab of your Firebase console.';
       }
       toast({
         variant: 'destructive',
