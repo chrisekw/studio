@@ -7,6 +7,7 @@ import { type Lead } from '@/lib/types';
 import { SuggestedQueries } from '@/components/dashboard/suggested-queries';
 import { useAuth } from '@/context/auth-context';
 import { BulkUploadForm } from '@/components/dashboard/bulk-upload-form';
+import { Separator } from '@/components/ui/separator';
 
 export default function DashboardPage() {
   const [leads, setLeads] = useState<Lead[]>([]);
@@ -21,22 +22,38 @@ export default function DashboardPage() {
   };
 
   return (
-    <div className="space-y-8 py-6">
-      <SearchForm
-        setIsLoading={setIsLoading}
-        setLeads={setLeads}
-        setSearchQuery={setSearchQuery}
-        setShowSuggestions={setShowSuggestions}
-        selectedSuggestion={selectedSuggestion}
-      />
-      {userProfile?.plan === 'Agency' && (
-        <BulkUploadForm 
-          setIsLoading={setIsLoading}
-          setLeads={setLeads}
-        />
-      )}
+    <div className="space-y-8 py-6 animate-in fade-in-50">
+      <div className="flex flex-col gap-2">
+        <h1 className="text-4xl font-headline font-bold tracking-tight">Dashboard</h1>
+        <p className="text-muted-foreground text-lg max-w-2xl">
+          Welcome back. Generate, view, and manage your leads with the power of AI.
+        </p>
+      </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 items-start">
+        <div className="lg:col-span-2 space-y-8">
+          <SearchForm
+            setIsLoading={setIsLoading}
+            setLeads={setLeads}
+            setSearchQuery={setSearchQuery}
+            setShowSuggestions={setShowSuggestions}
+            selectedSuggestion={selectedSuggestion}
+          />
+          {userProfile?.plan === 'Agency' && (
+            <BulkUploadForm 
+              setIsLoading={setIsLoading}
+              setLeads={setLeads}
+            />
+          )}
+        </div>
+        <div className="lg:col-span-1 sticky top-20">
+          {showSuggestions && <SuggestedQueries query={searchQuery} onSuggestionClick={handleSuggestionClick} />}
+        </div>
+      </div>
+
+      <Separator className="my-8 bg-border/50" />
+      
       <LeadsTable leads={leads} isLoading={isLoading} userProfile={userProfile} />
-      {showSuggestions && <SuggestedQueries query={searchQuery} onSuggestionClick={handleSuggestionClick} />}
     </div>
   );
 }

@@ -165,9 +165,9 @@ export function BulkUploadForm({ setLeads, setIsLoading }: BulkUploadFormProps) 
   }
 
   return (
-    <Card className="border-primary/20 shadow-lg">
+    <Card className="border-primary/20 bg-background/30 backdrop-blur-lg">
       <CardHeader>
-        <CardTitle className="font-headline flex items-center gap-2">
+        <CardTitle className="font-headline flex items-center gap-2 text-2xl">
           <UploadCloud className="text-primary"/>
           Bulk Prompt Upload
         </CardTitle>
@@ -205,7 +205,7 @@ export function BulkUploadForm({ setLeads, setIsLoading }: BulkUploadFormProps) 
                 </FormItem>
               )}
             />
-            <Button type="submit" disabled={isProcessing || remainingLeads <=0} className="md:col-span-1">
+            <Button type="submit" disabled={isProcessing || remainingLeads <=0} className="md:col-span-1 shadow-lg shadow-primary/30">
               {isProcessing ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <UploadCloud className="mr-2 h-4 w-4" />}
               {isProcessing ? 'Processing...' : 'Upload and Generate'}
             </Button>

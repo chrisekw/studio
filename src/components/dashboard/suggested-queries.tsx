@@ -5,6 +5,7 @@ import { Wand2, Zap } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { suggestAlternateQueries } from '@/ai/flows/suggest-alternate-queries';
 import { Skeleton } from '../ui/skeleton';
+import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
 
 interface SuggestedQueriesProps {
   query: string;
@@ -37,11 +38,14 @@ export function SuggestedQueries({ query, onSuggestionClick }: SuggestedQueriesP
   }, [query]);
 
   return (
-    <div className="mt-6 rounded-lg border border-dashed border-accent/50 bg-accent/5 p-4">
-      <div className="flex items-center gap-2 mb-3">
-        <Wand2 className="h-5 w-5 text-accent" />
-        <h3 className="font-headline text-lg text-accent">AI Suggestions</h3>
-      </div>
+    <Card className="bg-background/30 backdrop-blur-lg border-accent/30">
+        <CardHeader>
+            <CardTitle className="flex items-center gap-2 font-headline text-lg text-accent">
+                <Wand2 className="h-5 w-5" />
+                AI Suggestions
+            </CardTitle>
+        </CardHeader>
+      <CardContent>
       <p className="text-sm text-muted-foreground mb-4">
         Try these semantically similar queries to broaden your search:
       </p>
@@ -59,7 +63,7 @@ export function SuggestedQueries({ query, onSuggestionClick }: SuggestedQueriesP
             <Badge
               key={index}
               variant="outline"
-              className="cursor-pointer border-accent/80 bg-background text-accent-foreground/80 hover:bg-accent/10 py-1 px-3 text-sm"
+              className="cursor-pointer border-accent/50 bg-transparent text-accent-foreground/80 hover:bg-accent hover:text-accent-foreground py-1 px-3 text-sm transition-colors"
               onClick={() => onSuggestionClick(suggestion)}
             >
               <Zap className="mr-2 h-3 w-3" />
@@ -68,6 +72,7 @@ export function SuggestedQueries({ query, onSuggestionClick }: SuggestedQueriesP
           ))
         )}
       </div>
-    </div>
+      </CardContent>
+    </Card>
   );
 }

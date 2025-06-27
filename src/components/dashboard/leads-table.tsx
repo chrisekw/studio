@@ -6,6 +6,7 @@ import {
   CardTitle,
   CardDescription,
   CardContent,
+  CardFooter,
 } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import {
@@ -26,6 +27,7 @@ import {
   Globe,
   MapPin,
   Linkedin,
+  SearchX,
 } from 'lucide-react';
 import { type Lead, type UserProfile } from '@/lib/types';
 import { Skeleton } from '../ui/skeleton';
@@ -139,9 +141,9 @@ export function LeadsTable({ leads, isLoading, userProfile }: LeadsTableProps) {
   const canSave = userProfile?.plan !== 'Free';
   
   const renderSkeleton = () => (
-    <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+    <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3">
       {Array.from({ length: 6 }).map((_, index) => (
-        <Card key={index} className="flex flex-col">
+        <Card key={index} className="flex flex-col border-primary/10 bg-black/20 backdrop-blur-xl">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
              <div className="flex items-center gap-4">
               <Skeleton className="h-12 w-12 rounded-full" />
@@ -149,14 +151,11 @@ export function LeadsTable({ leads, isLoading, userProfile }: LeadsTableProps) {
                 <Skeleton className="h-5 w-32" />
               </div>
             </div>
-            <Skeleton className="h-8 w-8 rounded-full" />
           </CardHeader>
           <CardContent className="flex-grow space-y-4 pt-4">
              <Skeleton className="h-4 w-40" />
              <Skeleton className="h-4 w-32" />
              <Skeleton className="h-4 w-28" />
-             <Skeleton className="h-4 w-36" />
-             <Skeleton className="h-4 w-24" />
           </CardContent>
         </Card>
       ))}
@@ -164,12 +163,12 @@ export function LeadsTable({ leads, isLoading, userProfile }: LeadsTableProps) {
   );
 
   const renderLeads = () => (
-    <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+    <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3">
       {leads.map((lead) => (
-        <Card key={lead.id} className="flex flex-col transition-all hover:shadow-lg">
+        <Card key={lead.id} className="border-primary/10 bg-black/20 backdrop-blur-xl transition-all hover:border-primary/30 flex flex-col">
           <CardHeader className="flex flex-row items-start justify-between space-y-0 pb-4">
             <div className="flex items-center gap-4">
-              <Avatar className="h-12 w-12">
+              <Avatar className="h-12 w-12 border-2 border-primary/20">
                 <AvatarImage
                   src={`https://logo.clearbit.com/${getHostname(lead.website)}`}
                   alt={`${lead.name} logo`}
@@ -201,59 +200,72 @@ export function LeadsTable({ leads, isLoading, userProfile }: LeadsTableProps) {
           <CardContent className="flex-grow space-y-3">
             {lead.email && (
               <div className="flex items-center text-sm text-muted-foreground">
-                <Mail className="mr-3 h-4 w-4 flex-shrink-0" />
+                <Mail className="mr-3 h-4 w-4 flex-shrink-0 text-accent" />
                 <span className="truncate">{lead.email}</span>
               </div>
             )}
             {lead.phone && (
               <div className="flex items-center text-sm text-muted-foreground">
-                <Phone className="mr-3 h-4 w-4 flex-shrink-0" />
+                <Phone className="mr-3 h-4 w-4 flex-shrink-0 text-accent" />
                 <span className="truncate">{lead.phone}</span>
               </div>
             )}
-            <div className="flex items-center text-sm text-muted-foreground">
-              <Globe className="mr-3 h-4 w-4 flex-shrink-0" />
-              <a href={getFullUrl(lead.website)} target="_blank" rel="noopener noreferrer" className="hover:underline text-accent-foreground/80 truncate">
-                {getHostname(lead.website)}
-              </a>
-            </div>
             {lead.address && (
-              <div className="flex items-center text-sm text-muted-foreground">
-                <MapPin className="mr-3 h-4 w-4 flex-shrink-0" />
-                <span className="truncate">{lead.address}</span>
-              </div>
-            )}
-            {lead.linkedin && (
-              <div className="flex items-center text-sm text-muted-foreground">
-                <Linkedin className="mr-3 h-4 w-4 flex-shrink-0" />
-                <a href={getFullUrl(lead.linkedin)} target="_blank" rel="noopener noreferrer" className="hover:underline text-accent-foreground/80 truncate">
-                  {lead.linkedin.replace(/^https?:\/\/(www\.)?linkedin\.com\//, '').replace(/\/$/, '')}
-                </a>
+              <div className="flex items-start text-sm text-muted-foreground">
+                <MapPin className="mr-3 mt-0.5 h-4 w-4 flex-shrink-0 text-accent" />
+                <span>{lead.address}</span>
               </div>
             )}
           </CardContent>
+           <CardFooter className="flex-wrap gap-2 pt-4">
+             <TooltipProvider>
+              {lead.website && (
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Button asChild size="icon" variant="outline">
+                          <a href={getFullUrl(lead.website)} target="_blank" rel="noopener noreferrer">
+                              <Globe />
+                          </a>
+                      </Button>
+                    </TooltipTrigger>
+                    <TooltipContent><p>{getHostname(lead.website)}</p></TooltipContent>
+                  </Tooltip>
+              )}
+               {lead.linkedin && (
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Button asChild size="icon" variant="outline">
+                          <a href={getFullUrl(lead.linkedin)} target="_blank" rel="noopener noreferrer">
+                              <Linkedin />
+                          </a>
+                      </Button>
+                    </TooltipTrigger>
+                    <TooltipContent><p>View on LinkedIn</p></TooltipContent>
+                  </Tooltip>
+              )}
+             </TooltipProvider>
+          </CardFooter>
         </Card>
       ))}
     </div>
   );
 
   const renderEmptyState = () => (
-    <div className="flex items-center justify-center h-48 rounded-lg border border-dashed">
-      <div className="text-center">
-        <p className="text-muted-foreground">No leads generated yet.</p>
-        <p className="text-sm text-muted-foreground/80">Start a new search to see results here.</p>
-      </div>
+    <div className="flex flex-col items-center justify-center h-64 rounded-lg border-2 border-dashed border-border">
+      <SearchX className="h-16 w-16 text-muted-foreground/50 mb-4" />
+      <h3 className="text-xl font-headline font-medium text-muted-foreground">No Leads Generated Yet</h3>
+      <p className="text-muted-foreground/80 mt-1">Start a new search to see results here.</p>
     </div>
   );
 
   return (
-    <Card>
-      <CardHeader className="flex flex-row items-center justify-between">
+    <div className="space-y-6">
+       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div>
-          <CardTitle className="font-headline">Generated Leads</CardTitle>
-          <CardDescription>
+          <h2 className="text-3xl font-headline font-bold">Generated Leads</h2>
+          <p className="text-muted-foreground mt-1">
             Review the generated leads. Save or export them as needed.
-          </CardDescription>
+          </p>
         </div>
         <TooltipProvider>
           <Tooltip>
@@ -278,14 +290,13 @@ export function LeadsTable({ leads, isLoading, userProfile }: LeadsTableProps) {
             )}
           </Tooltip>
         </TooltipProvider>
-      </CardHeader>
-      <CardContent>
+      </div>
+
         {isLoading
           ? renderSkeleton()
           : leads.length > 0
           ? renderLeads()
           : renderEmptyState()}
-      </CardContent>
-    </Card>
+    </div>
   );
 }

@@ -224,9 +224,9 @@ export function SearchForm({ setIsLoading, setLeads, setSearchQuery, setShowSugg
   }
 
   return (
-    <Card>
+    <Card className="border-primary/20 bg-background/30 backdrop-blur-lg">
       <CardHeader>
-        <CardTitle className="font-headline">Generate New Leads</CardTitle>
+        <CardTitle className="font-headline text-2xl">Generate New Leads</CardTitle>
         <CardDescription>
           Enter a keyword and select options to start scraping for potential business leads.
         </CardDescription>
@@ -239,7 +239,7 @@ export function SearchForm({ setIsLoading, setLeads, setSearchQuery, setShowSugg
                 control={form.control}
                 name="keyword"
                 render={({ field }) => (
-                  <FormItem>
+                  <FormItem className="md:col-span-2">
                     <FormLabel>Keyword or Company Type</FormLabel>
                     <FormControl>
                       <Input placeholder="e.g., 'SaaS companies in New York'" {...field} />
@@ -248,7 +248,35 @@ export function SearchForm({ setIsLoading, setLeads, setSearchQuery, setShowSugg
                   </FormItem>
                 )}
               />
-              <FormField
+               <FormField
+                control={form.control}
+                name="numLeads"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Number of Leads</FormLabel>
+                    <FormControl>
+                      <Input
+                        type="number"
+                        placeholder="5"
+                        {...field}
+                        onChange={event => field.onChange(+event.target.value)}
+                        max={Math.min(maxLeadsPerSearch, remainingLeads)}
+                        min={1}
+                      />
+                    </FormControl>
+                     {userProfile && (
+                       <FormDescription>
+                         {isFreePlan ? `You have ${remainingLeadsToday} leads remaining today.` : `You have ${remainingLeadsThisMonth.toLocaleString()} left.`}
+                       </FormDescription>
+                     )}
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
+
+            <div className="grid md:grid-cols-2 gap-4">
+                <FormField
                 control={form.control}
                 name="industry"
                 render={({ field }) => (
@@ -324,33 +352,7 @@ export function SearchForm({ setIsLoading, setLeads, setSearchQuery, setShowSugg
                   </FormItem>
                 )}
               />
-               <FormField
-                control={form.control}
-                name="numLeads"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Number of Leads</FormLabel>
-                    <FormControl>
-                      <Input
-                        type="number"
-                        placeholder="5"
-                        {...field}
-                        onChange={event => field.onChange(+event.target.value)}
-                        max={Math.min(maxLeadsPerSearch, remainingLeads)}
-                        min={1}
-                      />
-                    </FormControl>
-                     {userProfile && (
-                       <FormDescription>
-                         {isFreePlan ? `You have ${remainingLeadsToday} leads remaining today.` : `You have ${remainingLeadsThisMonth} leads remaining this month.`}
-                       </FormDescription>
-                     )}
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            </div>
-            <FormField
+              <FormField
               control={form.control}
               name="radius"
               render={({ field }) => (
@@ -358,23 +360,24 @@ export function SearchForm({ setIsLoading, setLeads, setSearchQuery, setShowSugg
                   <FormLabel>Search Radius</FormLabel>
                   <FormControl>
                     <RadioGroup
-                      onValueChange={field.onChange}
+                      onValuecha
+nge={field.onChange}
                       defaultValue={field.value}
-                      className="flex flex-col space-y-1"
+                      className="flex items-center space-x-4 pt-1"
                     >
-                      <FormItem className="flex items-center space-x-3 space-y-0">
+                      <FormItem className="flex items-center space-x-2 space-y-0">
                         <FormControl>
-                          <RadioGroupItem value="broad" />
+                          <RadioGroupItem value="broad" id="r-broad"/>
                         </FormControl>
-                        <FormLabel className="font-normal">
-                          Broad Geography (Recommended)
+                        <FormLabel className="font-normal" htmlFor="r-broad">
+                          Broad Geography
                         </FormLabel>
                       </FormItem>
-                      <FormItem className="flex items-center space-x-3 space-y-0">
+                      <FormItem className="flex items-center space-x-2 space-y-0">
                         <FormControl>
-                          <RadioGroupItem value="local" />
+                          <RadioGroupItem value="local" id="r-local" />
                         </FormControl>
-                        <FormLabel className="font-normal">
+                        <FormLabel className="font-normal" htmlFor="r-local">
                           Local Focus
                         </FormLabel>
                       </FormItem>
@@ -383,6 +386,9 @@ export function SearchForm({ setIsLoading, setLeads, setSearchQuery, setShowSugg
                 </FormItem>
               )}
             />
+            </div>
+            
+            
             <div>
               <FormLabel>Additional Information</FormLabel>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-2">
@@ -463,7 +469,7 @@ export function SearchForm({ setIsLoading, setLeads, setSearchQuery, setShowSugg
               </div>
             </div>
             <div className="flex justify-end">
-              <Button type="submit" disabled={isGenerating || !userCanGenerate}>
+              <Button type="submit" disabled={isGenerating || !userCanGenerate} className="shadow-lg shadow-primary/30">
                 {isGenerating ? (
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                 ) : (
