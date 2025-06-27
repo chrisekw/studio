@@ -125,7 +125,7 @@ export default function ReferralsPage() {
                 <h4 className="font-semibold text-foreground mb-2">How it works:</h4>
                 <ul className="list-disc list-inside space-y-2">
                     <li>You get <span className="font-semibold text-primary">5 points</span> when a friend signs up with your link.</li>
-                    <li>When your friend subscribes to a paid plan, <span className="font-semibold">you both earn bonus points</span>:
+                    <li>When a referred user upgrades to a paid plan, <span className="font-semibold">you both receive the bonus points</span>:
                         <ul className="list-disc list-inside mt-1 ml-5">
                             <li>Starter Plan: <span className="font-semibold text-primary">20 points</span> each</li>
                             <li>Pro Plan: <span className="font-semibold text-primary">50 points</span> each</li>

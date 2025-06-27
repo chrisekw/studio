@@ -51,25 +51,25 @@ function SuccessPageContent() {
           const currentProfile = userDoc.data() as UserProfile;
 
           // Define the base update payload for the current user (the referee)
-          const userUpdatePayload: any = {
+          const userUpdatePayload: Record<string, any> = {
             plan: plan,
             leadsGeneratedThisMonth: 0,
             lastLeadGenerationMonth: new Date().toISOString().slice(0, 7)
           };
           
-          // Award referral points if applicable
+          // Handle referral points if applicable
           if (currentProfile.referredBy) {
             const oldPlan = currentProfile.plan;
             // Calculate points based on the difference between new and old plan value
             const pointsToAdd = PLAN_POINTS[plan] - (PLAN_POINTS[oldPlan] || 0);
 
             if (pointsToAdd > 0) {
-              // 1. Award points to the referrer
+              // First, add the points to the current user's (referee's) update payload
+              userUpdatePayload.leadPoints = increment(pointsToAdd);
+              
+              // Then, update the referrer's points
               const referrerDocRef = doc(db, 'users', currentProfile.referredBy);
               transaction.update(referrerDocRef, { leadPoints: increment(pointsToAdd) });
-              
-              // 2. Award points to the referee (themselves)
-              userUpdatePayload.leadPoints = increment(pointsToAdd);
             }
           }
           
