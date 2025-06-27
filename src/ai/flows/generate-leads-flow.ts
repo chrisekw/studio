@@ -147,19 +147,9 @@ const generateLeadsFlow = ai.defineFlow(
       if (error.message?.startsWith('LIMIT_EXCEEDED:')) {
         throw error;
       }
-
-      console.error('Error in generateLeadsFlow:', {
-        message: error.message,
-        code: error.code,
-        details: error.details,
-        stack: error.stack,
-      });
-
-      if (error.code === 'PERMISSION_DENIED' || (error.details && error.details.includes('permission_denied'))) {
-        throw new Error('Database permission error. Please check server credentials and Firestore rules.');
-      }
-
-      throw new Error('An unexpected error occurred while generating leads. Please try again later.');
+      console.error('Error in generateLeadsFlow:', error);
+      // Re-throw the original error for better client-side debugging.
+      throw new Error(error.message || 'An unexpected error occurred while generating leads.');
     }
   }
 );

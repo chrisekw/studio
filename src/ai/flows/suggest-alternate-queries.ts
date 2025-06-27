@@ -48,8 +48,13 @@ const suggestAlternateQueriesFlow = ai.defineFlow(
     inputSchema: SuggestAlternateQueriesInputSchema,
     outputSchema: SuggestAlternateQueriesOutputSchema,
   },
-  async input => {
-    const {output} = await suggestAlternateQueriesPrompt(input);
-    return output!;
+  async (input) => {
+    try {
+      const {output} = await suggestAlternateQueriesPrompt(input);
+      return output!;
+    } catch (error: any) {
+      console.error('Error in suggestAlternateQueriesFlow:', error);
+      throw new Error(error.message || 'Could not fetch AI suggestions.');
+    }
   }
 );
