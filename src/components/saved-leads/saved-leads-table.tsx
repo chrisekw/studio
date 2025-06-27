@@ -119,9 +119,9 @@ export function SavedLeadsTable({ leads }: SavedLeadsTableProps) {
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead className="w-[60%]">Company</TableHead>
-              <TableHead className="w-[20%]">Tags</TableHead>
-              <TableHead className="hidden md:table-cell w-[20%]">Contact</TableHead>
+              <TableHead className="w-full">Company</TableHead>
+              <TableHead>Tags</TableHead>
+              <TableHead className="hidden md:table-cell">Contact</TableHead>
               <TableHead>
                 <span className="sr-only">Actions</span>
               </TableHead>
