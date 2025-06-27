@@ -22,7 +22,7 @@ export function AppSidebar() {
       <SidebarHeader>
         <Link
           href="/dashboard"
-          className="group flex w-full items-center justify-center gap-2 rounded-md p-2 text-lg font-semibold text-primary-foreground md:text-base"
+          className="group flex w-full items-center justify-center gap-2 rounded-md p-2 text-lg font-semibold md:text-base"
         >
           <svg
             className="h-8 w-8 text-primary transition-all group-hover:scale-110"
@@ -61,7 +61,7 @@ export function AppSidebar() {
               strokeLinejoin="round"
             />
           </svg>
-          <span className={state === 'collapsed' ? 'hidden': 'font-headline text-lg text-foreground font-bold'}>Leadgen</span>
+          <span className={state === 'collapsed' ? 'hidden': 'font-headline text-lg font-bold'}>Leadgen</span>
         </Link>
       </SidebarHeader>
       <SidebarContent>
