@@ -111,10 +111,11 @@ export function LeadsTable({ leads, isLoading, userProfile }: LeadsTableProps) {
   const exportToCSV = () => {
     if (leads.length === 0) return;
     let csvContent = 'data:text/csv;charset=utf-8,';
-    csvContent += 'Name,Email,Phone,Website,Address,LinkedIn\n';
+    csvContent += 'Name,Description,Email,Phone,Website,Address,LinkedIn\n';
     leads.forEach((lead) => {
        const row = [
         lead.name,
+        lead.description,
         lead.email,
         lead.phone,
         lead.website,
@@ -152,10 +153,10 @@ export function LeadsTable({ leads, isLoading, userProfile }: LeadsTableProps) {
               </div>
             </div>
           </CardHeader>
-          <CardContent className="flex-grow space-y-4 p-4 pt-4">
+          <CardContent className="flex-grow space-y-4 p-4 pt-2">
+             <Skeleton className="h-8 w-full" />
              <Skeleton className="h-4 w-40" />
              <Skeleton className="h-4 w-32" />
-             <Skeleton className="h-4 w-28" />
           </CardContent>
         </Card>
       ))}
@@ -166,7 +167,7 @@ export function LeadsTable({ leads, isLoading, userProfile }: LeadsTableProps) {
     <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3">
       {leads.map((lead) => (
         <Card key={lead.id} className="border-primary/10 bg-card/60 backdrop-blur-xl transition-all hover:border-primary/30 flex flex-col">
-          <CardHeader className="flex flex-row items-start justify-between space-y-0 p-4">
+          <CardHeader className="flex flex-row items-start justify-between space-y-0 p-4 pb-2">
             <div className="flex items-center gap-4">
               <Avatar className="h-12 w-12 border-2 border-primary/20">
                 <AvatarImage
@@ -197,7 +198,10 @@ export function LeadsTable({ leads, isLoading, userProfile }: LeadsTableProps) {
               </DropdownMenuContent>
             </DropdownMenu>
           </CardHeader>
-          <CardContent className="flex-grow space-y-3 p-4 pt-0">
+          <CardContent className="flex-grow space-y-3 p-4 pt-2">
+            {lead.description && (
+              <p className="text-sm text-muted-foreground italic mb-3">"{lead.description}"</p>
+            )}
             {lead.email && (
               <div className="flex items-center text-sm text-muted-foreground">
                 <Mail className="mr-3 h-4 w-4 flex-shrink-0 text-primary" />
@@ -217,7 +221,7 @@ export function LeadsTable({ leads, isLoading, userProfile }: LeadsTableProps) {
               </div>
             )}
           </CardContent>
-           <CardFooter className="flex-wrap gap-2 p-4">
+           <CardFooter className="flex-wrap gap-2 p-4 pt-0">
              <TooltipProvider>
               {lead.website && (
                   <Tooltip>

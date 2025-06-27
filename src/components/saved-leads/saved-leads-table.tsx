@@ -71,11 +71,12 @@ export function SavedLeadsTable({ leads }: SavedLeadsTableProps) {
   const exportToCSV = () => {
     if (leads.length === 0) return;
     let csvContent = "data:text/csv;charset=utf-8,";
-    csvContent += "Name,Email,Phone,Website,Address,LinkedIn,Tags\n";
+    csvContent += "Name,Description,Email,Phone,Website,Address,LinkedIn,Tags\n";
     leads.forEach(lead => {
       const tags = lead.tags ? lead.tags.join(';') : '';
       const row = [
         lead.name,
+        lead.description,
         lead.email,
         lead.phone,
         lead.website,
@@ -123,7 +124,10 @@ export function SavedLeadsTable({ leads }: SavedLeadsTableProps) {
             {leads.length > 0 ? (
               leads.map((lead) => (
                 <TableRow key={lead.id}>
-                  <TableCell className="font-medium">{lead.name}</TableCell>
+                  <TableCell className="font-medium">
+                    <div>{lead.name}</div>
+                    {lead.description && <p className="text-xs text-muted-foreground italic mt-1 max-w-xs truncate">{lead.description}</p>}
+                  </TableCell>
                   <TableCell>
                     <div className="flex gap-1 flex-wrap">
                       {lead.tags?.map((tag, i) => (

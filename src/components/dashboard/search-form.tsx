@@ -181,6 +181,7 @@ export function SearchForm({ setIsLoading, setLeads, setSearchQuery, setShowSugg
         includeAddress: !isFreePlan && (values.includeAddress ?? false),
         includeLinkedIn: !isFreePlan && (values.includeLinkedIn ?? false),
         extractContactInfo: true,
+        includeDescription: !isFreePlan,
       });
 
       const newLeads = result.map((lead, index) => ({

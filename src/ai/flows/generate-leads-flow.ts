@@ -11,6 +11,7 @@ import {z} from 'zod';
 
 const LeadSchema = z.object({
   name: z.string().describe('The name of the company.'),
+  description: z.string().optional().describe('A one-line description of what the company is all about. Will be empty if not requested.'),
   email: z.string().describe('A contact email for the company. Should be an empty string if contact extraction is disabled.'),
   phone: z.string().describe('A contact phone number for the company. Should be an empty string if contact extraction is disabled.'),
   website: z.string().describe('The full company website URL, including the protocol (e.g., https://example.com).'),
@@ -24,6 +25,7 @@ const GenerateLeadsInputSchema = z.object({
   includeAddress: z.boolean().optional().describe('Whether to include the physical address.'),
   includeLinkedIn: z.boolean().optional().describe('Whether to include the LinkedIn profile URL.'),
   extractContactInfo: z.boolean().optional().describe('Whether to extract email and phone number. Defaults to true.'),
+  includeDescription: z.boolean().optional().describe('Whether to include a one-line company description. Defaults to false.'),
 });
 export type GenerateLeadsInput = z.infer<typeof GenerateLeadsInputSchema>;
 
@@ -55,6 +57,9 @@ const prompt = ai.definePrompt({
   {{/if}}
   {{#if includeLinkedIn}}
   Also include a specific, realistic-looking LinkedIn company profile URL for each company (e.g., https://www.linkedin.com/company/some-company). Do not just use "www.linkedin.com".
+  {{/if}}
+  {{#if includeDescription}}
+  Also include a concise, one-line description of what the company is all about.
   {{/if}}
   Ensure the generated data is plausible for the given query.
   
