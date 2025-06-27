@@ -37,6 +37,49 @@ export default function AuthLayout({
     <div className="w-full min-h-screen lg:grid lg:grid-cols-2">
       <div className="flex items-center justify-center py-12 lg:py-0">
         <div className="mx-auto grid w-[350px] gap-6">
+            <Link
+                href="/"
+                className="group flex items-center justify-center gap-2 mb-4"
+            >
+                <svg
+                className="h-8 w-8 text-primary transition-all group-hover:scale-110"
+                viewBox="0 0 24 24"
+                fill="none"
+                xmlns="http://www.w3.org/2000/svg"
+                >
+                <path
+                    d="M12 2L2 7V17L12 22L22 17V7L12 2Z"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    strokeLinejoin="round"
+                />
+                <path
+                    d="M12 12L22 7"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    strokeLinejoin="round"
+                />
+                <path
+                    d="M12 12V22"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    strokeLinejoin="round"
+                />
+                <path
+                    d="M12 12L2 7"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    strokeLinejoin="round"
+                />
+                <path
+                    d="M17 4.5L7 9.5"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    strokeLinejoin="round"
+                />
+                </svg>
+                <span className="text-3xl font-headline font-bold text-foreground">Leadgen</span>
+            </Link>
             {children}
         </div>
       </div>
