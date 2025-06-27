@@ -11,8 +11,6 @@
  * @param {string} query - The input query string.
  * @returns {string[]} - An array of suggested alternative queries.
  */
-import 'dotenv/config';
-
 import {ai} from '@/ai/genkit';
 import {z} from 'genkit';
 

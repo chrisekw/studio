@@ -6,8 +6,6 @@
  * - GenerateLeadsInput - The input type for the generateLeads function.
  * - GenerateLeadsOutput - The return type for the generateLeads function.
  */
-import 'dotenv/config'; // Ensure environment variables are loaded for server actions.
-
 import {ai} from '@/ai/genkit';
 import {z} from 'zod';
 import { adminDb } from '@/lib/firebase-admin';
