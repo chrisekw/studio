@@ -180,7 +180,7 @@ export function SearchForm({ setIsLoading, setLeads, setSearchQuery, setShowSugg
         numLeads: values.numLeads,
         includeAddress: !isFreePlan && (values.includeAddress ?? false),
         includeLinkedIn: !isFreePlan && (values.includeLinkedIn ?? false),
-        extractContactInfo: !isFreePlan,
+        extractContactInfo: true,
       });
 
       const newLeads = result.map((lead, index) => ({
