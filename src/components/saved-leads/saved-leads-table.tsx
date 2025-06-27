@@ -132,8 +132,8 @@ export function SavedLeadsTable({ leads }: SavedLeadsTableProps) {
               leads.map((lead) => (
                 <TableRow key={lead.id}>
                   <TableCell className="font-medium align-top">
-                    <div className="font-semibold">{lead.name}</div>
-                    {lead.description && <p className="text-xs text-muted-foreground italic mt-1 whitespace-normal break-words">{lead.description}</p>}
+                    <div className="font-semibold text-base">{lead.name}</div>
+                    {lead.description && <p className="text-sm text-muted-foreground italic mt-1 whitespace-normal break-words">{lead.description}</p>}
                   </TableCell>
                   <TableCell className="align-top">
                     <div className="flex gap-1 flex-wrap">
@@ -144,7 +144,7 @@ export function SavedLeadsTable({ leads }: SavedLeadsTableProps) {
                   </TableCell>
                   <TableCell className="hidden md:table-cell align-top">
                     <div className="text-sm text-muted-foreground break-all">{lead.email}</div>
-                    <div className="text-xs text-muted-foreground/80 mt-1">{lead.phone}</div>
+                    <div className="text-sm text-muted-foreground mt-1">{lead.phone}</div>
                   </TableCell>
                   <TableCell className="align-top">
                     <AlertDialog>
