@@ -11,16 +11,18 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '
 import { Input } from '@/components/ui/input';
 import { useToast } from '@/hooks/use-toast';
 import { generateLeads } from '@/ai/flows/generate-leads-flow';
-import type { Lead, UserProfile } from '@/lib/types';
+import type { Lead } from '@/lib/types';
 import { Loader2, UploadCloud } from 'lucide-react';
 import { useAuth } from '@/context/auth-context';
 import { doc, updateDoc, increment } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
+import { calculateRemainingLeads } from '@/lib/utils';
 
 interface BulkUploadFormProps {
   setLeads: React.Dispatch<React.SetStateAction<Lead[]>>;
   setIsLoading: React.Dispatch<React.SetStateAction<boolean>>;
-  onQuotaExceeded: () => void;
+  remainingLeads: number;
+  remainingLeadsText: string;
 }
 
 const formSchema = z.object({
@@ -31,14 +33,7 @@ const formSchema = z.object({
     .max(50, 'Cannot exceed 50 leads per query in bulk mode.'),
 });
 
-const PLAN_LIMITS = {
-  Free: 5,
-  Starter: 200,
-  Pro: 1000,
-  Agency: 5000,
-};
-
-export function BulkUploadForm({ setLeads, setIsLoading, onQuotaExceeded }: BulkUploadFormProps) {
+export function BulkUploadForm({ setLeads, setIsLoading, remainingLeads, remainingLeadsText }: BulkUploadFormProps) {
   const { toast } = useToast();
   const { user, userProfile } = useAuth();
   const [isProcessing, setIsProcessing] = useState(false);
@@ -58,25 +53,11 @@ export function BulkUploadForm({ setLeads, setIsLoading, onQuotaExceeded }: Bulk
     return null;
   }
 
-  const currentMonth = new Date().toISOString().slice(0, 7);
-  const leadsUsedThisMonth = (userProfile.lastLeadGenerationMonth === currentMonth) ? userProfile.leadsGeneratedThisMonth ?? 0 : 0;
-  const addonCredits = userProfile.addonCredits ?? 0;
-  const leadPoints = userProfile.leadPoints ?? 0;
-  const planLimit = PLAN_LIMITS.Agency;
+  const { remainingPlanLeads, leadPoints, addonCredits } = calculateRemainingLeads(userProfile);
   
-  const remainingMonthly = planLimit - leadsUsedThisMonth;
-  const remainingLeads = remainingMonthly + addonCredits + leadPoints;
-
-  const remainingLeadsText = `You have ${remainingMonthly.toLocaleString()} monthly + ${leadPoints.toLocaleString()} points + ${addonCredits.toLocaleString()} add-on leads remaining.`
-
   async function onSubmit(values: z.infer<typeof formSchema>) {
     const file = values.file[0];
     if (!file || !user || !userProfile) return;
-
-    if (remainingLeads <= 0) {
-      onQuotaExceeded();
-      return;
-    }
 
     setIsProcessing(true);
     setIsLoading(true);
@@ -153,9 +134,10 @@ export function BulkUploadForm({ setLeads, setIsLoading, onQuotaExceeded }: Bulk
             const userDocRef = doc(db, 'users', user.uid);
             let leadsToDeduct = leadsGeneratedCount;
             const updatePayload: any = {};
+            const currentMonth = new Date().toISOString().slice(0, 7);
 
             // 1. Deduct from plan quota
-            const planLeadsToUse = Math.min(leadsToDeduct, Math.max(0, remainingMonthly));
+            const planLeadsToUse = Math.min(leadsToDeduct, Math.max(0, remainingPlanLeads));
             if (planLeadsToUse > 0) {
               updatePayload.leadsGeneratedThisMonth = increment(planLeadsToUse);
               updatePayload.lastLeadGenerationMonth = currentMonth;
@@ -228,7 +210,7 @@ export function BulkUploadForm({ setLeads, setIsLoading, onQuotaExceeded }: Bulk
                 <FormItem className="md:col-span-1">
                   <FormLabel>CSV File</FormLabel>
                   <FormControl>
-                    <Input type="file" accept=".csv" {...fileRef} disabled={isProcessing} />
+                    <Input type="file" accept=".csv" {...fileRef} disabled={isProcessing || remainingLeads <= 0} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -241,13 +223,13 @@ export function BulkUploadForm({ setLeads, setIsLoading, onQuotaExceeded }: Bulk
                 <FormItem className="md:col-span-1">
                   <FormLabel>Leads per Prompt</FormLabel>
                   <FormControl>
-                    <Input type="number" {...field} disabled={isProcessing} />
+                    <Input type="number" {...field} disabled={isProcessing || remainingLeads <= 0} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
               )}
             />
-            <Button type="submit" disabled={isProcessing} className="md:col-span-1 shadow-lg shadow-primary/30">
+            <Button type="submit" disabled={isProcessing || remainingLeads <= 0} className="md:col-span-1 shadow-lg shadow-primary/30">
               {isProcessing ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <UploadCloud className="mr-2 h-4 w-4" />}
               {isProcessing ? 'Processing...' : 'Upload and Generate'}
             </Button>

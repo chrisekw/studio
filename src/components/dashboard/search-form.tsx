@@ -45,7 +45,7 @@ import {
   CommandItem,
   CommandList,
 } from '@/components/ui/command';
-import { cn } from '@/lib/utils';
+import { cn, calculateRemainingLeads } from '@/lib/utils';
 import { db } from '@/lib/firebase';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '../ui/tooltip';
 
@@ -55,7 +55,8 @@ interface SearchFormProps {
   setSearchQuery: Dispatch<SetStateAction<string>>;
   setShowSuggestions: Dispatch<SetStateAction<boolean>>;
   selectedSuggestion: string;
-  onQuotaExceeded: () => void;
+  remainingLeads: number;
+  remainingLeadsText: string;
 }
 
 const industries = [
@@ -76,13 +77,6 @@ const industries = [
   { value: 'consulting', label: 'Consulting' },
 ];
 
-const PLAN_LIMITS = {
-  Free: 5, // Daily
-  Starter: 200, // Monthly
-  Pro: 1000, // Monthly
-  Agency: 5000, // Monthly
-};
-
 const maxLeadsPerSearch = 100;
 
 const formSchema = z.object({
@@ -98,40 +92,13 @@ const formSchema = z.object({
 });
 
 
-export function SearchForm({ setIsLoading, setLeads, setSearchQuery, setShowSuggestions, selectedSuggestion, onQuotaExceeded }: SearchFormProps) {
+export function SearchForm({ setIsLoading, setLeads, setSearchQuery, setShowSuggestions, selectedSuggestion, remainingLeads, remainingLeadsText }: SearchFormProps) {
   const [isGenerating, setIsGenerating] = useState(false);
   const [openIndustry, setOpenIndustry] = useState(false);
   const router = useRouter();
   const { toast } = useToast();
   const { user, userProfile } = useAuth();
   const defaultsSet = useRef(false);
-
-  const isFreePlan = userProfile?.plan === 'Free';
-  const planLimit = userProfile ? PLAN_LIMITS[userProfile.plan] : 0;
-  const addonCredits = userProfile?.addonCredits ?? 0;
-  const leadPoints = userProfile?.leadPoints ?? 0;
-
-  const today = new Date().toISOString().split('T')[0];
-  const currentMonth = new Date().toISOString().slice(0, 7); // YYYY-MM
-
-  const leadsUsedToday = (isFreePlan && userProfile?.lastLeadGenerationDate === today) ? userProfile.leadsGeneratedToday ?? 0 : 0;
-  const leadsUsedThisMonth = (!isFreePlan && userProfile?.lastLeadGenerationMonth === currentMonth) ? userProfile.leadsGeneratedThisMonth ?? 0 : 0;
-  
-  const remainingPlanLeads = isFreePlan ? planLimit - leadsUsedToday : planLimit - leadsUsedThisMonth;
-  const remainingLeads = remainingPlanLeads + addonCredits + leadPoints;
-
-  let remainingLeadsText = '';
-  if (userProfile) {
-    const parts = [];
-    if (isFreePlan) {
-      parts.push(`${remainingPlanLeads} daily`);
-    } else {
-      parts.push(`${remainingPlanLeads.toLocaleString()} monthly`);
-    }
-    if (leadPoints > 0) parts.push(`${leadPoints.toLocaleString()} points`);
-    if (addonCredits > 0) parts.push(`${addonCredits.toLocaleString()} add-ons`);
-    remainingLeadsText = `You have ${parts.join(' + ')} leads remaining.`;
-  }
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -143,6 +110,9 @@ export function SearchForm({ setIsLoading, setLeads, setSearchQuery, setShowSugg
       includeLinkedIn: true,
     },
   });
+  
+  const isFreePlan = userProfile?.plan === 'Free';
+  const { remainingPlanLeads, leadPoints, addonCredits } = calculateRemainingLeads(userProfile);
 
   useEffect(() => {
     if (userProfile && !defaultsSet.current) {
@@ -168,11 +138,6 @@ export function SearchForm({ setIsLoading, setLeads, setSearchQuery, setShowSugg
         title: 'Authentication Error',
         description: 'You must be logged in to generate leads.',
       });
-      return;
-    }
-
-    if (remainingLeads <= 0) {
-      onQuotaExceeded();
       return;
     }
 
@@ -213,6 +178,8 @@ export function SearchForm({ setIsLoading, setLeads, setSearchQuery, setShowSugg
         const userDocRef = doc(db, 'users', user.uid);
         let leadsToDeduct = leadsGeneratedCount;
         const updatePayload: any = {};
+        const today = new Date().toISOString().split('T')[0];
+        const currentMonth = new Date().toISOString().slice(0, 7);
         
         // 1. Deduct from plan quota
         const planLeadsToUse = Math.min(leadsToDeduct, Math.max(0, remainingPlanLeads));
@@ -515,14 +482,28 @@ export function SearchForm({ setIsLoading, setLeads, setSearchQuery, setShowSugg
               </div>
             </div>
             <div className="flex justify-end">
-              <Button type="submit" disabled={isGenerating} className="shadow-lg shadow-primary/30">
-                {isGenerating ? (
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                ) : (
-                  <Search className="mr-2 h-4 w-4" />
-                )}
-                Generate Leads
-              </Button>
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    {/* The div wrapper is essential for tooltips on disabled buttons */}
+                    <div tabIndex={remainingLeads <= 0 ? 0 : -1}>
+                      <Button type="submit" disabled={isGenerating || remainingLeads <= 0} className="shadow-lg shadow-primary/30">
+                        {isGenerating ? (
+                          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                        ) : (
+                          <Search className="mr-2 h-4 w-4" />
+                        )}
+                        Generate Leads
+                      </Button>
+                    </div>
+                  </TooltipTrigger>
+                  {remainingLeads <= 0 && (
+                    <TooltipContent>
+                      <p>You've reached your limit. Please upgrade your plan.</p>
+                    </TooltipContent>
+                  )}
+                </Tooltip>
+              </TooltipProvider>
             </div>
           </form>
         </Form>

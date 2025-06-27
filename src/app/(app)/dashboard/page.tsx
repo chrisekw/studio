@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { SearchForm } from '@/components/dashboard/search-form';
 import { LeadsTable } from '@/components/dashboard/leads-table';
 import { type Lead } from '@/lib/types';
@@ -9,6 +9,7 @@ import { useAuth } from '@/context/auth-context';
 import { BulkUploadForm } from '@/components/dashboard/bulk-upload-form';
 import { Separator } from '@/components/ui/separator';
 import { UpgradeBanner } from '@/components/dashboard/upgrade-banner';
+import { calculateRemainingLeads } from '@/lib/utils';
 
 export default function DashboardPage() {
   const [leads, setLeads] = useState<Lead[]>([]);
@@ -19,12 +20,23 @@ export default function DashboardPage() {
   const { userProfile } = useAuth();
   const [showUpgradeBanner, setShowUpgradeBanner] = useState(false);
 
+  // Centralize quota calculation
+  const { remainingLeads, remainingLeadsText } = calculateRemainingLeads(userProfile);
+
+  // Show banner automatically if quota is exhausted
+  useEffect(() => {
+    if (userProfile && remainingLeads <= 0) {
+      setShowUpgradeBanner(true);
+    }
+    // Optionally hide it if quota is replenished, though onClose handles manual dismissal
+    if (userProfile && remainingLeads > 0) {
+      setShowUpgradeBanner(false);
+    }
+  }, [userProfile, remainingLeads]);
+
+
   const handleSuggestionClick = (suggestion: string) => {
     setSelectedSuggestion(suggestion);
-  };
-
-  const handleQuotaExceeded = () => {
-    setShowUpgradeBanner(true);
   };
 
   return (
@@ -44,13 +56,15 @@ export default function DashboardPage() {
             setSearchQuery={setSearchQuery}
             setShowSuggestions={setShowSuggestions}
             selectedSuggestion={selectedSuggestion}
-            onQuotaExceeded={handleQuotaExceeded}
+            remainingLeads={remainingLeads}
+            remainingLeadsText={remainingLeadsText}
           />
           {userProfile?.plan === 'Agency' && (
             <BulkUploadForm 
               setIsLoading={setIsLoading}
               setLeads={setLeads}
-              onQuotaExceeded={handleQuotaExceeded}
+              remainingLeads={remainingLeads}
+              remainingLeadsText={remainingLeadsText}
             />
           )}
         </div>
