@@ -53,7 +53,7 @@ export default function DashboardPage() {
 
       <Separator className="my-8 bg-border/50" />
       
-      <LeadsTable leads={leads} isLoading={isLoading} userProfile={userProfile} />
+      <LeadsTable leads={leads} isLoading={isLoading} />
     </div>
   );
 }

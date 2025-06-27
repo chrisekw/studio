@@ -29,27 +29,26 @@ import {
   Linkedin,
   SearchX,
 } from 'lucide-react';
-import { type Lead, type UserProfile } from '@/lib/types';
+import type { Lead, UserProfile } from '@/lib/types';
 import { Skeleton } from '../ui/skeleton';
 import { useToast } from '@/hooks/use-toast';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '../ui/tooltip';
 import { useAuth } from '@/context/auth-context';
-import { addDoc, collection, doc, increment, updateDoc } from 'firebase/firestore';
+import { collection, doc, increment, runTransaction } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 
 interface LeadsTableProps {
   leads: Lead[];
   isLoading: boolean;
-  userProfile: UserProfile | null;
 }
 
-export function LeadsTable({ leads, isLoading, userProfile }: LeadsTableProps) {
+export function LeadsTable({ leads, isLoading }: LeadsTableProps) {
   const { toast } = useToast();
-  const { user } = useAuth();
+  const { user, userProfile } = useAuth();
 
   const handleSaveLead = async (leadToSave: Lead) => {
-    if (!user || !userProfile) {
+    if (!user) {
       toast({
         variant: 'destructive',
         title: 'Not Logged In',
@@ -57,41 +56,51 @@ export function LeadsTable({ leads, isLoading, userProfile }: LeadsTableProps) {
       });
       return;
     }
-    
-    // Free plan check
-    if (userProfile.plan === 'Free' && (userProfile.savedLeadsCount ?? 0) >= 20) {
-      toast({
-        variant: 'destructive',
-        title: 'Save Limit Reached',
-        description: 'You have reached your limit of 20 saved leads. Please upgrade to save more.',
-      });
-      return;
-    }
 
     try {
-      const userDocRef = doc(db, 'users', user.uid);
-      const savedLeadsCollection = collection(userDocRef, 'savedLeads');
-      
-      // Omit id from lead before saving, as Firestore will generate one.
-      const { id, ...leadData } = leadToSave;
-      await addDoc(savedLeadsCollection, leadData);
+      await runTransaction(db, async (transaction) => {
+        const userDocRef = doc(db, 'users', user.uid);
+        const userDoc = await transaction.get(userDocRef);
 
-      // Increment saved leads count
-      await updateDoc(userDocRef, {
-        savedLeadsCount: increment(1)
+        if (!userDoc.exists()) {
+          throw new Error('User document does not exist.');
+        }
+
+        const currentProfile = userDoc.data() as UserProfile;
+        
+        if (currentProfile.plan === 'Free' && (currentProfile.savedLeadsCount ?? 0) >= 20) {
+          throw new Error('Save Limit Reached');
+        }
+        
+        const savedLeadsCollectionRef = collection(db, 'users', user.uid, 'savedLeads');
+        const newLeadDocRef = doc(savedLeadsCollectionRef); // Firestore generates the ID
+        
+        const { id, ...leadData } = leadToSave;
+        
+        transaction.set(newLeadDocRef, leadData);
+        transaction.update(userDocRef, { savedLeadsCount: increment(1) });
       });
-      
+
       toast({
         title: 'Lead Saved',
         description: `${leadToSave.name} has been added to your saved leads.`,
       });
-    } catch (error) {
-        console.error("Error saving lead: ", error);
+
+    } catch (error: any) {
+      console.error("Error saving lead: ", error);
+      if (error.message === 'Save Limit Reached') {
         toast({
-            variant: 'destructive',
-            title: 'Error',
-            description: 'Could not save the lead. Please try again.',
+          variant: 'destructive',
+          title: 'Save Limit Reached',
+          description: 'You have reached your limit of 20 saved leads. Please upgrade to save more.',
         });
+      } else {
+        toast({
+          variant: 'destructive',
+          title: 'Error Saving Lead',
+          description: 'Could not save the lead. This may be due to a permissions issue. Please contact support if the problem persists.',
+        });
+      }
     }
   };
 
