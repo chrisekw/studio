@@ -23,6 +23,7 @@ interface BulkUploadFormProps {
   setIsLoading: React.Dispatch<React.SetStateAction<boolean>>;
   remainingLeads: number;
   remainingLeadsText: string;
+  setShowUpgradeBanner: React.Dispatch<React.SetStateAction<boolean>>;
 }
 
 const formSchema = z.object({
@@ -33,7 +34,7 @@ const formSchema = z.object({
     .max(50, 'Cannot exceed 50 leads per query in bulk mode.'),
 });
 
-export function BulkUploadForm({ setLeads, setIsLoading, remainingLeads, remainingLeadsText }: BulkUploadFormProps) {
+export function BulkUploadForm({ setLeads, setIsLoading, remainingLeads, remainingLeadsText, setShowUpgradeBanner }: BulkUploadFormProps) {
   const { toast } = useToast();
   const { user, userProfile } = useAuth();
   const [isProcessing, setIsProcessing] = useState(false);
@@ -58,6 +59,11 @@ export function BulkUploadForm({ setLeads, setIsLoading, remainingLeads, remaini
   async function onSubmit(values: z.infer<typeof formSchema>) {
     const file = values.file[0];
     if (!file || !user || !userProfile) return;
+
+    if (remainingLeads <= 0) {
+      setShowUpgradeBanner(true);
+      return;
+    }
 
     setIsProcessing(true);
     setIsLoading(true);
@@ -210,7 +216,7 @@ export function BulkUploadForm({ setLeads, setIsLoading, remainingLeads, remaini
                 <FormItem className="md:col-span-1">
                   <FormLabel>CSV File</FormLabel>
                   <FormControl>
-                    <Input type="file" accept=".csv" {...fileRef} disabled={isProcessing || remainingLeads <= 0} />
+                    <Input type="file" accept=".csv" {...fileRef} disabled={isProcessing} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -223,13 +229,13 @@ export function BulkUploadForm({ setLeads, setIsLoading, remainingLeads, remaini
                 <FormItem className="md:col-span-1">
                   <FormLabel>Leads per Prompt</FormLabel>
                   <FormControl>
-                    <Input type="number" {...field} disabled={isProcessing || remainingLeads <= 0} />
+                    <Input type="number" {...field} disabled={isProcessing} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
               )}
             />
-            <Button type="submit" disabled={isProcessing || remainingLeads <= 0} className="md:col-span-1 shadow-lg shadow-primary/30">
+            <Button type="submit" disabled={isProcessing} className="md:col-span-1 shadow-lg shadow-primary/30">
               {isProcessing ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <UploadCloud className="mr-2 h-4 w-4" />}
               {isProcessing ? 'Processing...' : 'Upload and Generate'}
             </Button>

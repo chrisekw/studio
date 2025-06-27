@@ -57,6 +57,7 @@ interface SearchFormProps {
   selectedSuggestion: string;
   remainingLeads: number;
   remainingLeadsText: string;
+  setShowUpgradeBanner: Dispatch<SetStateAction<boolean>>;
 }
 
 const industries = [
@@ -92,7 +93,7 @@ const formSchema = z.object({
 });
 
 
-export function SearchForm({ setIsLoading, setLeads, setSearchQuery, setShowSuggestions, selectedSuggestion, remainingLeads, remainingLeadsText }: SearchFormProps) {
+export function SearchForm({ setIsLoading, setLeads, setSearchQuery, setShowSuggestions, selectedSuggestion, remainingLeads, remainingLeadsText, setShowUpgradeBanner }: SearchFormProps) {
   const [isGenerating, setIsGenerating] = useState(false);
   const [openIndustry, setOpenIndustry] = useState(false);
   const router = useRouter();
@@ -103,9 +104,8 @@ export function SearchForm({ setIsLoading, setLeads, setSearchQuery, setShowSugg
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      keyword: 'Marketing agencies in London',
+      keyword: '',
       radius: 'broad',
-      numLeads: 5,
       includeAddress: true,
       includeLinkedIn: true,
     },
@@ -141,6 +141,11 @@ export function SearchForm({ setIsLoading, setLeads, setSearchQuery, setShowSugg
       return;
     }
 
+    if (remainingLeads <= 0) {
+      setShowUpgradeBanner(true);
+      return;
+    }
+    
     if (values.numLeads > remainingLeads) {
       toast({
         variant: 'destructive',
@@ -271,7 +276,7 @@ export function SearchForm({ setIsLoading, setLeads, setSearchQuery, setShowSugg
                     <FormControl>
                       <Input
                         type="number"
-                        placeholder="5"
+                        placeholder="10"
                         {...field}
                         onChange={event => field.onChange(+event.target.value)}
                         max={Math.min(maxLeadsPerSearch, remainingLeads)}
@@ -485,9 +490,9 @@ export function SearchForm({ setIsLoading, setLeads, setSearchQuery, setShowSugg
               <TooltipProvider>
                 <Tooltip>
                   <TooltipTrigger asChild>
-                    {/* The div wrapper is essential for tooltips on disabled buttons */}
+                    {/* The div wrapper is for the tooltip to work even if button is disabled */}
                     <div tabIndex={remainingLeads <= 0 ? 0 : -1}>
-                      <Button type="submit" disabled={isGenerating || remainingLeads <= 0} className="shadow-lg shadow-primary/30">
+                      <Button type="submit" disabled={isGenerating} className="shadow-lg shadow-primary/30">
                         {isGenerating ? (
                           <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                         ) : (
@@ -499,7 +504,7 @@ export function SearchForm({ setIsLoading, setLeads, setSearchQuery, setShowSugg
                   </TooltipTrigger>
                   {remainingLeads <= 0 && (
                     <TooltipContent>
-                      <p>You've reached your limit. Please upgrade your plan.</p>
+                      <p>You've reached your limit. Click to upgrade your plan.</p>
                     </TooltipContent>
                   )}
                 </Tooltip>

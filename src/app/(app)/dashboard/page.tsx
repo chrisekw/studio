@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { SearchForm } from '@/components/dashboard/search-form';
 import { LeadsTable } from '@/components/dashboard/leads-table';
 import { type Lead } from '@/lib/types';
@@ -22,18 +22,6 @@ export default function DashboardPage() {
 
   // Centralize quota calculation
   const { remainingLeads, remainingLeadsText } = calculateRemainingLeads(userProfile);
-
-  // Show banner automatically if quota is exhausted
-  useEffect(() => {
-    if (userProfile && remainingLeads <= 0) {
-      setShowUpgradeBanner(true);
-    }
-    // Optionally hide it if quota is replenished, though onClose handles manual dismissal
-    if (userProfile && remainingLeads > 0) {
-      setShowUpgradeBanner(false);
-    }
-  }, [userProfile, remainingLeads]);
-
 
   const handleSuggestionClick = (suggestion: string) => {
     setSelectedSuggestion(suggestion);
@@ -58,6 +46,7 @@ export default function DashboardPage() {
             selectedSuggestion={selectedSuggestion}
             remainingLeads={remainingLeads}
             remainingLeadsText={remainingLeadsText}
+            setShowUpgradeBanner={setShowUpgradeBanner}
           />
           {userProfile?.plan === 'Agency' && (
             <BulkUploadForm 
@@ -65,6 +54,7 @@ export default function DashboardPage() {
               setLeads={setLeads}
               remainingLeads={remainingLeads}
               remainingLeadsText={remainingLeadsText}
+              setShowUpgradeBanner={setShowUpgradeBanner}
             />
           )}
         </div>
