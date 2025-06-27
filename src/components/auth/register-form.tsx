@@ -3,8 +3,8 @@
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
-import { useRouter } from 'next/navigation';
-import { useState } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
+import { useState, useEffect } from 'react';
 import { createUserWithEmailAndPassword, GoogleAuthProvider, signInWithPopup } from 'firebase/auth';
 
 import { Button } from '@/components/ui/button';
@@ -24,10 +24,12 @@ import { auth } from '@/lib/firebase';
 const formSchema = z.object({
   email: z.string().email({ message: 'Please enter a valid email.' }),
   password: z.string().min(6, { message: 'Password must be at least 6 characters.' }),
+  referralCode: z.string().optional(),
 });
 
 export function RegisterForm() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(false);
   const [isGoogleLoading, setIsGoogleLoading] = useState(false);
@@ -37,11 +39,22 @@ export function RegisterForm() {
     defaultValues: {
       email: '',
       password: '',
+      referralCode: '',
     },
   });
 
+  useEffect(() => {
+    const refCode = searchParams.get('ref');
+    if (refCode) {
+      form.setValue('referralCode', refCode);
+    }
+  }, [searchParams, form]);
+
   async function onSubmit(values: z.infer<typeof formSchema>) {
     setIsLoading(true);
+    if (values.referralCode) {
+      sessionStorage.setItem('referralCode', values.referralCode);
+    }
     try {
       await createUserWithEmailAndPassword(auth, values.email, values.password);
       toast({
@@ -50,6 +63,7 @@ export function RegisterForm() {
       });
       router.push('/dashboard');
     } catch (error: any) {
+      sessionStorage.removeItem('referralCode'); // Clean up on failure
       console.error('Registration error:', error);
       let description = error.message || 'An unexpected error occurred. Please try again.';
 
@@ -77,6 +91,10 @@ export function RegisterForm() {
 
   async function handleGoogleSignIn() {
     setIsGoogleLoading(true);
+    const referralCode = form.getValues('referralCode');
+    if (referralCode) {
+      sessionStorage.setItem('referralCode', referralCode);
+    }
     try {
       const provider = new GoogleAuthProvider();
       await signInWithPopup(auth, provider);
@@ -86,6 +104,7 @@ export function RegisterForm() {
       });
       router.push('/dashboard');
     } catch (error: any) {
+      sessionStorage.removeItem('referralCode'); // Clean up on failure
       console.error('Google Sign-Up error:', error);
       toast({
         variant: 'destructive',
@@ -122,6 +141,19 @@ export function RegisterForm() {
                 <FormLabel>Password</FormLabel>
                 <FormControl>
                   <Input type="password" placeholder="••••••••" {...field} />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+          <FormField
+            control={form.control}
+            name="referralCode"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Referral Code (Optional)</FormLabel>
+                <FormControl>
+                  <Input placeholder="Enter referral code" {...field} />
                 </FormControl>
                 <FormMessage />
               </FormItem>

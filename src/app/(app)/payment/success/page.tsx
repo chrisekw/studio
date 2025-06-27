@@ -11,6 +11,13 @@ import { Loader2, CheckCircle } from 'lucide-react';
 import type { UserPlan } from '@/lib/types';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 
+const PLAN_POINTS = {
+  'Free': 5,
+  'Starter': 20,
+  'Pro': 50,
+  'Agency': 100,
+};
+
 function SuccessPageContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -35,7 +42,7 @@ function SuccessPageContent() {
     if (status === 'successful') {
       // Handle plan upgrade
       if (plan && (plan === 'Starter' || plan === 'Pro' || plan === 'Agency')) {
-        updateDoc(userDocRef, {
+        const upgradePromise = updateDoc(userDocRef, {
           plan: plan,
           leadsGeneratedThisMonth: 0, // Reset monthly quota
           lastLeadGenerationMonth: new Date().toISOString().slice(0, 7)
@@ -44,6 +51,17 @@ function SuccessPageContent() {
             title: 'Upgrade Successful!',
             description: `Your plan has been upgraded to ${plan}.`,
           });
+          // Award referral points if applicable
+          if (userProfile.referredBy) {
+            const oldPlan = userProfile.plan;
+            const pointsToAdd = PLAN_POINTS[plan] - PLAN_POINTS[oldPlan];
+            if (pointsToAdd > 0) {
+              const referrerDocRef = doc(db, 'users', userProfile.referredBy);
+              updateDoc(referrerDocRef, { leadPoints: increment(pointsToAdd) }).catch(err => {
+                 console.error("Failed to award referral points:", err);
+              });
+            }
+          }
           setTimeout(() => router.replace('/dashboard'), 3000);
         }).catch(error => {
           console.error("Error updating user plan: ", error);
