@@ -166,7 +166,7 @@ export function LeadsTable({ leads, isLoading, userProfile }: LeadsTableProps) {
     <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3">
       {leads.map((lead) => (
         <Card key={lead.id} className="border-primary/10 bg-black/20 backdrop-blur-xl transition-all hover:border-primary/30 flex flex-col">
-          <CardHeader className="flex flex-row items-start justify-between space-y-0 pb-4">
+          <CardHeader className="flex flex-row items-start justify-between space-y-0 p-4">
             <div className="flex items-center gap-4">
               <Avatar className="h-12 w-12 border-2 border-primary/20">
                 <AvatarImage
@@ -197,7 +197,7 @@ export function LeadsTable({ leads, isLoading, userProfile }: LeadsTableProps) {
               </DropdownMenuContent>
             </DropdownMenu>
           </CardHeader>
-          <CardContent className="flex-grow space-y-3">
+          <CardContent className="flex-grow space-y-3 p-4 pt-0">
             {lead.email && (
               <div className="flex items-center text-sm text-muted-foreground">
                 <Mail className="mr-3 h-4 w-4 flex-shrink-0 text-accent" />
@@ -217,7 +217,7 @@ export function LeadsTable({ leads, isLoading, userProfile }: LeadsTableProps) {
               </div>
             )}
           </CardContent>
-           <CardFooter className="flex-wrap gap-2 pt-4">
+           <CardFooter className="flex-wrap gap-2 p-4">
              <TooltipProvider>
               {lead.website && (
                   <Tooltip>
