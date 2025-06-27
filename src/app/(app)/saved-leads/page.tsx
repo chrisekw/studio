@@ -65,7 +65,7 @@ export default function SavedLeadsPage() {
             View, manage, and export your saved business leads.
           </CardDescription>
         </CardHeader>
-        <CardContent>
+        <CardContent className="px-4">
           {renderContent()}
         </CardContent>
       </Card>
