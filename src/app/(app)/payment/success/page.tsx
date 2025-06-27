@@ -4,15 +4,15 @@
 import { useEffect, Suspense } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { useAuth } from '@/context/auth-context';
-import { doc, updateDoc, increment } from 'firebase/firestore';
+import { doc, updateDoc, increment, runTransaction } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { useToast } from '@/hooks/use-toast';
 import { Loader2, CheckCircle } from 'lucide-react';
-import type { UserPlan } from '@/lib/types';
+import type { UserPlan, UserProfile } from '@/lib/types';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 
-const PLAN_POINTS = {
-  'Free': 5,
+const PLAN_POINTS: Record<UserPlan, number> = {
+  'Free': 0, // Base, no points for free plan itself
   'Starter': 20,
   'Pro': 50,
   'Agency': 100,
@@ -42,26 +42,37 @@ function SuccessPageContent() {
     if (status === 'successful') {
       // Handle plan upgrade
       if (plan && (plan === 'Starter' || plan === 'Pro' || plan === 'Agency')) {
-        const upgradePromise = updateDoc(userDocRef, {
-          plan: plan,
-          leadsGeneratedThisMonth: 0, // Reset monthly quota
-          lastLeadGenerationMonth: new Date().toISOString().slice(0, 7)
+        runTransaction(db, async (transaction) => {
+          // Get the most recent user profile data within the transaction
+          const userDoc = await transaction.get(userDocRef);
+          if (!userDoc.exists()) {
+            throw new Error("User document does not exist.");
+          }
+          const currentProfile = userDoc.data() as UserProfile;
+
+          // Update the user's plan
+          transaction.update(userDocRef, {
+            plan: plan,
+            leadsGeneratedThisMonth: 0,
+            lastLeadGenerationMonth: new Date().toISOString().slice(0, 7)
+          });
+          
+          // Award referral points if applicable
+          if (currentProfile.referredBy) {
+            const oldPlan = currentProfile.plan;
+            // Calculate points based on the difference between new and old plan value
+            const pointsToAdd = PLAN_POINTS[plan] - (PLAN_POINTS[oldPlan] || 0);
+
+            if (pointsToAdd > 0) {
+              const referrerDocRef = doc(db, 'users', currentProfile.referredBy);
+              transaction.update(referrerDocRef, { leadPoints: increment(pointsToAdd) });
+            }
+          }
         }).then(() => {
           toast({
             title: 'Upgrade Successful!',
             description: `Your plan has been upgraded to ${plan}.`,
           });
-          // Award referral points if applicable
-          if (userProfile.referredBy) {
-            const oldPlan = userProfile.plan;
-            const pointsToAdd = PLAN_POINTS[plan] - PLAN_POINTS[oldPlan];
-            if (pointsToAdd > 0) {
-              const referrerDocRef = doc(db, 'users', userProfile.referredBy);
-              updateDoc(referrerDocRef, { leadPoints: increment(pointsToAdd) }).catch(err => {
-                 console.error("Failed to award referral points:", err);
-              });
-            }
-          }
           setTimeout(() => router.replace('/dashboard'), 3000);
         }).catch(error => {
           console.error("Error updating user plan: ", error);
