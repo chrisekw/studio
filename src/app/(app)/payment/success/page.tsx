@@ -50,12 +50,12 @@ function SuccessPageContent() {
           }
           const currentProfile = userDoc.data() as UserProfile;
 
-          // Update the user's plan
-          transaction.update(userDocRef, {
+          // Define the base update payload for the current user (the referee)
+          const userUpdatePayload: any = {
             plan: plan,
             leadsGeneratedThisMonth: 0,
             lastLeadGenerationMonth: new Date().toISOString().slice(0, 7)
-          });
+          };
           
           // Award referral points if applicable
           if (currentProfile.referredBy) {
@@ -64,10 +64,18 @@ function SuccessPageContent() {
             const pointsToAdd = PLAN_POINTS[plan] - (PLAN_POINTS[oldPlan] || 0);
 
             if (pointsToAdd > 0) {
+              // 1. Award points to the referrer
               const referrerDocRef = doc(db, 'users', currentProfile.referredBy);
               transaction.update(referrerDocRef, { leadPoints: increment(pointsToAdd) });
+              
+              // 2. Award points to the referee (themselves)
+              userUpdatePayload.leadPoints = increment(pointsToAdd);
             }
           }
+          
+          // Apply all updates for the current user in one go
+          transaction.update(userDocRef, userUpdatePayload);
+
         }).then(() => {
           toast({
             title: 'Upgrade Successful!',

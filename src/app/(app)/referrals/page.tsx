@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -60,9 +61,9 @@ export default function ReferralsPage() {
   return (
     <div className="space-y-8 py-6 animate-in fade-in-50">
       <div className="flex flex-col gap-2">
-        <h1 className="text-4xl font-headline font-bold tracking-tight">Referrals</h1>
+        <h1 className="text-4xl font-headline font-bold tracking-tight">Refer & Earn</h1>
         <p className="text-muted-foreground text-lg max-w-2xl">
-          Share your link to earn lead points when your friends sign up and subscribe.
+          Share your link and earn lead points when your friends sign up and subscribe. You both get rewarded!
         </p>
       </div>
       
@@ -101,7 +102,7 @@ export default function ReferralsPage() {
         <CardHeader>
           <CardTitle className="font-headline">Share Your Link</CardTitle>
           <CardDescription>
-            Copy your unique referral link and share it anywhere. You'll earn points for every new user who signs up and subscribes to a plan.
+            Copy your unique referral link and share it anywhere. When a friend subscribes, you both get rewarded with lead points.
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
@@ -122,11 +123,15 @@ export default function ReferralsPage() {
           </div>
             <div className="text-sm text-muted-foreground p-4 border rounded-lg bg-background/50">
                 <h4 className="font-semibold text-foreground mb-2">How it works:</h4>
-                <ul className="list-disc list-inside space-y-1">
-                    <li><span className="font-semibold text-primary">5 points</span> when a user signs up with your link.</li>
-                    <li><span className="font-semibold text-primary">20 points</span> when they subscribe to the Starter plan.</li>
-                    <li><span className="font-semibold text-primary">50 points</span> when they subscribe to the Pro plan.</li>
-                    <li><span className="font-semibold text-primary">100 points</span> when they subscribe to the Agency plan.</li>
+                <ul className="list-disc list-inside space-y-2">
+                    <li>You get <span className="font-semibold text-primary">5 points</span> when a friend signs up with your link.</li>
+                    <li>When your friend subscribes to a paid plan, <span className="font-semibold">you both earn bonus points</span>:
+                        <ul className="list-disc list-inside mt-1 ml-5">
+                            <li>Starter Plan: <span className="font-semibold text-primary">20 points</span> each</li>
+                            <li>Pro Plan: <span className="font-semibold text-primary">50 points</span> each</li>
+                            <li>Agency Plan: <span className="font-semibold text-primary">100 points</span> each</li>
+                        </ul>
+                    </li>
                 </ul>
             </div>
         </CardContent>
