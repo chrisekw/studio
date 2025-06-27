@@ -360,8 +360,7 @@ export function SearchForm({ setIsLoading, setLeads, setSearchQuery, setShowSugg
                   <FormLabel>Search Radius</FormLabel>
                   <FormControl>
                     <RadioGroup
-                      onValuecha
-nge={field.onChange}
+                      onValueChange={field.onChange}
                       defaultValue={field.value}
                       className="flex items-center space-x-4 pt-1"
                     >
