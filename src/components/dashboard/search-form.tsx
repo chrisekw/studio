@@ -82,13 +82,15 @@ const PLAN_LIMITS = {
   Agency: 5000, // Monthly
 };
 
+const maxLeadsPerSearch = 100;
+
 const formSchema = z.object({
   keyword: z.string().min(3, { message: 'Keyword must be at least 3 characters.' }),
   industry: z.string().optional(),
   numLeads: z.coerce
     .number({ invalid_type_error: 'Please enter a valid number.' })
     .min(1, { message: 'Please generate at least 1 lead.' })
-    .max(100, { message: `You can generate up to 100 leads per search.` }),
+    .max(maxLeadsPerSearch, { message: `You can generate up to ${maxLeadsPerSearch} leads per search.` }),
   radius: z.enum(['local', 'broad']),
   includeAddress: z.boolean().default(false).optional(),
   includeLinkedIn: z.boolean().default(false).optional(),
