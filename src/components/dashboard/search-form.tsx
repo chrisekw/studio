@@ -209,31 +209,35 @@ export function SearchForm({ setIsLoading, setLeads, setSearchQuery, setShowSugg
         let leadsToDeduct = leadsGeneratedCount;
         const updatePayload: any = {};
         
-        if (isFreePlan) {
-          const fromDaily = Math.min(leadsToDeduct, remainingPlanLeads);
-          leadsToDeduct -= fromDaily;
-          if (fromDaily > 0) {
-            updatePayload.leadsGeneratedToday = increment(fromDaily);
+        // 1. Deduct from plan quota
+        const planLeadsToUse = Math.min(leadsToDeduct, Math.max(0, remainingPlanLeads));
+        if (planLeadsToUse > 0) {
+          if (isFreePlan) {
+            updatePayload.leadsGeneratedToday = increment(planLeadsToUse);
             updatePayload.lastLeadGenerationDate = today;
-          }
-        } else {
-          const fromMonthly = Math.min(leadsToDeduct, remainingPlanLeads);
-          leadsToDeduct -= fromMonthly;
-          if (fromMonthly > 0) {
-            updatePayload.leadsGeneratedThisMonth = increment(fromMonthly);
+          } else {
+            updatePayload.leadsGeneratedThisMonth = increment(planLeadsToUse);
             updatePayload.lastLeadGenerationMonth = currentMonth;
           }
+          leadsToDeduct -= planLeadsToUse;
         }
-        
-        const fromPoints = leadsToDeduct > 0 ? Math.min(leadsToDeduct, leadPoints) : 0;
-        leadsToDeduct -= fromPoints;
-        if (fromPoints > 0) {
-          updatePayload.leadPoints = increment(-fromPoints);
+
+        // 2. Deduct from lead points
+        if (leadsToDeduct > 0) {
+          const pointsToUse = Math.min(leadsToDeduct, Math.max(0, leadPoints));
+          if (pointsToUse > 0) {
+            updatePayload.leadPoints = increment(-pointsToUse);
+            leadsToDeduct -= pointsToUse;
+          }
         }
-        
-        const fromAddons = leadsToDeduct > 0 ? Math.min(leadsToDeduct, addonCredits) : 0;
-        if (fromAddons > 0) {
-          updatePayload.addonCredits = increment(-fromAddons);
+
+        // 3. Deduct from add-on credits
+        if (leadsToDeduct > 0) {
+          const addonsToUse = Math.min(leadsToDeduct, Math.max(0, addonCredits));
+          if (addonsToUse > 0) {
+            updatePayload.addonCredits = increment(-addonsToUse);
+            leadsToDeduct -= addonsToUse;
+          }
         }
         
         if (Object.keys(updatePayload).length > 0) {

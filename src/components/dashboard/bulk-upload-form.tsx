@@ -148,25 +148,35 @@ export function BulkUploadForm({ setLeads, setIsLoading }: BulkUploadFormProps) 
             let leadsToDeduct = leadsGeneratedCount;
             const updatePayload: any = {};
 
-            const fromMonthly = Math.min(leadsToDeduct, remainingMonthly);
-            leadsToDeduct -= fromMonthly;
-            if(fromMonthly > 0) {
-                updatePayload.leadsGeneratedThisMonth = increment(fromMonthly);
-                updatePayload.lastLeadGenerationMonth = currentMonth;
+            // 1. Deduct from plan quota
+            const planLeadsToUse = Math.min(leadsToDeduct, Math.max(0, remainingMonthly));
+            if (planLeadsToUse > 0) {
+              updatePayload.leadsGeneratedThisMonth = increment(planLeadsToUse);
+              updatePayload.lastLeadGenerationMonth = currentMonth;
+              leadsToDeduct -= planLeadsToUse;
             }
             
-            const fromPoints = leadsToDeduct > 0 ? Math.min(leadsToDeduct, leadPoints) : 0;
-            leadsToDeduct -= fromPoints;
-            if (fromPoints > 0) {
-                updatePayload.leadPoints = increment(-fromPoints);
+            // 2. Deduct from lead points
+            if (leadsToDeduct > 0) {
+              const pointsToUse = Math.min(leadsToDeduct, Math.max(0, leadPoints));
+              if (pointsToUse > 0) {
+                updatePayload.leadPoints = increment(-pointsToUse);
+                leadsToDeduct -= pointsToUse;
+              }
+            }
+            
+            // 3. Deduct from add-on credits
+            if (leadsToDeduct > 0) {
+              const addonsToUse = Math.min(leadsToDeduct, Math.max(0, addonCredits));
+              if (addonsToUse > 0) {
+                updatePayload.addonCredits = increment(-addonsToUse);
+                leadsToDeduct -= addonsToUse;
+              }
             }
 
-            const fromAddons = leadsToDeduct > 0 ? Math.min(leadsToDeduct, addonCredits) : 0;
-            if (fromAddons > 0) {
-                updatePayload.addonCredits = increment(-fromAddons);
+            if (Object.keys(updatePayload).length > 0) {
+                await updateDoc(userDocRef, updatePayload);
             }
-
-            await updateDoc(userDocRef, updatePayload);
         }
 
         toast({
