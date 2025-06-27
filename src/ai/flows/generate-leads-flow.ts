@@ -8,8 +8,6 @@
  */
 import {ai} from '@/ai/genkit';
 import {z} from 'zod';
-import { adminDb } from '@/lib/firebase-admin';
-import { format } from 'date-fns';
 
 const LeadSchema = z.object({
   name: z.string().describe('The name of the company.'),
@@ -25,7 +23,6 @@ const GenerateLeadsInputSchema = z.object({
   numLeads: z.number().describe('The number of leads to generate.'),
   includeAddress: z.boolean().optional().describe('Whether to include the physical address.'),
   includeLinkedIn: z.boolean().optional().describe('Whether to include the LinkedIn profile URL.'),
-  userId: z.string().describe('The ID of the user requesting the leads.'),
 });
 export type GenerateLeadsInput = z.infer<typeof GenerateLeadsInputSchema>;
 
@@ -39,12 +36,7 @@ export async function generateLeads(input: GenerateLeadsInput): Promise<Generate
 const prompt = ai.definePrompt({
   name: 'generateLeadsPrompt',
   model: 'googleai/gemini-1.5-flash-latest',
-  input: {schema: z.object({
-    query: GenerateLeadsInputSchema.shape.query,
-    numLeads: GenerateLeadsInputSchema.shape.numLeads,
-    includeAddress: GenerateLeadsInputSchema.shape.includeAddress,
-    includeLinkedIn: GenerateLeadsInputSchema.shape.includeLinkedIn,
-  })},
+  input: {schema: GenerateLeadsInputSchema},
   output: {schema: GenerateLeadsOutputSchema},
   prompt: `You are an expert business development assistant. Your task is to generate a list of business leads based on a given query.
 
@@ -63,13 +55,6 @@ const prompt = ai.definePrompt({
   `,
 });
 
-const PLAN_LIMITS = {
-  Free: { daily: 5 },
-  Starter: { monthly: 200 },
-  Pro: { monthly: 1000 },
-  Agency: { monthly: Infinity }, // Essentially unlimited
-};
-
 const generateLeadsFlow = ai.defineFlow(
   {
     name: 'generateLeadsFlow',
@@ -77,74 +62,10 @@ const generateLeadsFlow = ai.defineFlow(
     outputSchema: GenerateLeadsOutputSchema,
   },
   async (input) => {
-    const { userId, numLeads, ...promptInput } = input;
-
     try {
-      const userRef = adminDb.collection('users').doc(userId);
-      const userSnap = await userRef.get();
-      if (!userSnap.exists) {
-        throw new Error('User profile not found. Please try again.');
-      }
-      const userPlan = userSnap.data()?.plan || 'Free';
-      const limits = PLAN_LIMITS[userPlan as keyof typeof PLAN_LIMITS];
-
-      const today = format(new Date(), 'yyyy-MM-dd');
-      const currentMonth = format(new Date(), 'yyyy-MM');
-      const userUsageRef = adminDb.collection('userLeadUsage').doc(userId);
-
-      // Check usage limits within a transaction
-      await adminDb.runTransaction(async (transaction) => {
-        const userUsageDoc = await transaction.get(userUsageRef);
-        const usageData = userUsageDoc.exists ? userUsageDoc.data() : {};
-
-        if (limits.daily) {
-          const dailyCount = usageData?.lastGeneratedDate === today ? usageData.dailyCount || 0 : 0;
-          if (dailyCount + numLeads > limits.daily) {
-            const remaining = limits.daily - dailyCount;
-            if (remaining <= 0) throw new Error(`LIMIT_EXCEEDED: You have exceeded your daily limit of ${limits.daily} leads. Please upgrade your plan or try again tomorrow.`);
-            throw new Error(`LIMIT_EXCEEDED: Your request exceeds your daily limit. You have ${remaining} leads remaining. Please request fewer leads or upgrade your plan.`);
-          }
-        } else if (limits.monthly) {
-          const monthlyCount = usageData?.lastGeneratedMonth === currentMonth ? usageData.monthlyCount || 0 : 0;
-          if (monthlyCount + numLeads > limits.monthly) {
-            const remaining = limits.monthly - monthlyCount;
-            if (remaining <= 0) throw new Error(`LIMIT_EXCEEDED: You have exceeded your monthly limit of ${limits.monthly} leads. Please upgrade your plan or wait until next month.`);
-            throw new Error(`LIMIT_EXCEEDED: Your request exceeds your monthly limit. You have ${remaining} leads remaining. Please request fewer leads or upgrade your plan.`);
-          }
-        }
-      });
-
-      const promptResult = await prompt(promptInput);
-
-      const { output } = promptResult;
-      if (!output) {
-        return [];
-      }
-      const generatedLeads = output;
-
-      // Update usage count in a transaction
-      await adminDb.runTransaction(async (transaction) => {
-        const userUsageDoc = await transaction.get(userUsageRef);
-        const usageData = userUsageDoc.exists ? userUsageDoc.data() : {};
-        const updates: { [key: string]: any } = {};
-
-        if (limits.daily) {
-          const dailyCount = usageData?.lastGeneratedDate === today ? usageData.dailyCount || 0 : 0;
-          updates.dailyCount = dailyCount + generatedLeads.length;
-          updates.lastGeneratedDate = today;
-        } else if (limits.monthly) {
-          const monthlyCount = usageData?.lastGeneratedMonth === currentMonth ? usageData.monthlyCount || 0 : 0;
-          updates.monthlyCount = monthlyCount + generatedLeads.length;
-          updates.lastGeneratedMonth = currentMonth;
-        }
-        transaction.set(userUsageRef, updates, { merge: true });
-      });
-
-      return generatedLeads;
+      const { output } = await prompt(input);
+      return output || [];
     } catch (error: any) {
-      if (error.message?.startsWith('LIMIT_EXCEEDED:')) {
-        throw error;
-      }
       console.error('Error in generateLeadsFlow:', error);
       // Re-throw the original error for better client-side debugging.
       throw new Error(error.message || 'An unexpected error occurred while generating leads.');

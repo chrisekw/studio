@@ -5,37 +5,32 @@ import { onAuthStateChanged, signOut, type User } from 'firebase/auth';
 import { doc, setDoc, onSnapshot } from 'firebase/firestore';
 import { auth, db } from '@/lib/firebase';
 import { Loader2 } from 'lucide-react';
-import type { UserProfile, UserUsage } from '@/lib/types';
+import type { UserProfile } from '@/lib/types';
 import { useToast } from '@/hooks/use-toast';
 
 interface AuthContextType {
   user: User | null;
   loading: boolean;
   userProfile: UserProfile | null;
-  userUsage: UserUsage | null;
 }
 
 const AuthContext = createContext<AuthContextType>({
   user: null,
   loading: true,
   userProfile: null,
-  userUsage: null,
 });
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
-  const [userUsage, setUserUsage] = useState<UserUsage | null>(null);
   const [loading, setLoading] = useState(true);
   const { toast } = useToast();
 
   useEffect(() => {
     let unsubscribeProfile: (() => void) | undefined;
-    let unsubscribeUsage: (() => void) | undefined;
 
     const unsubscribeAuth = onAuthStateChanged(auth, (user) => {
       if (unsubscribeProfile) unsubscribeProfile();
-      if (unsubscribeUsage) unsubscribeUsage();
 
       setUser(user);
       if (user) {
@@ -66,23 +61,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
               duration: 5000,
             });
             signOut(auth);
-          }
-        );
-
-        const userUsageRef = doc(db, 'userLeadUsage', user.uid);
-        unsubscribeUsage = onSnapshot(
-          userUsageRef,
-          (docSnap) => {
-            setUserUsage(docSnap.exists() ? (docSnap.data() as UserUsage) : {});
-          },
-          (error) => {
-            console.error('Firebase usage listener error:', error);
-            setUserUsage(null);
+            setLoading(false);
           }
         );
       } else {
         setUserProfile(null);
-        setUserUsage(null);
         setLoading(false);
       }
     });
@@ -90,7 +73,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return () => {
       unsubscribeAuth();
       if (unsubscribeProfile) unsubscribeProfile();
-      if (unsubscribeUsage) unsubscribeUsage();
     };
   }, [toast]);
 
@@ -103,7 +85,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }
 
   return (
-    <AuthContext.Provider value={{ user, loading, userProfile, userUsage }}>
+    <AuthContext.Provider value={{ user, loading, userProfile }}>
       {children}
     </AuthContext.Provider>
   );

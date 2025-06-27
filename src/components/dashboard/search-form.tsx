@@ -3,9 +3,8 @@
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
-import { useState, type Dispatch, type SetStateAction, useEffect, useMemo, useRef } from 'react';
+import { useState, type Dispatch, type SetStateAction, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
-import Link from 'next/link';
 import { Check, ChevronsUpDown, Loader2, Search } from 'lucide-react';
 
 import {
@@ -27,7 +26,6 @@ import { Input } from '@/components/ui/input';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
-import { ToastAction } from '@/components/ui/toast';
 import { generateLeads } from '@/ai/flows/generate-leads-flow';
 import type { Lead } from '@/lib/types';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -73,6 +71,18 @@ const industries = [
   { value: 'consulting', label: 'Consulting' },
 ];
 
+const formSchema = z.object({
+  keyword: z.string().min(3, { message: 'Keyword must be at least 3 characters.' }),
+  industry: z.string().optional(),
+  numLeads: z.coerce
+    .number({ invalid_type_error: 'Please enter a valid number.' })
+    .min(1, { message: 'Please generate at least 1 lead.' })
+    .max(100, { message: `You can generate up to 100 leads per search.` }),
+  radius: z.enum(['local', 'broad']),
+  includeAddress: z.boolean().default(false).optional(),
+  includeLinkedIn: z.boolean().default(false).optional(),
+});
+
 
 export function SearchForm({ setIsLoading, setLeads, setSearchQuery, setShowSuggestions, selectedSuggestion }: SearchFormProps) {
   const [isGenerating, setIsGenerating] = useState(false);
@@ -81,24 +91,6 @@ export function SearchForm({ setIsLoading, setLeads, setSearchQuery, setShowSugg
   const { toast } = useToast();
   const { user, userProfile } = useAuth();
   const defaultsSet = useRef(false);
-
-  const formSchema = useMemo(() => {
-    const planLimits = { Free: 5, Starter: 20, Pro: 50, Agency: 100 };
-    const planName = userProfile?.plan || 'Free';
-    const maxLeads = planLimits[planName as keyof typeof planLimits];
-    
-    return z.object({
-      keyword: z.string().min(3, { message: 'Keyword must be at least 3 characters.' }),
-      industry: z.string().optional(),
-      numLeads: z.coerce
-        .number({ invalid_type_error: 'Please enter a valid number.' })
-        .min(1, { message: 'Please generate at least 1 lead.' })
-        .max(maxLeads, { message: `Your ${planName} plan allows up to ${maxLeads} leads per search.` }),
-      radius: z.enum(['local', 'broad']),
-      includeAddress: z.boolean().default(false).optional(),
-      includeLinkedIn: z.boolean().default(false).optional(),
-    });
-  }, [userProfile]);
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -125,15 +117,6 @@ export function SearchForm({ setIsLoading, setLeads, setSearchQuery, setShowSugg
     }
   }, [selectedSuggestion, form]);
   
-  useEffect(() => {
-    // Reset numLeads if it exceeds the new limit when the plan changes
-    const planLimits = { Free: 5, Starter: 20, Pro: 50, Agency: 100 };
-    const planName = userProfile?.plan || 'Free';
-    const maxLeads = planLimits[planName as keyof typeof planLimits];
-    if (form.getValues('numLeads') > maxLeads) {
-      form.setValue('numLeads', maxLeads);
-    }
-  }, [userProfile, form]);
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
     if (!user) {
@@ -159,7 +142,6 @@ export function SearchForm({ setIsLoading, setLeads, setSearchQuery, setShowSugg
         numLeads: values.numLeads,
         includeAddress: values.includeAddress,
         includeLinkedIn: values.includeLinkedIn,
-        userId: user.uid,
       });
 
       const newLeads = result.map((lead, index) => ({
@@ -175,25 +157,11 @@ export function SearchForm({ setIsLoading, setLeads, setSearchQuery, setShowSugg
       });
     } catch (error: any) {
        console.error('Failed to generate leads:', error);
-       if (error.message?.startsWith('LIMIT_EXCEEDED:')) {
-        toast({
-          variant: 'destructive',
-          title: 'Plan Limit Reached',
-          description: error.message.replace('LIMIT_EXCEEDED: ', ''),
-          action: (
-            <ToastAction asChild altText="Upgrade Plan">
-              <Link href="/pricing">Upgrade</Link>
-            </ToastAction>
-          ),
-          duration: 10000,
-        });
-       } else {
-         toast({
-          variant: 'destructive',
-          title: 'An Error Occurred',
-          description: error.message || 'Failed to generate leads. Please try again.',
-        });
-       }
+       toast({
+        variant: 'destructive',
+        title: 'An Error Occurred',
+        description: error.message || 'Failed to generate leads. Please try again.',
+      });
     } finally {
       setIsGenerating(false);
       setIsLoading(false);
