@@ -55,6 +55,7 @@ interface SearchFormProps {
   setSearchQuery: Dispatch<SetStateAction<string>>;
   setShowSuggestions: Dispatch<SetStateAction<boolean>>;
   selectedSuggestion: string;
+  onQuotaExceeded: () => void;
 }
 
 const industries = [
@@ -97,7 +98,7 @@ const formSchema = z.object({
 });
 
 
-export function SearchForm({ setIsLoading, setLeads, setSearchQuery, setShowSuggestions, selectedSuggestion }: SearchFormProps) {
+export function SearchForm({ setIsLoading, setLeads, setSearchQuery, setShowSuggestions, selectedSuggestion, onQuotaExceeded }: SearchFormProps) {
   const [isGenerating, setIsGenerating] = useState(false);
   const [openIndustry, setOpenIndustry] = useState(false);
   const router = useRouter();
@@ -118,7 +119,6 @@ export function SearchForm({ setIsLoading, setLeads, setSearchQuery, setShowSugg
   
   const remainingPlanLeads = isFreePlan ? planLimit - leadsUsedToday : planLimit - leadsUsedThisMonth;
   const remainingLeads = remainingPlanLeads + addonCredits + leadPoints;
-  const userCanGenerate = remainingLeads > 0;
 
   let remainingLeadsText = '';
   if (userProfile) {
@@ -171,10 +171,15 @@ export function SearchForm({ setIsLoading, setLeads, setSearchQuery, setShowSugg
       return;
     }
 
+    if (remainingLeads <= 0) {
+      onQuotaExceeded();
+      return;
+    }
+
     if (values.numLeads > remainingLeads) {
       toast({
         variant: 'destructive',
-        title: isFreePlan ? 'Daily Limit Exceeded' : 'Monthly Limit Exceeded',
+        title: isFreePlan ? 'Daily Limit Exceeded' : 'Quota Exceeded',
         description: `You only have ${remainingLeads.toLocaleString()} leads remaining. Please request ${remainingLeads.toLocaleString()} or fewer.`,
       });
       return;
@@ -510,7 +515,7 @@ export function SearchForm({ setIsLoading, setLeads, setSearchQuery, setShowSugg
               </div>
             </div>
             <div className="flex justify-end">
-              <Button type="submit" disabled={isGenerating || !userCanGenerate} className="shadow-lg shadow-primary/30">
+              <Button type="submit" disabled={isGenerating} className="shadow-lg shadow-primary/30">
                 {isGenerating ? (
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                 ) : (

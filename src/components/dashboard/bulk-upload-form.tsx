@@ -20,6 +20,7 @@ import { db } from '@/lib/firebase';
 interface BulkUploadFormProps {
   setLeads: React.Dispatch<React.SetStateAction<Lead[]>>;
   setIsLoading: React.Dispatch<React.SetStateAction<boolean>>;
+  onQuotaExceeded: () => void;
 }
 
 const formSchema = z.object({
@@ -37,7 +38,7 @@ const PLAN_LIMITS = {
   Agency: 5000,
 };
 
-export function BulkUploadForm({ setLeads, setIsLoading }: BulkUploadFormProps) {
+export function BulkUploadForm({ setLeads, setIsLoading, onQuotaExceeded }: BulkUploadFormProps) {
   const { toast } = useToast();
   const { user, userProfile } = useAuth();
   const [isProcessing, setIsProcessing] = useState(false);
@@ -71,6 +72,11 @@ export function BulkUploadForm({ setLeads, setIsLoading }: BulkUploadFormProps) 
   async function onSubmit(values: z.infer<typeof formSchema>) {
     const file = values.file[0];
     if (!file || !user || !userProfile) return;
+
+    if (remainingLeads <= 0) {
+      onQuotaExceeded();
+      return;
+    }
 
     setIsProcessing(true);
     setIsLoading(true);
@@ -241,7 +247,7 @@ export function BulkUploadForm({ setLeads, setIsLoading }: BulkUploadFormProps) 
                 </FormItem>
               )}
             />
-            <Button type="submit" disabled={isProcessing || remainingLeads <=0} className="md:col-span-1 shadow-lg shadow-primary/30">
+            <Button type="submit" disabled={isProcessing} className="md:col-span-1 shadow-lg shadow-primary/30">
               {isProcessing ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <UploadCloud className="mr-2 h-4 w-4" />}
               {isProcessing ? 'Processing...' : 'Upload and Generate'}
             </Button>

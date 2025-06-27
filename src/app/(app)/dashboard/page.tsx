@@ -8,6 +8,7 @@ import { SuggestedQueries } from '@/components/dashboard/suggested-queries';
 import { useAuth } from '@/context/auth-context';
 import { BulkUploadForm } from '@/components/dashboard/bulk-upload-form';
 import { Separator } from '@/components/ui/separator';
+import { UpgradeBanner } from '@/components/dashboard/upgrade-banner';
 
 export default function DashboardPage() {
   const [leads, setLeads] = useState<Lead[]>([]);
@@ -16,9 +17,14 @@ export default function DashboardPage() {
   const [showSuggestions, setShowSuggestions] = useState(false);
   const [selectedSuggestion, setSelectedSuggestion] = useState('');
   const { userProfile } = useAuth();
+  const [showUpgradeBanner, setShowUpgradeBanner] = useState(false);
 
   const handleSuggestionClick = (suggestion: string) => {
     setSelectedSuggestion(suggestion);
+  };
+
+  const handleQuotaExceeded = () => {
+    setShowUpgradeBanner(true);
   };
 
   return (
@@ -38,11 +44,13 @@ export default function DashboardPage() {
             setSearchQuery={setSearchQuery}
             setShowSuggestions={setShowSuggestions}
             selectedSuggestion={selectedSuggestion}
+            onQuotaExceeded={handleQuotaExceeded}
           />
           {userProfile?.plan === 'Agency' && (
             <BulkUploadForm 
               setIsLoading={setIsLoading}
               setLeads={setLeads}
+              onQuotaExceeded={handleQuotaExceeded}
             />
           )}
         </div>
@@ -54,6 +62,8 @@ export default function DashboardPage() {
       <Separator className="my-8 bg-border/50" />
       
       <LeadsTable leads={leads} isLoading={isLoading} />
+
+      <UpgradeBanner isOpen={showUpgradeBanner} onClose={() => setShowUpgradeBanner(false)} />
     </div>
   );
 }
