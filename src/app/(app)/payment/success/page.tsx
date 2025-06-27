@@ -64,7 +64,7 @@ function SuccessPageContent() {
             const pointsToAdd = PLAN_POINTS[plan] - (PLAN_POINTS[oldPlan] || 0);
 
             if (pointsToAdd > 0) {
-              // First, add the points to the current user's (referee's) update payload
+              // Add points to the current user's (referee's) update payload
               userUpdatePayload.leadPoints = increment(pointsToAdd);
               
               // Then, update the referrer's points
