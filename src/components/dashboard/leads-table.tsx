@@ -143,8 +143,8 @@ export function LeadsTable({ leads, isLoading, userProfile }: LeadsTableProps) {
   const renderSkeleton = () => (
     <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3">
       {Array.from({ length: 6 }).map((_, index) => (
-        <Card key={index} className="flex flex-col border-primary/10 bg-black/20 backdrop-blur-xl">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+        <Card key={index} className="flex flex-col border-primary/10 bg-card/60 backdrop-blur-xl">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 p-4 pb-2">
              <div className="flex items-center gap-4">
               <Skeleton className="h-12 w-12 rounded-full" />
               <div className="space-y-2">
@@ -152,7 +152,7 @@ export function LeadsTable({ leads, isLoading, userProfile }: LeadsTableProps) {
               </div>
             </div>
           </CardHeader>
-          <CardContent className="flex-grow space-y-4 pt-4">
+          <CardContent className="flex-grow space-y-4 p-4 pt-4">
              <Skeleton className="h-4 w-40" />
              <Skeleton className="h-4 w-32" />
              <Skeleton className="h-4 w-28" />
@@ -165,7 +165,7 @@ export function LeadsTable({ leads, isLoading, userProfile }: LeadsTableProps) {
   const renderLeads = () => (
     <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3">
       {leads.map((lead) => (
-        <Card key={lead.id} className="border-primary/10 bg-black/20 backdrop-blur-xl transition-all hover:border-primary/30 flex flex-col">
+        <Card key={lead.id} className="border-primary/10 bg-card/60 backdrop-blur-xl transition-all hover:border-primary/30 flex flex-col">
           <CardHeader className="flex flex-row items-start justify-between space-y-0 p-4">
             <div className="flex items-center gap-4">
               <Avatar className="h-12 w-12 border-2 border-primary/20">
@@ -200,19 +200,19 @@ export function LeadsTable({ leads, isLoading, userProfile }: LeadsTableProps) {
           <CardContent className="flex-grow space-y-3 p-4 pt-0">
             {lead.email && (
               <div className="flex items-center text-sm text-muted-foreground">
-                <Mail className="mr-3 h-4 w-4 flex-shrink-0 text-accent" />
+                <Mail className="mr-3 h-4 w-4 flex-shrink-0 text-primary" />
                 <span className="truncate">{lead.email}</span>
               </div>
             )}
             {lead.phone && (
               <div className="flex items-center text-sm text-muted-foreground">
-                <Phone className="mr-3 h-4 w-4 flex-shrink-0 text-accent" />
+                <Phone className="mr-3 h-4 w-4 flex-shrink-0 text-primary" />
                 <span className="truncate">{lead.phone}</span>
               </div>
             )}
             {lead.address && (
               <div className="flex items-start text-sm text-muted-foreground">
-                <MapPin className="mr-3 mt-0.5 h-4 w-4 flex-shrink-0 text-accent" />
+                <MapPin className="mr-3 mt-0.5 h-4 w-4 flex-shrink-0 text-primary" />
                 <span>{lead.address}</span>
               </div>
             )}
