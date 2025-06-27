@@ -43,6 +43,7 @@ export function QuotaDisplay() {
   const planBadgeVariant = PLAN_BADGE_VARIANTS[plan];
   const isFreePlan = plan === 'Free';
   const planLimit = PLAN_LIMITS[plan];
+  const addonCredits = userProfile.addonCredits ?? 0;
 
   const today = new Date().toISOString().split('T')[0];
   const leadsUsedToday = (isFreePlan && userProfile.lastLeadGenerationDate === today) ? userProfile.leadsGeneratedToday ?? 0 : 0;
@@ -74,6 +75,12 @@ export function QuotaDisplay() {
                     <span>{leadsUsedThisMonth.toLocaleString()} / {planLimit.toLocaleString()}</span>
                 </div>
                 <Progress value={monthlyUsagePercentage} className="h-2" />
+                 {addonCredits > 0 && (
+                    <div className="text-xs text-sidebar-foreground/80 flex justify-between pt-2">
+                        <span>Add-on Credits</span>
+                        <span>{addonCredits.toLocaleString()}</span>
+                    </div>
+                )}
             </div>
         )}
 

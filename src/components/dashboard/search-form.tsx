@@ -6,7 +6,7 @@ import { z } from 'zod';
 import { useState, type Dispatch, type SetStateAction, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { Check, ChevronsUpDown, Loader2, Search } from 'lucide-react';
-import { doc, updateDoc } from 'firebase/firestore';
+import { doc, updateDoc, increment } from 'firebase/firestore';
 
 import {
   Card,
@@ -105,18 +105,16 @@ export function SearchForm({ setIsLoading, setLeads, setSearchQuery, setShowSugg
 
   const isFreePlan = userProfile?.plan === 'Free';
   const planLimit = userProfile ? PLAN_LIMITS[userProfile.plan] : 0;
+  const addonCredits = userProfile?.addonCredits ?? 0;
 
   const today = new Date().toISOString().split('T')[0];
   const currentMonth = new Date().toISOString().slice(0, 7); // YYYY-MM
 
   const leadsUsedToday = (isFreePlan && userProfile?.lastLeadGenerationDate === today) ? userProfile.leadsGeneratedToday ?? 0 : 0;
-  const remainingLeadsToday = isFreePlan ? planLimit - leadsUsedToday : Infinity;
-  
   const leadsUsedThisMonth = (!isFreePlan && userProfile?.lastLeadGenerationMonth === currentMonth) ? userProfile.leadsGeneratedThisMonth ?? 0 : 0;
-  const remainingLeadsThisMonth = !isFreePlan ? planLimit - leadsUsedThisMonth : Infinity;
-
-  const remainingLeads = isFreePlan ? remainingLeadsToday : remainingLeadsThisMonth;
-  const maxLeadsPerSearch = 100;
+  
+  const remainingMonthlyLeads = isFreePlan ? planLimit - leadsUsedToday : planLimit - leadsUsedThisMonth;
+  const remainingLeads = remainingMonthlyLeads + addonCredits;
   const userCanGenerate = remainingLeads > 0;
 
   const form = useForm<z.infer<typeof formSchema>>({
@@ -161,7 +159,7 @@ export function SearchForm({ setIsLoading, setLeads, setSearchQuery, setShowSugg
       toast({
         variant: 'destructive',
         title: isFreePlan ? 'Daily Limit Exceeded' : 'Monthly Limit Exceeded',
-        description: `You only have ${remainingLeads} leads remaining. Please request ${remainingLeads} or fewer.`,
+        description: `You only have ${remainingLeads.toLocaleString()} leads remaining. Please request ${remainingLeads.toLocaleString()} or fewer.`,
       });
       return;
     }
@@ -188,23 +186,33 @@ export function SearchForm({ setIsLoading, setLeads, setSearchQuery, setShowSugg
         id: `${Date.now()}-${index}`,
       }));
 
-      setLeads(newLeads);
-      
+      const leadsGeneratedCount = newLeads.length;
       const userDocRef = doc(db, 'users', user.uid);
+      
       if (isFreePlan) {
-        const newTotal = leadsUsedToday + newLeads.length;
         await updateDoc(userDocRef, {
-          leadsGeneratedToday: newTotal,
+          leadsGeneratedToday: increment(leadsGeneratedCount),
           lastLeadGenerationDate: today,
         });
       } else {
-         const newTotal = leadsUsedThisMonth + newLeads.length;
+        let leadsToDeduct = leadsGeneratedCount;
+        
+        // Use from monthly quota first
+        const fromMonthly = Math.min(leadsToDeduct, remainingMonthlyLeads);
+        leadsToDeduct -= fromMonthly;
+        
+        // Use remaining from addons
+        const fromAddons = leadsToDeduct > 0 ? Math.min(leadsToDeduct, addonCredits) : 0;
+
         await updateDoc(userDocRef, {
-          leadsGeneratedThisMonth: newTotal,
-          lastLeadGenerationMonth: currentMonth,
+            leadsGeneratedThisMonth: increment(fromMonthly),
+            addonCredits: increment(-fromAddons),
+            lastLeadGenerationMonth: currentMonth,
         });
       }
-
+      
+      setLeads(newLeads);
+      
       toast({
         title: 'Search Complete',
         description: `We've found ${newLeads.length} potential leads for "${values.keyword}".`,
@@ -266,7 +274,9 @@ export function SearchForm({ setIsLoading, setLeads, setSearchQuery, setShowSugg
                     </FormControl>
                      {userProfile && (
                        <FormDescription>
-                         {isFreePlan ? `You have ${remainingLeadsToday} leads remaining today.` : `You have ${remainingLeadsThisMonth.toLocaleString()} left.`}
+                         {isFreePlan 
+                          ? `You have ${remainingMonthlyLeads} leads remaining today.` 
+                          : `You have ${remainingMonthlyLeads.toLocaleString()} monthly + ${addonCredits.toLocaleString()} add-on leads.`}
                        </FormDescription>
                      )}
                     <FormMessage />

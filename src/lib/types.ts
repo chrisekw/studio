@@ -9,6 +9,7 @@ export interface UserProfile {
   lastLeadGenerationDate?: string;
   leadsGeneratedThisMonth?: number;
   lastLeadGenerationMonth?: string;
+  addonCredits?: number;
 }
 
 export interface Lead {

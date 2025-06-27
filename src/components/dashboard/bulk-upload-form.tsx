@@ -14,7 +14,7 @@ import { generateLeads } from '@/ai/flows/generate-leads-flow';
 import type { Lead, UserProfile } from '@/lib/types';
 import { Loader2, UploadCloud } from 'lucide-react';
 import { useAuth } from '@/context/auth-context';
-import { doc, updateDoc } from 'firebase/firestore';
+import { doc, updateDoc, increment } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 
 interface BulkUploadFormProps {
@@ -53,13 +53,17 @@ export function BulkUploadForm({ setLeads, setIsLoading }: BulkUploadFormProps) 
   const fileRef = form.register('file');
 
   const canBulkUpload = userProfile?.plan === 'Agency';
-  if (!canBulkUpload) {
+  if (!userProfile || !canBulkUpload) {
     return null;
   }
 
   const currentMonth = new Date().toISOString().slice(0, 7);
-  const leadsUsedThisMonth = (userProfile?.lastLeadGenerationMonth === currentMonth) ? userProfile.leadsGeneratedThisMonth ?? 0 : 0;
-  const remainingLeads = PLAN_LIMITS.Agency - leadsUsedThisMonth;
+  const leadsUsedThisMonth = (userProfile.lastLeadGenerationMonth === currentMonth) ? userProfile.leadsGeneratedThisMonth ?? 0 : 0;
+  const addonCredits = userProfile.addonCredits ?? 0;
+  const planLimit = PLAN_LIMITS.Agency;
+  
+  const remainingMonthly = planLimit - leadsUsedThisMonth;
+  const remainingLeads = remainingMonthly + addonCredits;
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
     const file = values.file[0];
@@ -94,7 +98,7 @@ export function BulkUploadForm({ setLeads, setIsLoading }: BulkUploadFormProps) 
             toast({
                 variant: 'destructive',
                 title: 'Quota Exceeded',
-                description: `This bulk job requires ${totalLeadsToGenerate} leads, but you have ${remainingLeads} remaining this month.`,
+                description: `This bulk job requires ${totalLeadsToGenerate.toLocaleString()} leads, but you have ${remainingLeads.toLocaleString()} remaining.`,
             });
             setIsProcessing(false);
             setIsLoading(false);
@@ -137,9 +141,17 @@ export function BulkUploadForm({ setLeads, setIsLoading }: BulkUploadFormProps) 
         
         // Final quota update
         const userDocRef = doc(db, 'users', user.uid);
-        const newTotal = leadsUsedThisMonth + leadsGeneratedCount;
+        
+        let leadsToDeduct = leadsGeneratedCount;
+        
+        const fromMonthly = Math.min(leadsToDeduct, remainingMonthly);
+        leadsToDeduct -= fromMonthly;
+        
+        const fromAddons = leadsToDeduct > 0 ? Math.min(leadsToDeduct, addonCredits) : 0;
+
         await updateDoc(userDocRef, {
-            leadsGeneratedThisMonth: newTotal,
+            leadsGeneratedThisMonth: increment(fromMonthly),
+            addonCredits: increment(-fromAddons),
             lastLeadGenerationMonth: currentMonth,
         });
 
@@ -173,7 +185,7 @@ export function BulkUploadForm({ setLeads, setIsLoading }: BulkUploadFormProps) 
         </CardTitle>
         <CardDescription>
           For Agency plans. Upload a CSV with a &quot;query&quot; column to generate leads in bulk.
-          You have {remainingLeads.toLocaleString()} leads remaining this month.
+          You have {remainingMonthly.toLocaleString()} monthly + {addonCredits.toLocaleString()} add-on leads remaining.
         </CardDescription>
       </CardHeader>
       <CardContent>

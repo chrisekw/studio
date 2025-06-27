@@ -50,6 +50,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                 lastLeadGenerationDate: '',
                 leadsGeneratedThisMonth: 0,
                 lastLeadGenerationMonth: '',
+                addonCredits: 0,
               };
               await setDoc(userDocRef, newProfile);
               setUserProfile(newProfile);
