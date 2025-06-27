@@ -2,7 +2,7 @@
 
 import { createContext, useContext, useEffect, useState, type ReactNode } from 'react';
 import { onAuthStateChanged, signOut, type User } from 'firebase/auth';
-import { doc, setDoc, onSnapshot, runTransaction, query, collection, where, getDocs, writeBatch, increment, arrayUnion } from 'firebase/firestore';
+import { doc, setDoc, onSnapshot, runTransaction, query, collection, where, getDocs, writeBatch, increment, arrayUnion, type DocumentReference } from 'firebase/firestore';
 import { auth, db } from '@/lib/firebase';
 import { Loader2 } from 'lucide-react';
 import type { UserProfile } from '@/lib/types';
@@ -48,6 +48,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                 const referralCode = sessionStorage.getItem('referralCode');
                 sessionStorage.removeItem('referralCode'); // Clean up immediately
 
+                let referrerDocRef: DocumentReference | null = null;
+                if (referralCode) {
+                    const usersRef = collection(db, 'users');
+                    const q = query(usersRef, where('referralCode', '==', referralCode));
+                    const querySnapshot = await getDocs(q);
+
+                    if (!querySnapshot.empty) {
+                        const referrerDoc = querySnapshot.docs[0];
+                        if (referrerDoc.id !== user.uid) { // Ensure user is not referring themselves
+                            referrerDocRef = referrerDoc.ref;
+                        }
+                    }
+                }
+
                 const newProfile: Omit<UserProfile, 'referredBy'> & { referredBy?: string } = {
                   email: user.email,
                   plan: 'Free',
@@ -64,35 +78,28 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                   leadPoints: 0,
                 };
                 
-                if (referralCode) {
-                  // Run a transaction to find referrer and create new user atomically
+                if (referrerDocRef) {
+                  // Use transaction to update referrer and create new user atomically
+                  newProfile.referredBy = referrerDocRef.id;
                   await runTransaction(db, async (transaction) => {
-                    const usersRef = collection(db, 'users');
-                    const q = query(usersRef, where('referralCode', '==', referralCode));
-                    const querySnapshot = await getDocs(q);
-                    
-                    let referrerId: string | null = null;
-                    if (!querySnapshot.empty) {
-                      const referrerDoc = querySnapshot.docs[0];
-                      // Ensure user is not referring themselves
-                      if (referrerDoc.id !== user.uid) {
-                        referrerId = referrerDoc.id;
-                      }
+                    // It's good practice to re-read the doc inside a transaction for safety
+                    const referrerDoc = await transaction.get(referrerDocRef!);
+                    if (!referrerDoc.exists()) {
+                      // Referrer was deleted between the initial query and now.
+                      delete newProfile.referredBy;
+                      transaction.set(userDocRef, newProfile);
+                      return;
                     }
+                    
+                    transaction.update(referrerDocRef!, {
+                      leadPoints: increment(5), // 5 points for a new Free user
+                      referrals: arrayUnion(user.uid),
+                    });
 
-                    if (referrerId) {
-                      newProfile.referredBy = referrerId;
-                      const referrerDocRef = doc(db, 'users', referrerId);
-                      transaction.update(referrerDocRef, {
-                        leadPoints: increment(5), // 5 points for a new Free user
-                        referrals: arrayUnion(user.uid),
-                      });
-                    }
-                    
                     transaction.set(userDocRef, newProfile);
                   });
                 } else {
-                  // No referral code, just create the new user
+                  // No valid referrer, just create the new user
                   await setDoc(userDocRef, newProfile);
                 }
                 
@@ -101,7 +108,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                  toast({
                     variant: 'destructive',
                     title: 'Could not create profile',
-                    description: 'There was an issue setting up your account. Please try again.',
+                    description: 'There was an issue setting up your account. This could be due to a permissions issue. Please try again.',
                   });
                  signOut(auth);
               }
