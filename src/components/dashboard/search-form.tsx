@@ -1,3 +1,4 @@
+
 'use client';
 
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -106,6 +107,7 @@ export function SearchForm({ setIsLoading, setLeads, setSearchQuery, setShowSugg
     defaultValues: {
       keyword: '',
       radius: 'broad',
+      numLeads: 10,
       includeAddress: true,
       includeLinkedIn: true,
     },
@@ -279,8 +281,6 @@ export function SearchForm({ setIsLoading, setLeads, setSearchQuery, setShowSugg
                         placeholder="10"
                         {...field}
                         onChange={event => field.onChange(+event.target.value)}
-                        max={Math.min(maxLeadsPerSearch, remainingLeads)}
-                        min={1}
                       />
                     </FormControl>
                      {userProfile && (
@@ -487,28 +487,14 @@ export function SearchForm({ setIsLoading, setLeads, setSearchQuery, setShowSugg
               </div>
             </div>
             <div className="flex justify-end">
-              <TooltipProvider>
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    {/* The div wrapper is for the tooltip to work even if button is disabled */}
-                    <div tabIndex={remainingLeads <= 0 ? 0 : -1}>
-                      <Button type="submit" disabled={isGenerating} className="shadow-lg shadow-primary/30">
-                        {isGenerating ? (
-                          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                        ) : (
-                          <Search className="mr-2 h-4 w-4" />
-                        )}
-                        Generate Leads
-                      </Button>
-                    </div>
-                  </TooltipTrigger>
-                  {remainingLeads <= 0 && (
-                    <TooltipContent>
-                      <p>You've reached your limit. Click to upgrade your plan.</p>
-                    </TooltipContent>
-                  )}
-                </Tooltip>
-              </TooltipProvider>
+              <Button type="submit" disabled={isGenerating} className="shadow-lg shadow-primary/30">
+                {isGenerating ? (
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                ) : (
+                  <Search className="mr-2 h-4 w-4" />
+                )}
+                Generate Leads
+              </Button>
             </div>
           </form>
         </Form>
