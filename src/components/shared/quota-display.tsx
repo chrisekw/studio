@@ -44,6 +44,7 @@ export function QuotaDisplay() {
   const isFreePlan = plan === 'Free';
   const planLimit = PLAN_LIMITS[plan];
   const addonCredits = userProfile.addonCredits ?? 0;
+  const leadPoints = userProfile.leadPoints ?? 0;
 
   const today = new Date().toISOString().split('T')[0];
   const leadsUsedToday = (isFreePlan && userProfile.lastLeadGenerationDate === today) ? userProfile.leadsGeneratedToday ?? 0 : 0;
@@ -67,6 +68,12 @@ export function QuotaDisplay() {
                     <span>{leadsUsedToday} / {planLimit}</span>
                 </div>
                 <Progress value={dailyUsagePercentage} className="h-2" />
+                {leadPoints > 0 && (
+                    <div className="text-xs text-sidebar-foreground/80 flex justify-between pt-2">
+                        <span>Referral Points</span>
+                        <span>{leadPoints.toLocaleString()}</span>
+                    </div>
+                )}
             </div>
         ) : (
              <div className="px-2 pt-1 space-y-2">
@@ -75,6 +82,12 @@ export function QuotaDisplay() {
                     <span>{leadsUsedThisMonth.toLocaleString()} / {planLimit.toLocaleString()}</span>
                 </div>
                 <Progress value={monthlyUsagePercentage} className="h-2" />
+                 {leadPoints > 0 && (
+                    <div className="text-xs text-sidebar-foreground/80 flex justify-between pt-2">
+                        <span>Referral Points</span>
+                        <span>{leadPoints.toLocaleString()}</span>
+                    </div>
+                )}
                  {addonCredits > 0 && (
                     <div className="text-xs text-sidebar-foreground/80 flex justify-between pt-2">
                         <span>Add-on Credits</span>

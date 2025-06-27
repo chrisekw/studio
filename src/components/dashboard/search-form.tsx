@@ -108,6 +108,7 @@ export function SearchForm({ setIsLoading, setLeads, setSearchQuery, setShowSugg
   const isFreePlan = userProfile?.plan === 'Free';
   const planLimit = userProfile ? PLAN_LIMITS[userProfile.plan] : 0;
   const addonCredits = userProfile?.addonCredits ?? 0;
+  const leadPoints = userProfile?.leadPoints ?? 0;
 
   const today = new Date().toISOString().split('T')[0];
   const currentMonth = new Date().toISOString().slice(0, 7); // YYYY-MM
@@ -115,9 +116,22 @@ export function SearchForm({ setIsLoading, setLeads, setSearchQuery, setShowSugg
   const leadsUsedToday = (isFreePlan && userProfile?.lastLeadGenerationDate === today) ? userProfile.leadsGeneratedToday ?? 0 : 0;
   const leadsUsedThisMonth = (!isFreePlan && userProfile?.lastLeadGenerationMonth === currentMonth) ? userProfile.leadsGeneratedThisMonth ?? 0 : 0;
   
-  const remainingMonthlyLeads = isFreePlan ? planLimit - leadsUsedToday : planLimit - leadsUsedThisMonth;
-  const remainingLeads = remainingMonthlyLeads + addonCredits;
+  const remainingPlanLeads = isFreePlan ? planLimit - leadsUsedToday : planLimit - leadsUsedThisMonth;
+  const remainingLeads = remainingPlanLeads + addonCredits + leadPoints;
   const userCanGenerate = remainingLeads > 0;
+
+  let remainingLeadsText = '';
+  if (userProfile) {
+    const parts = [];
+    if (isFreePlan) {
+      parts.push(`${remainingPlanLeads} daily`);
+    } else {
+      parts.push(`${remainingPlanLeads.toLocaleString()} monthly`);
+    }
+    if (leadPoints > 0) parts.push(`${leadPoints.toLocaleString()} points`);
+    if (addonCredits > 0) parts.push(`${addonCredits.toLocaleString()} add-ons`);
+    remainingLeadsText = `You have ${parts.join(' + ')} leads remaining.`;
+  }
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -190,28 +204,41 @@ export function SearchForm({ setIsLoading, setLeads, setSearchQuery, setShowSugg
       }));
 
       const leadsGeneratedCount = newLeads.length;
-      const userDocRef = doc(db, 'users', user.uid);
-      
-      if (isFreePlan) {
-        await updateDoc(userDocRef, {
-          leadsGeneratedToday: increment(leadsGeneratedCount),
-          lastLeadGenerationDate: today,
-        });
-      } else {
+      if (leadsGeneratedCount > 0) {
+        const userDocRef = doc(db, 'users', user.uid);
         let leadsToDeduct = leadsGeneratedCount;
+        const updatePayload: any = {};
         
-        // Use from monthly quota first
-        const fromMonthly = Math.min(leadsToDeduct, remainingMonthlyLeads);
-        leadsToDeduct -= fromMonthly;
+        if (isFreePlan) {
+          const fromDaily = Math.min(leadsToDeduct, remainingPlanLeads);
+          leadsToDeduct -= fromDaily;
+          if (fromDaily > 0) {
+            updatePayload.leadsGeneratedToday = increment(fromDaily);
+            updatePayload.lastLeadGenerationDate = today;
+          }
+        } else {
+          const fromMonthly = Math.min(leadsToDeduct, remainingPlanLeads);
+          leadsToDeduct -= fromMonthly;
+          if (fromMonthly > 0) {
+            updatePayload.leadsGeneratedThisMonth = increment(fromMonthly);
+            updatePayload.lastLeadGenerationMonth = currentMonth;
+          }
+        }
         
-        // Use remaining from addons
+        const fromPoints = leadsToDeduct > 0 ? Math.min(leadsToDeduct, leadPoints) : 0;
+        leadsToDeduct -= fromPoints;
+        if (fromPoints > 0) {
+          updatePayload.leadPoints = increment(-fromPoints);
+        }
+        
         const fromAddons = leadsToDeduct > 0 ? Math.min(leadsToDeduct, addonCredits) : 0;
-
-        await updateDoc(userDocRef, {
-            leadsGeneratedThisMonth: increment(fromMonthly),
-            addonCredits: increment(-fromAddons),
-            lastLeadGenerationMonth: currentMonth,
-        });
+        if (fromAddons > 0) {
+          updatePayload.addonCredits = increment(-fromAddons);
+        }
+        
+        if (Object.keys(updatePayload).length > 0) {
+          await updateDoc(userDocRef, updatePayload);
+        }
       }
       
       setLeads(newLeads);
@@ -277,9 +304,7 @@ export function SearchForm({ setIsLoading, setLeads, setSearchQuery, setShowSugg
                     </FormControl>
                      {userProfile && (
                        <FormDescription>
-                         {isFreePlan 
-                          ? `You have ${remainingMonthlyLeads} leads remaining today.` 
-                          : `You have ${remainingMonthlyLeads.toLocaleString()} monthly + ${addonCredits.toLocaleString()} add-on leads.`}
+                         {remainingLeadsText}
                        </FormDescription>
                      )}
                     <FormMessage />

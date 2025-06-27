@@ -60,10 +60,13 @@ export function BulkUploadForm({ setLeads, setIsLoading }: BulkUploadFormProps) 
   const currentMonth = new Date().toISOString().slice(0, 7);
   const leadsUsedThisMonth = (userProfile.lastLeadGenerationMonth === currentMonth) ? userProfile.leadsGeneratedThisMonth ?? 0 : 0;
   const addonCredits = userProfile.addonCredits ?? 0;
+  const leadPoints = userProfile.leadPoints ?? 0;
   const planLimit = PLAN_LIMITS.Agency;
   
   const remainingMonthly = planLimit - leadsUsedThisMonth;
-  const remainingLeads = remainingMonthly + addonCredits;
+  const remainingLeads = remainingMonthly + addonCredits + leadPoints;
+
+  const remainingLeadsText = `You have ${remainingMonthly.toLocaleString()} monthly + ${leadPoints.toLocaleString()} points + ${addonCredits.toLocaleString()} add-on leads remaining.`
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
     const file = values.file[0];
@@ -140,20 +143,31 @@ export function BulkUploadForm({ setLeads, setIsLoading }: BulkUploadFormProps) 
         }
         
         // Final quota update
-        const userDocRef = doc(db, 'users', user.uid);
-        
-        let leadsToDeduct = leadsGeneratedCount;
-        
-        const fromMonthly = Math.min(leadsToDeduct, remainingMonthly);
-        leadsToDeduct -= fromMonthly;
-        
-        const fromAddons = leadsToDeduct > 0 ? Math.min(leadsToDeduct, addonCredits) : 0;
+        if (leadsGeneratedCount > 0) {
+            const userDocRef = doc(db, 'users', user.uid);
+            let leadsToDeduct = leadsGeneratedCount;
+            const updatePayload: any = {};
 
-        await updateDoc(userDocRef, {
-            leadsGeneratedThisMonth: increment(fromMonthly),
-            addonCredits: increment(-fromAddons),
-            lastLeadGenerationMonth: currentMonth,
-        });
+            const fromMonthly = Math.min(leadsToDeduct, remainingMonthly);
+            leadsToDeduct -= fromMonthly;
+            if(fromMonthly > 0) {
+                updatePayload.leadsGeneratedThisMonth = increment(fromMonthly);
+                updatePayload.lastLeadGenerationMonth = currentMonth;
+            }
+            
+            const fromPoints = leadsToDeduct > 0 ? Math.min(leadsToDeduct, leadPoints) : 0;
+            leadsToDeduct -= fromPoints;
+            if (fromPoints > 0) {
+                updatePayload.leadPoints = increment(-fromPoints);
+            }
+
+            const fromAddons = leadsToDeduct > 0 ? Math.min(leadsToDeduct, addonCredits) : 0;
+            if (fromAddons > 0) {
+                updatePayload.addonCredits = increment(-fromAddons);
+            }
+
+            await updateDoc(userDocRef, updatePayload);
+        }
 
         toast({
           title: 'Bulk Upload Complete',
@@ -185,7 +199,7 @@ export function BulkUploadForm({ setLeads, setIsLoading }: BulkUploadFormProps) 
         </CardTitle>
         <CardDescription>
           For Agency plans. Upload a CSV with a &quot;query&quot; column to generate leads in bulk.
-          You have {remainingMonthly.toLocaleString()} monthly + {addonCredits.toLocaleString()} add-on leads remaining.
+          {remainingLeadsText}
         </CardDescription>
       </CardHeader>
       <CardContent>
