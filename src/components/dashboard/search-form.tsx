@@ -178,8 +178,8 @@ export function SearchForm({ setIsLoading, setLeads, setSearchQuery, setShowSugg
       const result = await generateLeads({
         query: fullQuery,
         numLeads: values.numLeads,
-        includeAddress: values.includeAddress,
-        includeLinkedIn: values.includeLinkedIn,
+        includeAddress: !isFreePlan && (values.includeAddress ?? false),
+        includeLinkedIn: !isFreePlan && (values.includeLinkedIn ?? false),
         extractContactInfo: !isFreePlan,
       });
 
@@ -390,40 +390,74 @@ export function SearchForm({ setIsLoading, setLeads, setSearchQuery, setShowSugg
                   control={form.control}
                   name="includeAddress"
                   render={({ field }) => (
-                    <FormItem className="flex flex-row items-center space-x-3 space-y-0 rounded-md border p-3">
-                      <FormControl>
-                        <Checkbox
-                          checked={field.value}
-                          onCheckedChange={field.onChange}
-                          id="includeAddress"
-                        />
-                      </FormControl>
-                      <div className="space-y-1 leading-none">
-                        <label htmlFor="includeAddress" className="cursor-pointer text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
-                          Include Address
-                        </label>
-                      </div>
-                    </FormItem>
+                     <TooltipProvider>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <div tabIndex={isFreePlan ? 0 : -1} className="w-full">
+                            <FormItem className="flex flex-row items-center space-x-3 space-y-0 rounded-md border p-3 h-full">
+                              <FormControl>
+                                <Checkbox
+                                  checked={field.value}
+                                  onCheckedChange={field.onChange}
+                                  id="includeAddress"
+                                  disabled={isFreePlan}
+                                />
+                              </FormControl>
+                              <div className="space-y-1 leading-none">
+                                <label
+                                  htmlFor="includeAddress"
+                                  className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                                >
+                                  Include Address
+                                </label>
+                              </div>
+                            </FormItem>
+                          </div>
+                        </TooltipTrigger>
+                        {isFreePlan && (
+                          <TooltipContent>
+                            <p>Address is a premium feature. Please upgrade.</p>
+                          </TooltipContent>
+                        )}
+                      </Tooltip>
+                    </TooltipProvider>
                   )}
                 />
                 <FormField
                   control={form.control}
                   name="includeLinkedIn"
                   render={({ field }) => (
-                    <FormItem className="flex flex-row items-center space-x-3 space-y-0 rounded-md border p-3">
-                      <FormControl>
-                        <Checkbox
-                          checked={field.value}
-                          onCheckedChange={field.onChange}
-                          id="includeLinkedIn"
-                        />
-                      </FormControl>
-                      <div className="space-y-1 leading-none">
-                        <label htmlFor="includeLinkedIn" className="cursor-pointer text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
-                          Include LinkedIn
-                        </label>
-                      </div>
-                    </FormItem>
+                     <TooltipProvider>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <div tabIndex={isFreePlan ? 0 : -1} className="w-full">
+                            <FormItem className="flex flex-row items-center space-x-3 space-y-0 rounded-md border p-3 h-full">
+                              <FormControl>
+                                <Checkbox
+                                  checked={field.value}
+                                  onCheckedChange={field.onChange}
+                                  id="includeLinkedIn"
+                                  disabled={isFreePlan}
+                                />
+                              </FormControl>
+                              <div className="space-y-1 leading-none">
+                                <label
+                                  htmlFor="includeLinkedIn"
+                                  className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                                >
+                                  Include LinkedIn
+                                </label>
+                              </div>
+                            </FormItem>
+                          </div>
+                        </TooltipTrigger>
+                        {isFreePlan && (
+                          <TooltipContent>
+                            <p>LinkedIn is a premium feature. Please upgrade.</p>
+                          </TooltipContent>
+                        )}
+                      </Tooltip>
+                    </TooltipProvider>
                   )}
                 />
               </div>
