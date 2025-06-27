@@ -1,3 +1,4 @@
+
 'use client';
 
 import {
@@ -114,13 +115,13 @@ export function SavedLeadsTable({ leads }: SavedLeadsTableProps) {
           Export All
         </Button>
       </div>
-      <div className="border rounded-lg">
+      <div className="border rounded-lg w-full overflow-x-auto">
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead>Company</TableHead>
-              <TableHead>Tags</TableHead>
-              <TableHead className="hidden md:table-cell">Contact</TableHead>
+              <TableHead className="w-[40%]">Company</TableHead>
+              <TableHead className="w-[30%]">Tags</TableHead>
+              <TableHead className="hidden md:table-cell w-[30%]">Contact</TableHead>
               <TableHead>
                 <span className="sr-only">Actions</span>
               </TableHead>
@@ -130,22 +131,22 @@ export function SavedLeadsTable({ leads }: SavedLeadsTableProps) {
             {leads.length > 0 ? (
               leads.map((lead) => (
                 <TableRow key={lead.id}>
-                  <TableCell className="font-medium">
-                    <div>{lead.name}</div>
-                    {lead.description && <p className="text-xs text-muted-foreground italic mt-1 max-w-xs truncate">{lead.description}</p>}
+                  <TableCell className="font-medium align-top">
+                    <div className="font-semibold">{lead.name}</div>
+                    {lead.description && <p className="text-xs text-muted-foreground italic mt-1 whitespace-normal break-words">{lead.description}</p>}
                   </TableCell>
-                  <TableCell>
+                  <TableCell className="align-top">
                     <div className="flex gap-1 flex-wrap">
                       {lead.tags?.map((tag, i) => (
                         <Badge key={i} variant="secondary">{tag}</Badge>
                       ))}
                     </div>
                   </TableCell>
-                  <TableCell className="hidden md:table-cell">
-                    <div className="text-sm text-muted-foreground">{lead.email}</div>
-                    <div className="text-xs text-muted-foreground/80">{lead.phone}</div>
+                  <TableCell className="hidden md:table-cell align-top">
+                    <div className="text-sm text-muted-foreground break-all">{lead.email}</div>
+                    <div className="text-xs text-muted-foreground/80 mt-1">{lead.phone}</div>
                   </TableCell>
-                  <TableCell>
+                  <TableCell className="align-top">
                     <AlertDialog>
                       <DropdownMenu>
                         <DropdownMenuTrigger asChild>
