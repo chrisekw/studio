@@ -50,12 +50,24 @@ export function LoginForm() {
       });
       router.push('/dashboard');
     } catch (error: any) {
-      let description = 'An unexpected error occurred. Please try again.';
-      if (error.code === 'auth/invalid-credential') {
-        description = 'Invalid email or password. Please try again.';
-      } else if (error.code === 'auth/operation-not-allowed') {
-        description = 'Email/password sign-in is not enabled. Please enable it in the Authentication > Sign-in method tab of your Firebase console.';
+      console.error('Login error:', error);
+      let description = error.message || 'An unexpected error occurred. Please try again.';
+      
+      switch (error.code) {
+        case 'auth/invalid-credential':
+          description = 'Invalid email or password. Please check your credentials and try again.';
+          break;
+        case 'auth/operation-not-allowed':
+          description = 'Email/password sign-in is not enabled. Please enable it in the Authentication > Sign-in method tab of your Firebase console.';
+          break;
+        case 'auth/too-many-requests':
+          description = 'Access to this account has been temporarily disabled due to many failed login attempts. You can try again later or reset your password.';
+          break;
+        case 'auth/user-disabled':
+            description = 'This user account has been disabled.';
+            break;
       }
+      
       toast({
         variant: 'destructive',
         title: 'Login Failed',
@@ -77,10 +89,11 @@ export function LoginForm() {
       });
       router.push('/dashboard');
     } catch (error: any) {
+      console.error('Google Sign-In Error:', error);
       toast({
         variant: 'destructive',
         title: 'Google Sign-In Failed',
-        description: 'Could not sign in with Google. Please try again.',
+        description: error.message || 'Could not sign in with Google. Please try again.',
       });
     } finally {
       setIsGoogleLoading(false);

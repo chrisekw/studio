@@ -50,12 +50,21 @@ export function RegisterForm() {
       });
       router.push('/dashboard');
     } catch (error: any) {
-      let description = 'An unexpected error occurred. Please try again.';
-      if (error.code === 'auth/email-already-in-use') {
-        description = 'This email is already associated with an account.';
-      } else if (error.code === 'auth/operation-not-allowed') {
-        description = 'Email/password sign-in is not enabled. Please enable it in the Authentication > Sign-in method tab of your Firebase console.';
+      console.error('Registration error:', error);
+      let description = error.message || 'An unexpected error occurred. Please try again.';
+
+      switch (error.code) {
+        case 'auth/email-already-in-use':
+          description = 'This email is already associated with an account. Please log in or use a different email.';
+          break;
+        case 'auth/operation-not-allowed':
+          description = 'Email/password sign-up is not enabled. Please check your Firebase console settings.';
+          break;
+        case 'auth/weak-password':
+          description = 'The password is too weak. Please use a stronger password (at least 6 characters).';
+          break;
       }
+      
       toast({
         variant: 'destructive',
         title: 'Registration Failed',
@@ -77,10 +86,11 @@ export function RegisterForm() {
       });
       router.push('/dashboard');
     } catch (error: any) {
+      console.error('Google Sign-Up error:', error);
       toast({
         variant: 'destructive',
         title: 'Google Sign-Up Failed',
-        description: 'Could not sign up with Google. Please try again.',
+        description: error.message || 'Could not sign up with Google. Please try again.',
       });
     } finally {
       setIsGoogleLoading(false);
