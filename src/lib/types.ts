@@ -28,4 +28,6 @@ export interface Lead {
   address?: string;
   linkedin?: string;
   tags?: string[];
+  score?: number;
+  scoreRationale?: string;
 }

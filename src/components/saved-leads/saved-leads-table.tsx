@@ -36,14 +36,24 @@ import {
   AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
 import { useToast } from '@/hooks/use-toast';
-import { Badge } from '../ui/badge';
+import { Badge, type BadgeProps } from '../ui/badge';
 import { useAuth } from '@/context/auth-context';
 import { db } from '@/lib/firebase';
 import { doc, increment, runTransaction } from 'firebase/firestore';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '../ui/tooltip';
 
 interface SavedLeadsTableProps {
   leads: Lead[];
 }
+
+const getScoreBadgeVariant = (score?: number): BadgeProps['variant'] => {
+  if (score === undefined) return 'secondary';
+  if (score >= 80) return 'accent';
+  if (score >= 50) return 'default';
+  if (score > 0) return 'secondary';
+  return 'destructive';
+};
+
 
 export function SavedLeadsTable({ leads }: SavedLeadsTableProps) {
   const { user } = useAuth();
@@ -78,7 +88,7 @@ export function SavedLeadsTable({ leads }: SavedLeadsTableProps) {
   const exportToCSV = () => {
     if (leads.length === 0) return;
     let csvContent = "data:text/csv;charset=utf-8,";
-    csvContent += "Name,Description,Email,Phone,Website,Address,LinkedIn,Tags\n";
+    csvContent += "Name,Description,Email,Phone,Website,Address,LinkedIn,Tags,Score,Score Rationale\n";
     leads.forEach(lead => {
       const tags = lead.tags ? lead.tags.join(';') : '';
       const row = [
@@ -89,8 +99,10 @@ export function SavedLeadsTable({ leads }: SavedLeadsTableProps) {
         lead.website,
         lead.address,
         lead.linkedin,
-        `"${tags}"`
-      ].map(field => `"${(field || '').replace(/"/g, '""')}"`).join(',');
+        `"${tags}"`,
+        lead.score,
+        lead.scoreRationale,
+      ].map(field => `"${(String(field ?? '')).replace(/"/g, '""')}"`).join(',');
       csvContent += row + "\r\n";
     });
     
@@ -119,9 +131,10 @@ export function SavedLeadsTable({ leads }: SavedLeadsTableProps) {
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead className="w-full">Company</TableHead>
-              <TableHead>Tags</TableHead>
+              <TableHead className="w-[40%]">Company</TableHead>
               <TableHead className="hidden md:table-cell">Contact</TableHead>
+              <TableHead>Tags</TableHead>
+              <TableHead>Score</TableHead>
               <TableHead>
                 <span className="sr-only">Actions</span>
               </TableHead>
@@ -135,6 +148,10 @@ export function SavedLeadsTable({ leads }: SavedLeadsTableProps) {
                     <div className="font-semibold text-base">{lead.name}</div>
                     {lead.description && <p className="text-sm text-muted-foreground italic mt-1 whitespace-normal break-words">{lead.description}</p>}
                   </TableCell>
+                  <TableCell className="hidden md:table-cell align-top">
+                    <div className="text-sm text-muted-foreground break-all">{lead.email}</div>
+                    <div className="text-sm text-muted-foreground mt-1">{lead.phone}</div>
+                  </TableCell>
                   <TableCell className="align-top">
                     <div className="flex gap-1 flex-wrap">
                       {lead.tags?.map((tag, i) => (
@@ -142,9 +159,23 @@ export function SavedLeadsTable({ leads }: SavedLeadsTableProps) {
                       ))}
                     </div>
                   </TableCell>
-                  <TableCell className="hidden md:table-cell align-top">
-                    <div className="text-sm text-muted-foreground break-all">{lead.email}</div>
-                    <div className="text-sm text-muted-foreground mt-1">{lead.phone}</div>
+                  <TableCell className="align-top text-center">
+                    {lead.score !== undefined ? (
+                      <TooltipProvider>
+                        <Tooltip>
+                          <TooltipTrigger>
+                            <Badge variant={getScoreBadgeVariant(lead.score)}>
+                              {lead.score}
+                            </Badge>
+                          </TooltipTrigger>
+                          <TooltipContent>
+                            <p className="max-w-xs">{lead.scoreRationale}</p>
+                          </TooltipContent>
+                        </Tooltip>
+                      </TooltipProvider>
+                    ) : (
+                      <span className="text-muted-foreground">-</span>
+                    )}
                   </TableCell>
                   <TableCell className="align-top">
                     <AlertDialog>
@@ -187,7 +218,7 @@ export function SavedLeadsTable({ leads }: SavedLeadsTableProps) {
               ))
             ) : (
               <TableRow>
-                <TableCell colSpan={4} className="text-center h-24">
+                <TableCell colSpan={5} className="text-center h-24">
                   No saved leads.
                 </TableCell>
               </TableRow>

@@ -37,11 +37,20 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '../ui/
 import { useAuth } from '@/context/auth-context';
 import { collection, doc, increment, runTransaction } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
+import { Badge, type BadgeProps } from '../ui/badge';
 
 interface LeadsTableProps {
   leads: Lead[];
   isLoading: boolean;
 }
+
+const getScoreBadgeVariant = (score?: number): BadgeProps['variant'] => {
+  if (score === undefined) return 'secondary';
+  if (score >= 80) return 'accent';
+  if (score >= 50) return 'default';
+  if (score > 0) return 'secondary';
+  return 'destructive';
+};
 
 export function LeadsTable({ leads, isLoading }: LeadsTableProps) {
   const { toast } = useToast();
@@ -128,7 +137,7 @@ export function LeadsTable({ leads, isLoading }: LeadsTableProps) {
   const exportToCSV = () => {
     if (leads.length === 0) return;
     let csvContent = 'data:text/csv;charset=utf-8,';
-    csvContent += 'Name,Description,Email,Phone,Website,Address,LinkedIn\n';
+    csvContent += 'Name,Description,Email,Phone,Website,Address,LinkedIn,Score,Score Rationale\n';
     leads.forEach((lead) => {
        const row = [
         lead.name,
@@ -138,7 +147,9 @@ export function LeadsTable({ leads, isLoading }: LeadsTableProps) {
         lead.website,
         lead.address,
         lead.linkedin,
-      ].map(field => `"${(field || '').replace(/"/g, '""')}"`).join(',');
+        lead.score,
+        lead.scoreRationale
+      ].map(field => `"${(String(field ?? '')).replace(/"/g, '""')}"`).join(',');
       csvContent += row + '\r\n';
     });
 
@@ -183,18 +194,37 @@ export function LeadsTable({ leads, isLoading }: LeadsTableProps) {
     <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3">
       {leads.map((lead) => (
         <Card key={lead.id} className="border-primary/10 bg-card/60 backdrop-blur-xl transition-all hover:border-primary/30 flex flex-col">
-          <CardHeader className="p-4 pb-2 flex flex-row items-start justify-between space-y-0">
-            <div className="flex items-center gap-4">
-              <Avatar className="h-12 w-12 border-2 border-primary/20">
-                <AvatarImage
-                  src={`https://logo.clearbit.com/${getHostname(lead.website)}`}
-                  alt={`${lead.name} logo`}
-                  data-ai-hint="company logo"
-                />
-                <AvatarFallback>{lead.name.split(' ').map(n => n[0]).join('').substring(0,2)}</AvatarFallback>
-              </Avatar>
-              <CardTitle className="text-lg font-medium">{lead.name}</CardTitle>
+          <CardHeader className="p-4 pb-2 flex-row items-start justify-between space-y-0">
+            <div className="flex-1 space-y-2">
+                <div className="flex items-center gap-4">
+                    <Avatar className="h-12 w-12 border-2 border-primary/20">
+                        <AvatarImage
+                        src={`https://logo.clearbit.com/${getHostname(lead.website)}`}
+                        alt={`${lead.name} logo`}
+                        data-ai-hint="company logo"
+                        />
+                        <AvatarFallback>{lead.name.split(' ').map(n => n[0]).join('').substring(0,2)}</AvatarFallback>
+                    </Avatar>
+                    <CardTitle className="text-lg font-medium">{lead.name}</CardTitle>
+                </div>
+                {lead.score !== undefined && (
+                <TooltipProvider>
+                    <Tooltip>
+                    <TooltipTrigger asChild>
+                        <div className="flex items-center gap-2 cursor-default pl-16">
+                        <Badge variant={getScoreBadgeVariant(lead.score)} className="text-xs font-bold">
+                            Lead Score: {lead.score}
+                        </Badge>
+                        </div>
+                    </TooltipTrigger>
+                    <TooltipContent>
+                        <p className="max-w-xs">{lead.scoreRationale || 'No rationale provided.'}</p>
+                    </TooltipContent>
+                    </Tooltip>
+                </TooltipProvider>
+                )}
             </div>
+
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button aria-haspopup="true" size="icon" variant="ghost">

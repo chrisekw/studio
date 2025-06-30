@@ -103,6 +103,7 @@ export function BulkUploadForm({ setLeads, setIsLoading, remainingLeads, remaini
 
         let allNewLeads: Lead[] = [];
         let leadsGeneratedCount = 0;
+        const isProOrAgency = userProfile.plan === 'Pro' || userProfile.plan === 'Agency';
 
         for (let i = 0; i < queries.length; i++) {
           const query = queries[i];
@@ -114,6 +115,8 @@ export function BulkUploadForm({ setLeads, setIsLoading, remainingLeads, remaini
               extractContactInfo: true, 
               includeAddress: userProfile.defaultIncludeAddress,
               includeLinkedIn: userProfile.defaultIncludeLinkedIn,
+              includeDescription: true,
+              scoreLeads: isProOrAgency,
             });
 
             const newLeads = result.map((lead, index) => ({

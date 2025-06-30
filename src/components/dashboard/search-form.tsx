@@ -166,6 +166,8 @@ export function SearchForm({ setIsLoading, setLeads, setSearchQuery, setShowSugg
     try {
       const industryLabel = industries.find(i => i.value === values.industry)?.label;
       const fullQuery = values.industry && industryLabel ? `${values.keyword} in the ${industryLabel} industry` : values.keyword;
+      const isProOrAgency = userProfile.plan === 'Pro' || userProfile.plan === 'Agency';
+      
       const result = await generateLeads({
         query: fullQuery,
         numLeads: values.numLeads,
@@ -173,6 +175,7 @@ export function SearchForm({ setIsLoading, setLeads, setSearchQuery, setShowSugg
         includeLinkedIn: !isFreePlan && (values.includeLinkedIn ?? false),
         extractContactInfo: true,
         includeDescription: !isFreePlan,
+        scoreLeads: isProOrAgency,
       });
 
       const newLeads = result.map((lead, index) => ({

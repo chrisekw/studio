@@ -8,6 +8,7 @@
  */
 import {ai} from '@/ai/genkit';
 import {z} from 'zod';
+import { scoreLead } from './score-lead-flow';
 
 const LeadSchema = z.object({
   name: z.string().describe('The name of the company.'),
@@ -17,6 +18,8 @@ const LeadSchema = z.object({
   website: z.string().describe('The full company website URL, including the protocol (e.g., https://example.com).'),
   address: z.string().optional().describe('The physical address of the company.'),
   linkedin: z.string().optional().describe('The specific LinkedIn company profile URL (e.g., https://www.linkedin.com/company/company-name).'),
+  score: z.number().optional().describe('A lead quality score from 1-100.'),
+  scoreRationale: z.string().optional().describe('The rationale behind the lead score.'),
 });
 
 const GenerateLeadsInputSchema = z.object({
@@ -26,6 +29,7 @@ const GenerateLeadsInputSchema = z.object({
   includeLinkedIn: z.boolean().optional().describe('Whether to include the LinkedIn profile URL.'),
   extractContactInfo: z.boolean().optional().describe('Whether to extract email and phone number. Defaults to true.'),
   includeDescription: z.boolean().optional().describe('Whether to include a one-line company description. Defaults to false.'),
+  scoreLeads: z.boolean().optional().describe('Whether to perform AI-based scoring on the leads. Defaults to false.'),
 });
 export type GenerateLeadsInput = z.infer<typeof GenerateLeadsInputSchema>;
 
@@ -76,7 +80,25 @@ const generateLeadsFlow = ai.defineFlow(
   async (input) => {
     try {
       const { output } = await prompt(input);
-      return output || [];
+      let leads = output || [];
+
+      if (input.scoreLeads && leads.length > 0) {
+        // If scoring is requested, run the scoring flow for each lead in parallel.
+        const scoringPromises = leads.map(lead => 
+          scoreLead({ 
+            name: lead.name, 
+            description: lead.description, 
+            website: lead.website 
+          }).then(scoreOutput => ({
+            ...lead,
+            score: scoreOutput.score,
+            scoreRationale: scoreOutput.rationale,
+          }))
+        );
+        leads = await Promise.all(scoringPromises);
+      }
+
+      return leads;
     } catch (error: any) {
       console.error('Error in generateLeadsFlow:', error);
       // Re-throw the original error for better client-side debugging.
