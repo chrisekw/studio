@@ -17,15 +17,30 @@ export default function AppLayout({
   const router = useRouter();
 
   useEffect(() => {
-    // Wait for auth state to resolve, then redirect if no user.
-    if (!loading && !user) {
+    if (loading) return; // Wait for auth state to resolve.
+
+    if (!user) {
       router.replace('/login');
+      return;
+    }
+
+    // Check if the user signed up with email/password and is not verified.
+    const isEmailPasswordUser = user.providerData.some(
+      (provider) => provider.providerId === 'password'
+    );
+
+    if (isEmailPasswordUser && !user.emailVerified) {
+      router.replace('/verify-email');
     }
   }, [user, loading, router]);
+  
+  const isEmailPasswordUser = user?.providerData.some(
+    (provider) => provider.providerId === 'password'
+  );
 
-  // Show a loader while auth state is resolving or if there's no user
-  // (which means a redirect is in progress).
-  if (loading || !user) {
+  // Show a loader while auth state is resolving, or if there's no user,
+  // or if an unverified user is being redirected.
+  if (loading || !user || (isEmailPasswordUser && !user.emailVerified)) {
     return (
       <div className="flex h-screen w-full items-center justify-center">
         <Loader2 className="h-8 w-8 animate-spin" />
@@ -33,7 +48,7 @@ export default function AppLayout({
     );
   }
 
-  // If user exists, render the app layout
+  // If user exists and is verified (or a social login), render the app layout.
   return (
     <SidebarProvider>
       <AppSidebar />

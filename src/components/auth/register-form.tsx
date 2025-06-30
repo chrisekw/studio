@@ -5,7 +5,7 @@ import { useForm } from 'react-hook-form';
 import { z } from 'zod';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useState, useEffect } from 'react';
-import { createUserWithEmailAndPassword, GoogleAuthProvider, signInWithPopup } from 'firebase/auth';
+import { createUserWithEmailAndPassword, GoogleAuthProvider, signInWithPopup, sendEmailVerification } from 'firebase/auth';
 
 import { Button } from '@/components/ui/button';
 import {
@@ -56,12 +56,14 @@ export function RegisterForm() {
       sessionStorage.setItem('referralCode', values.referralCode);
     }
     try {
-      await createUserWithEmailAndPassword(auth, values.email, values.password);
+      const userCredential = await createUserWithEmailAndPassword(auth, values.email, values.password);
+      await sendEmailVerification(userCredential.user);
+      
       toast({
         title: 'Account Created',
-        description: "Welcome to Leadgen! We're redirecting you to the dashboard.",
+        description: "Please check your email to verify your account.",
       });
-      router.push('/dashboard');
+      router.push('/verify-email');
     } catch (error: any) {
       sessionStorage.removeItem('referralCode'); // Clean up on failure
       console.error('Registration error:', error);

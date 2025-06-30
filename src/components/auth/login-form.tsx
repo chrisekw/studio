@@ -5,7 +5,7 @@ import { useForm } from 'react-hook-form';
 import { z } from 'zod';
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
-import { signInWithEmailAndPassword, GoogleAuthProvider, signInWithPopup } from 'firebase/auth';
+import { signInWithEmailAndPassword, GoogleAuthProvider, signInWithPopup, sendEmailVerification } from 'firebase/auth';
 
 import { Button } from '@/components/ui/button';
 import {
@@ -43,7 +43,23 @@ export function LoginForm() {
   async function onSubmit(values: z.infer<typeof formSchema>) {
     setIsLoading(true);
     try {
-      await signInWithEmailAndPassword(auth, values.email, values.password);
+      const userCredential = await signInWithEmailAndPassword(auth, values.email, values.password);
+      const user = userCredential.user;
+
+      const isEmailPasswordUser = user.providerData.some(
+        (provider) => provider.providerId === 'password'
+      );
+
+      if (isEmailPasswordUser && !user.emailVerified) {
+        await sendEmailVerification(user);
+        toast({
+          title: 'Verification Required',
+          description: "We've sent a new verification link to your email. Please verify to continue.",
+        });
+        router.push('/verify-email');
+        return;
+      }
+
       toast({
         title: 'Login Successful',
         description: "Welcome back to Leadgen! Redirecting you to the dashboard.",
