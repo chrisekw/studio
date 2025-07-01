@@ -102,7 +102,7 @@ export function RegisterForm() {
       await signInWithPopup(auth, provider);
       toast({
         title: 'Account Created',
-        description: "Welcome to Leadgen! We're redirecting you to the dashboard.",
+        description: "Welcome to LeadGen! We're redirecting you to the dashboard.",
       });
       router.push('/dashboard');
     } catch (error: any) {

@@ -12,7 +12,7 @@ const spaceGrotesk = Space_Grotesk({
 });
 
 export const metadata: Metadata = {
-  title: "Leadgen",
+  title: "LeadGen",
   description: "Generate business leads with the power of AI.",
 };
 

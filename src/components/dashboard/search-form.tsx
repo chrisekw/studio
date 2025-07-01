@@ -10,13 +10,6 @@ import { Check, ChevronsUpDown, Loader2, Search } from 'lucide-react';
 import { doc, updateDoc, increment } from 'firebase/firestore';
 
 import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from '@/components/ui/card';
-import {
   Form,
   FormControl,
   FormDescription,
@@ -248,30 +241,31 @@ export function SearchForm({ setIsLoading, setLeads, setSearchQuery, setShowSugg
   }
 
   return (
-    <Card className="border-primary/20 bg-background/30 backdrop-blur-lg">
-      <CardHeader>
-        <CardTitle className="font-headline text-2xl">Generate New Leads</CardTitle>
-        <CardDescription>
-          Enter a keyword and select options to start scraping for potential business leads.
-        </CardDescription>
-      </CardHeader>
-      <CardContent>
-        <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="grid gap-6">
-            <div className="grid md:grid-cols-3 gap-4">
-              <FormField
-                control={form.control}
-                name="keyword"
-                render={({ field }) => (
-                  <FormItem className="md:col-span-2">
-                    <FormLabel>Keyword or Company Type</FormLabel>
-                    <FormControl>
-                      <Input placeholder="e.g., 'SaaS companies in New York'" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+    <Form {...form}>
+      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
+        <div>
+          <FormLabel className="text-base font-semibold">Search Criteria</FormLabel>
+          <FormDescription>Start by telling us who you&apos;re looking for.</FormDescription>
+          <div className="pt-4">
+             <FormField
+              control={form.control}
+              name="keyword"
+              render={({ field }) => (
+                <FormItem>
+                  <FormControl>
+                    <Input placeholder="e.g., 'SaaS companies in New York focusing on AI'" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          </div>
+        </div>
+
+        <div>
+          <FormLabel className="text-base font-semibold">Configuration</FormLabel>
+          <FormDescription>Fine-tune the search parameters to match your needs.</FormDescription>
+           <div className="grid md:grid-cols-2 gap-x-6 gap-y-4 pt-4">
                <FormField
                 control={form.control}
                 name="numLeads"
@@ -286,24 +280,16 @@ export function SearchForm({ setIsLoading, setLeads, setSearchQuery, setShowSugg
                         onChange={event => field.onChange(+event.target.value)}
                       />
                     </FormControl>
-                     {userProfile && (
-                       <FormDescription>
-                         {remainingLeadsText}
-                       </FormDescription>
-                     )}
                     <FormMessage />
                   </FormItem>
                 )}
               />
-            </div>
-
-            <div className="grid md:grid-cols-2 gap-4">
-                <FormField
+              <FormField
                 control={form.control}
                 name="industry"
                 render={({ field }) => (
                   <FormItem className="flex flex-col">
-                    <FormLabel>Industry / Category (Optional)</FormLabel>
+                    <FormLabel>Industry / Category</FormLabel>
                     <TooltipProvider>
                       <Tooltip>
                         <TooltipTrigger asChild>
@@ -374,134 +360,139 @@ export function SearchForm({ setIsLoading, setLeads, setSearchQuery, setShowSugg
                   </FormItem>
                 )}
               />
-              <FormField
-              control={form.control}
-              name="radius"
-              render={({ field }) => (
-                <FormItem className="space-y-3">
-                  <FormLabel>Search Radius</FormLabel>
-                  <FormControl>
-                    <RadioGroup
-                      onValueChange={field.onChange}
-                      defaultValue={field.value}
-                      className="flex items-center space-x-4 pt-1"
-                    >
-                      <FormItem className="flex items-center space-x-2 space-y-0">
-                        <FormControl>
-                          <RadioGroupItem value="broad" id="r-broad"/>
-                        </FormControl>
-                        <FormLabel className="font-normal" htmlFor="r-broad">
-                          Broad Geography
-                        </FormLabel>
-                      </FormItem>
-                      <FormItem className="flex items-center space-x-2 space-y-0">
-                        <FormControl>
-                          <RadioGroupItem value="local" id="r-local" />
-                        </FormControl>
-                        <FormLabel className="font-normal" htmlFor="r-local">
-                          Local Focus
-                        </FormLabel>
-                      </FormItem>
-                    </RadioGroup>
-                  </FormControl>
-                </FormItem>
-              )}
-            />
-            </div>
-            
-            
-            <div>
-              <FormLabel>Additional Information</FormLabel>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-2">
-                <FormField
-                  control={form.control}
-                  name="includeAddress"
-                  render={({ field }) => (
-                     <TooltipProvider>
-                      <Tooltip>
-                        <TooltipTrigger asChild>
-                          <div tabIndex={isFreePlan ? 0 : -1} className="w-full">
-                            <FormItem className="flex flex-row items-center space-x-3 space-y-0 rounded-md border p-3 h-full">
-                              <FormControl>
-                                <Checkbox
-                                  checked={field.value}
-                                  onCheckedChange={field.onChange}
-                                  id="includeAddress"
-                                  disabled={isFreePlan}
-                                />
-                              </FormControl>
-                              <div className="space-y-1 leading-none">
-                                <label
-                                  htmlFor="includeAddress"
-                                  className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
-                                >
-                                  Include Address
-                                </label>
-                              </div>
-                            </FormItem>
-                          </div>
-                        </TooltipTrigger>
-                        {isFreePlan && (
-                          <TooltipContent>
-                            <p>Address is a premium feature. Please upgrade.</p>
-                          </TooltipContent>
-                        )}
-                      </Tooltip>
-                    </TooltipProvider>
-                  )}
-                />
-                <FormField
-                  control={form.control}
-                  name="includeLinkedIn"
-                  render={({ field }) => (
-                     <TooltipProvider>
-                      <Tooltip>
-                        <TooltipTrigger asChild>
-                          <div tabIndex={isFreePlan ? 0 : -1} className="w-full">
-                            <FormItem className="flex flex-row items-center space-x-3 space-y-0 rounded-md border p-3 h-full">
-                              <FormControl>
-                                <Checkbox
-                                  checked={field.value}
-                                  onCheckedChange={field.onChange}
-                                  id="includeLinkedIn"
-                                  disabled={isFreePlan}
-                                />
-                              </FormControl>
-                              <div className="space-y-1 leading-none">
-                                <label
-                                  htmlFor="includeLinkedIn"
-                                  className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
-                                >
-                                  Include LinkedIn
-                                </label>
-                              </div>
-                            </FormItem>
-                          </div>
-                        </TooltipTrigger>
-                        {isFreePlan && (
-                          <TooltipContent>
-                            <p>LinkedIn is a premium feature. Please upgrade.</p>
-                          </TooltipContent>
-                        )}
-                      </Tooltip>
-                    </TooltipProvider>
-                  )}
-                />
-              </div>
-            </div>
-            <div className="flex justify-end">
-              <Button type="submit" disabled={isGenerating} className="shadow-lg shadow-primary/30">
-                {isGenerating ? (
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                ) : (
-                  <Search className="mr-2 h-4 w-4" />
+               <FormField
+                control={form.control}
+                name="radius"
+                render={({ field }) => (
+                  <FormItem className="space-y-3 md:col-span-2">
+                    <FormLabel>Search Radius</FormLabel>
+                    <FormControl>
+                      <RadioGroup
+                        onValueChange={field.onChange}
+                        defaultValue={field.value}
+                        className="flex items-center space-x-4 pt-1"
+                      >
+                        <FormItem className="flex items-center space-x-2 space-y-0">
+                          <FormControl>
+                            <RadioGroupItem value="broad" id="r-broad"/>
+                          </FormControl>
+                          <FormLabel className="font-normal" htmlFor="r-broad">
+                            Broad Geography
+                          </FormLabel>
+                        </FormItem>
+                        <FormItem className="flex items-center space-x-2 space-y-0">
+                          <FormControl>
+                            <RadioGroupItem value="local" id="r-local" />
+                          </FormControl>
+                          <FormLabel className="font-normal" htmlFor="r-local">
+                            Local Focus
+                          </FormLabel>
+                        </FormItem>
+                      </RadioGroup>
+                    </FormControl>
+                  </FormItem>
                 )}
-                Generate Leads
-              </Button>
+              />
+           </div>
+           {userProfile && (
+              <p className="text-sm text-muted-foreground pt-4">
+                {remainingLeadsText}
+              </p>
+            )}
+        </div>
+
+        <div>
+            <FormLabel className="text-base font-semibold">Data Enrichment</FormLabel>
+            <FormDescription>Select additional data points to include for each lead. (Paid plans only)</FormDescription>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-4">
+            <FormField
+                control={form.control}
+                name="includeAddress"
+                render={({ field }) => (
+                    <TooltipProvider>
+                    <Tooltip>
+                        <TooltipTrigger asChild>
+                        <div tabIndex={isFreePlan ? 0 : -1} className="w-full">
+                            <FormItem className="flex flex-row items-center space-x-3 space-y-0 rounded-md border p-4 h-full hover:border-primary/50 transition-colors">
+                            <FormControl>
+                                <Checkbox
+                                checked={field.value}
+                                onCheckedChange={field.onChange}
+                                id="includeAddress"
+                                disabled={isFreePlan}
+                                />
+                            </FormControl>
+                            <div className="space-y-1 leading-none">
+                                <label
+                                htmlFor="includeAddress"
+                                className="font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                                >
+                                Include Address
+                                </label>
+                            </div>
+                            </FormItem>
+                        </div>
+                        </TooltipTrigger>
+                        {isFreePlan && (
+                        <TooltipContent>
+                            <p>Address is a premium feature. Please upgrade.</p>
+                        </TooltipContent>
+                        )}
+                    </Tooltip>
+                    </TooltipProvider>
+                )}
+                />
+                <FormField
+                control={form.control}
+                name="includeLinkedIn"
+                render={({ field }) => (
+                    <TooltipProvider>
+                    <Tooltip>
+                        <TooltipTrigger asChild>
+                        <div tabIndex={isFreePlan ? 0 : -1} className="w-full">
+                            <FormItem className="flex flex-row items-center space-x-3 space-y-0 rounded-md border p-4 h-full hover:border-primary/50 transition-colors">
+                            <FormControl>
+                                <Checkbox
+                                checked={field.value}
+                                onCheckedChange={field.onChange}
+                                id="includeLinkedIn"
+                                disabled={isFreePlan}
+                                />
+                            </FormControl>
+                            <div className="space-y-1 leading-none">
+                                <label
+                                htmlFor="includeLinkedIn"
+                                className="font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                                >
+                                Include LinkedIn
+                                </label>
+                            </div>
+                            </FormItem>
+                        </div>
+                        </TooltipTrigger>
+                        {isFreePlan && (
+                        <TooltipContent>
+                            <p>LinkedIn is a premium feature. Please upgrade.</p>
+                        </TooltipContent>
+                        )}
+                    </Tooltip>
+                    </TooltipProvider>
+                )}
+                />
             </div>
-          </form>
-        </Form>
-      </CardContent>
-    </Card>
+        </div>
+
+        <div className="flex justify-end">
+            <Button type="submit" size="lg" disabled={isGenerating} className="w-full sm:w-auto shadow-lg shadow-primary/30">
+            {isGenerating ? (
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+            ) : (
+                <Search className="mr-2 h-4 w-4" />
+            )}
+            Generate Leads
+            </Button>
+        </div>
+      </form>
+    </Form>
   );
 }

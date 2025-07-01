@@ -61,7 +61,7 @@ export function AppSidebar() {
               strokeLinejoin="round"
             />
           </svg>
-          <span className={state === 'collapsed' ? 'hidden': 'font-headline text-lg font-bold'}>Leadgen</span>
+          <span className={state === 'collapsed' ? 'hidden': 'font-headline text-lg font-bold'}>LeadGen</span>
         </Link>
       </SidebarHeader>
       <SidebarContent>

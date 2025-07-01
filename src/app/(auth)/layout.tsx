@@ -78,7 +78,7 @@ export default function AuthLayout({
                     strokeLinejoin="round"
                 />
                 </svg>
-                <span className="text-3xl font-headline font-bold text-foreground">Leadgen</span>
+                <span className="text-3xl font-headline font-bold text-foreground">LeadGen</span>
             </Link>
             {children}
         </div>
@@ -125,7 +125,7 @@ export default function AuthLayout({
                 strokeLinejoin="round"
             />
             </svg>
-            <span className="text-4xl font-headline font-bold text-foreground">Leadgen</span>
+            <span className="text-4xl font-headline font-bold text-foreground">LeadGen</span>
         </Link>
         <Image 
           src="https://placehold.co/600x400.png"

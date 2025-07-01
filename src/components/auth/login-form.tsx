@@ -62,7 +62,7 @@ export function LoginForm() {
 
       toast({
         title: 'Login Successful',
-        description: "Welcome back to Leadgen! Redirecting you to the dashboard.",
+        description: "Welcome back to LeadGen! Redirecting you to the dashboard.",
       });
       router.push('/dashboard');
     } catch (error: any) {
@@ -101,7 +101,7 @@ export function LoginForm() {
       await signInWithPopup(auth, provider);
       toast({
         title: 'Login Successful',
-        description: "Welcome to Leadgen! You're now signed in with Google.",
+        description: "Welcome to LeadGen! You're now signed in with Google.",
       });
       router.push('/dashboard');
     } catch (error: any) {

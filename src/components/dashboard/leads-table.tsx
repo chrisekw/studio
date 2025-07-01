@@ -156,7 +156,7 @@ export function LeadsTable({ leads, isLoading }: LeadsTableProps) {
     const encodedUri = encodeURI(csvContent);
     const link = document.createElement('a');
     link.setAttribute('href', encodedUri);
-    link.setAttribute('download', 'leadgen_leads.csv');
+    link.setAttribute('download', 'LeadGen_leads.csv');
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);

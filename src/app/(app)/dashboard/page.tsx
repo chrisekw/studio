@@ -30,14 +30,14 @@ export default function DashboardPage() {
   return (
     <div className="space-y-8 py-6 animate-in fade-in-50">
       <div className="flex flex-col gap-2">
-        <h1 className="text-4xl font-headline font-bold tracking-tight">Dashboard</h1>
+        <h1 className="text-4xl font-headline font-bold tracking-tight">AI Lead Finder</h1>
         <p className="text-muted-foreground text-lg max-w-2xl">
-          Welcome back. Generate, view, and manage your leads with the power of AI.
+          Describe your ideal customer, and let our AI build you a list of qualified leads.
         </p>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 items-start">
-        <div className="lg:col-span-2 space-y-8">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-12 items-start">
+        <div className="lg:col-span-2 space-y-12">
           <SearchForm
             setIsLoading={setIsLoading}
             setLeads={setLeads}

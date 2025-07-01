@@ -84,7 +84,7 @@ export function AppHeader() {
                 strokeLinejoin="round"
             />
             </svg>
-          <span className="font-headline text-lg font-bold">Leadgen</span>
+          <span className="font-headline text-lg font-bold">LeadGen</span>
         </Link>
       </div>
 
