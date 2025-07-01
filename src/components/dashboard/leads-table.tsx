@@ -28,7 +28,7 @@ import {
   MapPin,
   Linkedin,
   SearchX,
-  FileCsv,
+  FileSpreadsheet,
   Rocket,
   Database,
   ChevronDown,
@@ -374,7 +374,7 @@ export function LeadsTable({ leads, isLoading, progress, progressMessage }: Lead
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end">
             <DropdownMenuItem onClick={exportToCSV} disabled={!canExport}>
-              <FileCsv className="mr-2 h-4 w-4" />
+              <FileSpreadsheet className="mr-2 h-4 w-4" />
               <span>Export to CSV</span>
             </DropdownMenuItem>
              <DropdownMenuSeparator />
