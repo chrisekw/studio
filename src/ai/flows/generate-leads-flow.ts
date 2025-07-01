@@ -8,7 +8,6 @@
  */
 import {ai} from '@/ai/genkit';
 import {z} from 'zod';
-import { scoreLead } from './score-lead-flow';
 
 const LeadSchema = z.object({
   name: z.string().describe('The name of the company.'),
@@ -50,6 +49,7 @@ const prompt = ai.definePrompt({
   Generate exactly {{{numLeads}}} leads based on the following query: "{{{query}}}"
 
   For each lead, provide a fictional but realistic-looking company name, and a full website URL including the protocol (e.g. https://example.com).
+  
   {{#if extractContactInfo}}
   Also provide an email address and phone number.
   {{else}}
@@ -59,12 +59,22 @@ const prompt = ai.definePrompt({
   {{#if includeAddress}}
   Also include a physical address for each company.
   {{/if}}
+
   {{#if includeLinkedIn}}
   Also include a specific, realistic-looking LinkedIn company profile URL for each company (e.g., https://www.linkedin.com/company/some-company). Do not just use "www.linkedin.com".
   {{/if}}
+
   {{#if includeDescription}}
   Also include a concise, one-line description of what the company is all about.
   {{/if}}
+
+  {{#if scoreLeads}}
+  You are also an expert B2B sales development representative. For each lead, analyze its potential value for outreach.
+  Provide a score from 1 to 100, where 100 is the highest quality lead. 
+  Also provide a brief, one-sentence rationale explaining your score. For example, consider factors like the company's industry, apparent size, and the professionalism of their online presence.
+  Populate the 'score' and 'scoreRationale' fields for each lead in the output.
+  {{/if}}
+
   Ensure the generated data is plausible for the given query.
   
   Return the list of leads in the specified JSON format.
@@ -79,26 +89,10 @@ const generateLeadsFlow = ai.defineFlow(
   },
   async (input) => {
     try {
+      // The scoring logic is now handled directly within the prompt based on the 'scoreLeads' flag,
+      // which is much more efficient and prevents timeouts on large requests.
       const { output } = await prompt(input);
-      let leads = output || [];
-
-      if (input.scoreLeads && leads.length > 0) {
-        // If scoring is requested, run the scoring flow for each lead in parallel.
-        const scoringPromises = leads.map(lead => 
-          scoreLead({ 
-            name: lead.name, 
-            description: lead.description, 
-            website: lead.website 
-          }).then(scoreOutput => ({
-            ...lead,
-            score: scoreOutput.score,
-            scoreRationale: scoreOutput.rationale,
-          }))
-        );
-        leads = await Promise.all(scoringPromises);
-      }
-
-      return leads;
+      return output || [];
     } catch (error: any) {
       console.error('Error in generateLeadsFlow:', error);
       // Re-throw the original error for better client-side debugging.
