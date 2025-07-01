@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState } from 'react';
@@ -12,11 +13,12 @@ import { Input } from '@/components/ui/input';
 import { useToast } from '@/hooks/use-toast';
 import { generateLeads } from '@/ai/flows/generate-leads-flow';
 import type { Lead } from '@/lib/types';
-import { Loader2, UploadCloud } from 'lucide-react';
+import { Loader2, UploadCloud, Info } from 'lucide-react';
 import { useAuth } from '@/context/auth-context';
 import { doc, updateDoc, increment } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { calculateRemainingLeads } from '@/lib/utils';
+import { Alert, AlertDescription, AlertTitle } from '../ui/alert';
 
 interface BulkUploadFormProps {
   setLeads: React.Dispatch<React.SetStateAction<Lead[]>>;
@@ -184,6 +186,7 @@ export function BulkUploadForm({ setLeads, setIsLoading, remainingLeads, remaini
         setIsProcessing(false);
         setIsLoading(false);
         setProgressMessage('');
+        form.reset();
       },
       error: (error) => {
         toast({
@@ -211,34 +214,47 @@ export function BulkUploadForm({ setLeads, setIsLoading, remainingLeads, remaini
       </CardHeader>
       <CardContent>
         <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="grid gap-4 md:grid-cols-3 md:items-end">
-            <FormField
-              control={form.control}
-              name="file"
-              render={({ field }) => (
-                <FormItem className="md:col-span-1">
-                  <FormLabel>CSV File</FormLabel>
-                  <FormControl>
-                    <Input type="file" accept=".csv" {...fileRef} disabled={isProcessing} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <FormField
-              control={form.control}
-              name="numLeadsPerQuery"
-              render={({ field }) => (
-                <FormItem className="md:col-span-1">
-                  <FormLabel>Leads per Prompt</FormLabel>
-                  <FormControl>
-                    <Input type="number" {...field} disabled={isProcessing} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <Button type="submit" disabled={isProcessing} className="md:col-span-1 shadow-lg shadow-primary/30">
+          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+            <div className="grid gap-4 md:grid-cols-2 md:items-end">
+              <FormField
+                control={form.control}
+                name="file"
+                render={({ field }) => (
+                  <FormItem className="md:col-span-1">
+                    <FormLabel>CSV File</FormLabel>
+                    <FormControl>
+                      <Input type="file" accept=".csv" {...fileRef} disabled={isProcessing} className="file:text-primary file:font-semibold" />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="numLeadsPerQuery"
+                render={({ field }) => (
+                  <FormItem className="md:col-span-1">
+                    <FormLabel>Leads per Prompt</FormLabel>
+                    <FormControl>
+                      <Input type="number" {...field} disabled={isProcessing} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
+             <Alert>
+                <Info className="h-4 w-4" />
+                <AlertTitle className="font-semibold">How to Use</AlertTitle>
+                <AlertDescription>
+                   <ol className="list-decimal list-inside space-y-1 mt-2">
+                       <li>Create a CSV file with a single column header: <code className="bg-muted px-1.5 py-0.5 rounded-md font-mono text-xs">query</code></li>
+                       <li>Add your list of search prompts under that column.</li>
+                       <li>Upload the file, set leads per prompt, and generate.</li>
+                   </ol>
+                </AlertDescription>
+            </Alert>
+            <Button type="submit" disabled={isProcessing} className="w-full shadow-lg shadow-primary/30">
               {isProcessing ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <UploadCloud className="mr-2 h-4 w-4" />}
               {isProcessing ? 'Processing...' : 'Upload and Generate'}
             </Button>
