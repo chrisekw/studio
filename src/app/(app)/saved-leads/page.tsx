@@ -5,15 +5,18 @@ import { collection, onSnapshot, query } from 'firebase/firestore';
 import { useAuth } from '@/context/auth-context';
 import { db } from '@/lib/firebase';
 import type { Lead } from '@/lib/types';
-
-import { SavedLeadsTable } from '@/components/saved-leads/saved-leads-table';
+import { useToast } from '@/hooks/use-toast';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
+import { Button } from '@/components/ui/button';
+import { Download } from 'lucide-react';
+import { SavedLeadsCards } from '@/components/saved-leads/saved-leads-cards';
 
 export default function SavedLeadsPage() {
   const { user } = useAuth();
   const [savedLeads, setSavedLeads] = useState<Lead[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const { toast } = useToast();
 
   useEffect(() => {
     if (user) {
@@ -37,33 +40,70 @@ export default function SavedLeadsPage() {
     }
   }, [user]);
 
+  const exportToCSV = () => {
+    if (savedLeads.length === 0) return;
+    let csvContent = "data:text/csv;charset=utf-8,";
+    csvContent += "Name,Description,Email,Phone,Website,Address,LinkedIn,Tags,Score,Score Rationale\n";
+    savedLeads.forEach(lead => {
+      const tags = lead.tags ? lead.tags.join(';') : '';
+      const row = [
+        lead.name,
+        lead.description,
+        lead.email,
+        lead.phone,
+        lead.website,
+        lead.address,
+        lead.linkedin,
+        `"${tags}"`,
+        lead.score,
+        lead.scoreRationale,
+      ].map(field => `"${(String(field ?? '')).replace(/"/g, '""')}"`).join(',');
+      csvContent += row + "\r\n";
+    });
+    
+    const encodedUri = encodeURI(csvContent);
+    const link = document.createElement("a");
+    link.setAttribute("href", encodedUri);
+    link.setAttribute("download", "LeadGen_saved_leads.csv");
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    toast({
+      title: 'Export Successful',
+      description: 'Saved leads have been exported to CSV.',
+    });
+  };
+
   const renderContent = () => {
     if (isLoading) {
       return (
-        <div className="space-y-4">
-            <div className="flex justify-end">
-                <Skeleton className="h-9 w-28" />
-            </div>
-            <div className="border rounded-lg p-4 space-y-2">
-                <Skeleton className="h-10 w-full" />
-                <Skeleton className="h-10 w-full" />
-                <Skeleton className="h-10 w-full" />
-            </div>
+        <div className="space-y-2">
+            {Array.from({ length: 4 }).map((_, index) => (
+                <Skeleton key={index} className="h-20 w-full" />
+            ))}
         </div>
       );
     }
 
-    return <SavedLeadsTable leads={savedLeads} />;
+    return <SavedLeadsCards leads={savedLeads} />;
   }
 
   return (
     <div className="py-6">
       <Card>
         <CardHeader>
-          <CardTitle className="font-headline">Saved Leads</CardTitle>
-          <CardDescription>
-            View, manage, and export your saved business leads.
-          </CardDescription>
+            <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
+                <div>
+                    <CardTitle className="font-headline">Saved Leads</CardTitle>
+                    <CardDescription>
+                        View, manage, and export your saved business leads. Click a lead to see details.
+                    </CardDescription>
+                </div>
+                <Button size="sm" variant="outline" onClick={exportToCSV} disabled={savedLeads.length === 0}>
+                    <Download className="mr-2 h-4 w-4" />
+                    Export All
+                </Button>
+            </div>
         </CardHeader>
         <CardContent className="px-4">
           {renderContent()}
