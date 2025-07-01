@@ -1,3 +1,4 @@
+
 'use client';
 
 import {
@@ -313,8 +314,8 @@ export function LeadsTable({ leads, isLoading }: LeadsTableProps) {
        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div>
           <h2 className="text-3xl font-headline font-bold">Generated Leads</h2>
-          <p className="text-muted-foreground mt-1">
-            Review the generated leads. Save or export them as needed.
+          <p className="text-muted-foreground mt-1 max-w-2xl">
+            Review the generated leads below. For Pro and Agency plans, our AI scores each lead from 1-100 based on its potential quality—hover over a score for the rationale.
           </p>
         </div>
         <TooltipProvider>
