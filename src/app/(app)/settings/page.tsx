@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useEffect } from 'react';
@@ -69,6 +70,26 @@ export default function SettingsPage() {
       toast({ variant: 'destructive', title: 'Error', description: 'Could not save settings.' });
     }
   }
+
+  const handleTestUpgrade = async () => {
+    if (!user) {
+      toast({ variant: 'destructive', title: 'Error', description: 'You must be logged in.' });
+      return;
+    }
+
+    try {
+      const userDocRef = doc(db, 'users', user.uid);
+      await updateDoc(userDocRef, {
+        plan: 'Agency',
+        leadsGeneratedThisMonth: 0,
+        lastLeadGenerationMonth: new Date().toISOString().slice(0, 7),
+      });
+      toast({ title: 'Test Upgrade Successful', description: 'Your account has been upgraded to the Agency plan.' });
+    } catch (error) {
+      console.error('Error performing test upgrade:', error);
+      toast({ variant: 'destructive', title: 'Error', description: 'Could not perform test upgrade.' });
+    }
+  };
 
   if (!userProfile) {
     return (
@@ -229,7 +250,6 @@ export default function SettingsPage() {
             </CardContent>
           </Card>
 
-
           <div className="flex justify-end">
             <Button type="submit" disabled={form.formState.isSubmitting}>
                {form.formState.isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
@@ -238,6 +258,22 @@ export default function SettingsPage() {
           </div>
         </form>
       </Form>
+
+      {userProfile.email === 'ekwchristian@gmail.com' && (
+        <Card className="border-accent/50 mt-8">
+          <CardHeader>
+            <CardTitle className="text-accent">Developer Tools</CardTitle>
+            <CardDescription>
+              This section is for testing features and is only visible to you.
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <Button variant="outline" onClick={handleTestUpgrade}>
+              Upgrade my account to Agency
+            </Button>
+          </CardContent>
+        </Card>
+      )}
     </div>
   );
 }
