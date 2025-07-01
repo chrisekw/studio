@@ -89,10 +89,35 @@ const generateLeadsFlow = ai.defineFlow(
   },
   async (input) => {
     try {
-      // The scoring logic is now handled directly within the prompt based on the 'scoreLeads' flag,
-      // which is much more efficient and prevents timeouts on large requests.
-      const { output } = await prompt(input);
-      return output || [];
+      const response = await prompt(input);
+      const output = response.output;
+
+      if (!output) {
+        const candidate = response.candidates[0];
+        let reason = "The AI model returned an empty or invalid response.";
+
+        if (candidate) {
+          switch (candidate.finishReason) {
+            case 'SAFETY':
+              reason = 'The request was blocked due to safety settings. Please adjust your query and try again.';
+              break;
+            case 'RECITATION':
+              reason = 'The response was blocked due to a recitation policy. Please rephrase your query.';
+              break;
+            case 'BLOCKED':
+              reason = 'The response was blocked for an unspecified reason. Please rephrase your query.';
+              break;
+            default:
+              reason = `Generation stopped for reason: ${candidate.finishReason}.`;
+              break;
+          }
+        }
+        
+        throw new Error(reason);
+      }
+      
+      return output;
+
     } catch (error: any) {
       console.error('Error in generateLeadsFlow:', error);
       // Re-throw the original error for better client-side debugging.

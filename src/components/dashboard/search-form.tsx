@@ -247,7 +247,7 @@ export function SearchForm({ setIsLoading, setLeads, setSearchQuery, setShowSugg
        console.error('Failed to generate leads:', error);
        toast({
         variant: 'destructive',
-        title: 'An Error Occurred',
+        title: 'Generation Failed',
         description: error.message || 'Failed to generate leads. Please try again.',
       });
     } finally {
