@@ -52,11 +52,8 @@ export function AppHeader() {
         </Link>
       </div>
 
-      <SidebarTrigger asChild>
-        <Button variant="ghost" size="icon">
-          <Menu className="h-6 w-6" />
-          <span className="sr-only">Toggle Sidebar</span>
-        </Button>
+      <SidebarTrigger>
+        <Menu className="h-6 w-6" />
       </SidebarTrigger>
     </header>
   );
