@@ -52,6 +52,8 @@ interface SearchFormProps {
   remainingLeads: number;
   remainingLeadsText: string;
   setShowUpgradeBanner: Dispatch<SetStateAction<boolean>>;
+  setProgress: Dispatch<SetStateAction<number>>;
+  setProgressMessage: Dispatch<SetStateAction<string>>;
 }
 
 const industries = [
@@ -87,13 +89,14 @@ const formSchema = z.object({
 });
 
 
-export function SearchForm({ setIsLoading, setLeads, setSearchQuery, setShowSuggestions, selectedSuggestion, remainingLeads, remainingLeadsText, setShowUpgradeBanner }: SearchFormProps) {
+export function SearchForm({ setIsLoading, setLeads, setSearchQuery, setShowSuggestions, selectedSuggestion, remainingLeads, remainingLeadsText, setShowUpgradeBanner, setProgress, setProgressMessage }: SearchFormProps) {
   const [isGenerating, setIsGenerating] = useState(false);
   const [openIndustry, setOpenIndustry] = useState(false);
   const router = useRouter();
   const { toast } = useToast();
   const { user, userProfile } = useAuth();
   const defaultsSet = useRef(false);
+  const intervalRef = useRef<NodeJS.Timeout | null>(null);
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -155,7 +158,24 @@ export function SearchForm({ setIsLoading, setLeads, setSearchQuery, setShowSugg
     setLeads([]);
     setShowSuggestions(false);
     setSearchQuery(values.keyword);
+
+    if (intervalRef.current) clearInterval(intervalRef.current);
     
+    const numLeads = values.numLeads;
+    const estimatedTime = numLeads * 1500; // 1.5s per lead
+    setProgressMessage(`Generating ${numLeads} leads... This can take up to ${Math.ceil(estimatedTime / 1000)} seconds. Please don't close the window.`);
+    setProgress(5);
+
+    intervalRef.current = setInterval(() => {
+      setProgress(prev => {
+        if (prev >= 95) {
+          if(intervalRef.current) clearInterval(intervalRef.current);
+          return 95;
+        }
+        return prev + 5;
+      });
+    }, Math.max(200, estimatedTime / 20));
+
     try {
       const industryLabel = industries.find(i => i.value === values.industry)?.label;
       const fullQuery = values.industry && industryLabel ? `${values.keyword} in the ${industryLabel} industry` : values.keyword;
@@ -184,7 +204,6 @@ export function SearchForm({ setIsLoading, setLeads, setSearchQuery, setShowSugg
         const today = new Date().toISOString().split('T')[0];
         const currentMonth = new Date().toISOString().slice(0, 7);
         
-        // 1. Deduct from plan quota
         const planLeadsToUse = Math.min(leadsToDeduct, Math.max(0, remainingPlanLeads));
         if (planLeadsToUse > 0) {
           if (isFreePlan) {
@@ -197,7 +216,6 @@ export function SearchForm({ setIsLoading, setLeads, setSearchQuery, setShowSugg
           leadsToDeduct -= planLeadsToUse;
         }
 
-        // 2. Deduct from lead points
         if (leadsToDeduct > 0) {
           const pointsToUse = Math.min(leadsToDeduct, Math.max(0, leadPoints));
           if (pointsToUse > 0) {
@@ -206,7 +224,6 @@ export function SearchForm({ setIsLoading, setLeads, setSearchQuery, setShowSugg
           }
         }
 
-        // 3. Deduct from add-on credits
         if (leadsToDeduct > 0) {
           const addonsToUse = Math.min(leadsToDeduct, Math.max(0, addonCredits));
           if (addonsToUse > 0) {
@@ -234,9 +251,15 @@ export function SearchForm({ setIsLoading, setLeads, setSearchQuery, setShowSugg
         description: error.message || 'Failed to generate leads. Please try again.',
       });
     } finally {
+      if (intervalRef.current) clearInterval(intervalRef.current);
+      setProgress(100);
       setIsGenerating(false);
       setIsLoading(false);
       setShowSuggestions(true);
+      setTimeout(() => {
+        setProgress(0);
+        setProgressMessage('');
+      }, 1000);
     }
   }
 

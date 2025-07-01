@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState } from 'react';
@@ -19,6 +20,8 @@ export default function DashboardPage() {
   const [selectedSuggestion, setSelectedSuggestion] = useState('');
   const { userProfile } = useAuth();
   const [showUpgradeBanner, setShowUpgradeBanner] = useState(false);
+  const [progress, setProgress] = useState(0);
+  const [progressMessage, setProgressMessage] = useState('');
 
   // Centralize quota calculation
   const { remainingLeads, remainingLeadsText } = calculateRemainingLeads(userProfile);
@@ -47,6 +50,8 @@ export default function DashboardPage() {
             remainingLeads={remainingLeads}
             remainingLeadsText={remainingLeadsText}
             setShowUpgradeBanner={setShowUpgradeBanner}
+            setProgress={setProgress}
+            setProgressMessage={setProgressMessage}
           />
           {userProfile?.plan === 'Agency' && (
             <BulkUploadForm 
@@ -65,7 +70,12 @@ export default function DashboardPage() {
 
       <Separator className="my-8 bg-border/50" />
       
-      <LeadsTable leads={leads} isLoading={isLoading} />
+      <LeadsTable
+        leads={leads}
+        isLoading={isLoading}
+        progress={progress}
+        progressMessage={progressMessage}
+      />
 
       <UpgradeBanner isOpen={showUpgradeBanner} onClose={() => setShowUpgradeBanner(false)} />
     </div>

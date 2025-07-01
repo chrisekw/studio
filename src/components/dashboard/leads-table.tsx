@@ -29,6 +29,11 @@ import {
   MapPin,
   Linkedin,
   SearchX,
+  FileCsv,
+  Rocket,
+  Database,
+  ChevronDown,
+  Loader2,
 } from 'lucide-react';
 import type { Lead, UserProfile } from '@/lib/types';
 import { Skeleton } from '../ui/skeleton';
@@ -39,10 +44,13 @@ import { useAuth } from '@/context/auth-context';
 import { collection, doc, increment, runTransaction } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { Badge, type BadgeProps } from '../ui/badge';
+import { Progress } from '@/components/ui/progress';
 
 interface LeadsTableProps {
   leads: Lead[];
   isLoading: boolean;
+  progress: number;
+  progressMessage: string;
 }
 
 const getScoreBadgeVariant = (score?: number): BadgeProps['variant'] => {
@@ -53,7 +61,7 @@ const getScoreBadgeVariant = (score?: number): BadgeProps['variant'] => {
   return 'destructive';
 };
 
-export function LeadsTable({ leads, isLoading }: LeadsTableProps) {
+export function LeadsTable({ leads, isLoading, progress, progressMessage }: LeadsTableProps) {
   const { toast } = useToast();
   const { user, userProfile } = useAuth();
 
@@ -167,8 +175,15 @@ export function LeadsTable({ leads, isLoading }: LeadsTableProps) {
     });
   };
 
+  const handlePremiumExport = (platform: string) => {
+    toast({
+      title: 'Coming Soon!',
+      description: `${platform} integration is on our roadmap. Stay tuned!`,
+    });
+  };
+
   const canExport = userProfile?.plan !== 'Free';
-  
+
   const renderSkeleton = () => (
     <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3">
       {Array.from({ length: 6 }).map((_, index) => (
@@ -188,6 +203,21 @@ export function LeadsTable({ leads, isLoading }: LeadsTableProps) {
           </CardContent>
         </Card>
       ))}
+    </div>
+  );
+
+  const renderProgress = () => (
+    <div className="flex flex-col items-center justify-center h-64 rounded-lg border-2 border-dashed border-border bg-card/60 backdrop-blur-xl">
+      <div className="w-full max-w-md text-center p-4">
+        <Loader2 className="h-16 w-16 text-primary animate-spin mb-4 mx-auto" />
+        <h3 className="text-xl font-headline font-medium text-foreground">
+          {progressMessage.split('...')[0] || 'Processing...'}
+        </h3>
+        <p className="text-muted-foreground/80 mt-2 mb-4">
+          {progressMessage.split('...')[1] || 'Please wait.'}
+        </p>
+        <Progress value={progress} className="w-full" />
+      </div>
     </div>
   );
 
@@ -309,6 +339,19 @@ export function LeadsTable({ leads, isLoading }: LeadsTableProps) {
     </div>
   );
 
+  const renderContent = () => {
+    if (isLoading && progress > 0 && progressMessage) {
+      return renderProgress();
+    }
+    if (isLoading) {
+      return renderSkeleton();
+    }
+    if (leads.length > 0) {
+      return renderLeads();
+    }
+    return renderEmptyState();
+  };
+
   return (
     <div className="space-y-6">
        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
@@ -318,36 +361,73 @@ export function LeadsTable({ leads, isLoading }: LeadsTableProps) {
             Review the generated leads below. For Pro and Agency plans, our AI scores each lead from 1-100 based on its potential quality—hover over a score for the rationale.
           </p>
         </div>
-        <TooltipProvider>
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <div tabIndex={0}>
-                <Button
-                  size="sm"
-                  variant="outline"
-                  onClick={exportToCSV}
-                  disabled={isLoading || leads.length === 0 || !canExport}
-                  className={!canExport ? 'cursor-not-allowed' : ''}
-                >
-                  <Download className="mr-2 h-4 w-4" />
-                  Export to CSV
-                </Button>
-              </div>
-            </TooltipTrigger>
-            {!canExport && (
-              <TooltipContent>
-                <p>Export is a paid feature. Please upgrade your plan.</p>
-              </TooltipContent>
-            )}
-          </Tooltip>
-        </TooltipProvider>
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button
+              size="sm"
+              variant="outline"
+              disabled={isLoading || leads.length === 0}
+            >
+              <Download className="mr-2 h-4 w-4" />
+              Export
+              <ChevronDown className="ml-2 h-4 w-4" />
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end">
+            <DropdownMenuItem onClick={exportToCSV} disabled={!canExport}>
+              <FileCsv className="mr-2 h-4 w-4" />
+              <span>Export to CSV</span>
+            </DropdownMenuItem>
+             <DropdownMenuSeparator />
+            <DropdownMenuLabel>Premium Exports</DropdownMenuLabel>
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <div className={!canExport ? 'cursor-not-allowed' : ''}>
+                    <DropdownMenuItem
+                      onClick={() => handlePremiumExport('HubSpot')}
+                      disabled={!canExport}
+                    >
+                      <Rocket className="mr-2 h-4 w-4" />
+                      <span>HubSpot</span>
+                    </DropdownMenuItem>
+                  </div>
+                </TooltipTrigger>
+                {!canExport && <TooltipContent><p>Upgrade to use premium exports.</p></TooltipContent>}
+              </Tooltip>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <div className={!canExport ? 'cursor-not-allowed' : ''}>
+                    <DropdownMenuItem
+                      onClick={() => handlePremiumExport('Pipedrive')}
+                      disabled={!canExport}
+                    >
+                      <Database className="mr-2 h-4 w-4" />
+                      <span>Pipedrive</span>
+                    </DropdownMenuItem>
+                  </div>
+                </TooltipTrigger>
+                {!canExport && <TooltipContent><p>Upgrade to use premium exports.</p></TooltipContent>}
+              </Tooltip>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <div className={!canExport ? 'cursor-not-allowed' : ''}>
+                    <DropdownMenuItem
+                      onClick={() => handlePremiumExport('Gmail Draft')}
+                      disabled={!canExport}
+                    >
+                      <Mail className="mr-2 h-4 w-4" />
+                      <span>Gmail Draft</span>
+                    </DropdownMenuItem>
+                  </div>
+                </TooltipTrigger>
+                {!canExport && <TooltipContent><p>Upgrade to use premium exports.</p></TooltipContent>}
+              </Tooltip>
+            </TooltipProvider>
+          </DropdownMenuContent>
+        </DropdownMenu>
       </div>
-
-        {isLoading
-          ? renderSkeleton()
-          : leads.length > 0
-          ? renderLeads()
-          : renderEmptyState()}
+      {renderContent()}
     </div>
   );
 }
