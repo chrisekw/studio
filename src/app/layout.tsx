@@ -12,8 +12,12 @@ const spaceGrotesk = Space_Grotesk({
 });
 
 export const metadata: Metadata = {
-  title: "oPilot",
-  description: "Your AI copilot for lead generation.",
+  title: {
+    default: "oPilot | AI Lead Generation Copilot",
+    template: "%s | oPilot",
+  },
+  description: "Supercharge your sales pipeline with oPilot, the AI-powered copilot for lead generation. Find qualified leads, extract contact info, and get AI-driven scores.",
+  keywords: ["AI lead generation", "sales leads", "B2B leads", "marketing automation", "sales intelligence", "prospecting tool"],
 };
 
 export default function RootLayout({

@@ -1,7 +1,13 @@
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Check, Bell } from 'lucide-react';
+import type { Metadata } from 'next';
 import Link from 'next/link';
+
+export const metadata: Metadata = {
+  title: 'Pricing Plans',
+  description: 'Choose the perfect oPilot plan for your business. From our free starter plan to powerful agency tools, find the right fit to start generating high-quality leads.',
+}
 
 const plans = [
   {

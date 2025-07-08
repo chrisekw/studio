@@ -1,11 +1,9 @@
-
 'use client';
 
 import { useState } from 'react';
+import dynamic from 'next/dynamic';
 import { SearchForm } from '@/components/dashboard/search-form';
-import { LeadsTable } from '@/components/dashboard/leads-table';
 import { type Lead } from '@/lib/types';
-import { SuggestedQueries } from '@/components/dashboard/suggested-queries';
 import { useAuth } from '@/context/auth-context';
 import { BulkUploadForm } from '@/components/dashboard/bulk-upload-form';
 import { Separator } from '@/components/ui/separator';
@@ -20,6 +18,46 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 import { UploadCloud } from 'lucide-react';
+import { Skeleton } from '@/components/ui/skeleton';
+
+// Skeletons for lazy loading
+const SuggestedQueriesSkeleton = () => (
+    <div className="p-4 border rounded-lg bg-card/60">
+        <Skeleton className="h-6 w-32 mb-4" />
+        <Skeleton className="h-4 w-full mb-2" />
+        <div className="flex flex-wrap gap-2">
+            <Skeleton className="h-7 w-24" />
+            <Skeleton className="h-7 w-32" />
+            <Skeleton className="h-7 w-28" />
+        </div>
+    </div>
+);
+
+const LeadsTableSkeleton = () => (
+    <div className="space-y-6">
+        <div className="flex justify-between items-center">
+            <div>
+                <Skeleton className="h-8 w-64" />
+                <Skeleton className="h-4 w-96 mt-2" />
+            </div>
+            <Skeleton className="h-9 w-32" />
+        </div>
+        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3">
+            {Array.from({ length: 6 }).map((_, i) => <Skeleton key={i} className="h-56 w-full" />)}
+        </div>
+    </div>
+);
+
+// Lazy load components
+const SuggestedQueries = dynamic(
+  () => import('@/components/dashboard/suggested-queries').then(mod => mod.SuggestedQueries),
+  { loading: () => <SuggestedQueriesSkeleton />, ssr: false }
+);
+
+const LeadsTable = dynamic(
+  () => import('@/components/dashboard/leads-table').then(mod => mod.LeadsTable),
+  { loading: () => <div />, ssr: false } // Use a simpler loader here, the component has its own
+);
 
 export default function DashboardPage() {
   const [leads, setLeads] = useState<Lead[]>([]);
