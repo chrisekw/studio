@@ -1,4 +1,3 @@
-
 'use client';
 
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -6,7 +5,7 @@ import { useForm } from 'react-hook-form';
 import { z } from 'zod';
 import { useState, type Dispatch, type SetStateAction, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
-import { Check, ChevronsUpDown, Loader2, Search } from 'lucide-react';
+import { Loader2, Search } from 'lucide-react';
 import { doc, updateDoc, increment } from 'firebase/firestore';
 
 import {
@@ -26,20 +25,7 @@ import { generateLeads } from '@/ai/flows/generate-leads-flow';
 import type { Lead } from '@/lib/types';
 import { Checkbox } from '@/components/ui/checkbox';
 import { useAuth } from '@/context/auth-context';
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from '@/components/ui/popover';
-import {
-  Command,
-  CommandEmpty,
-  CommandGroup,
-  CommandInput,
-  CommandItem,
-  CommandList,
-} from '@/components/ui/command';
-import { cn, calculateRemainingLeads } from '@/lib/utils';
+import { calculateRemainingLeads } from '@/lib/utils';
 import { db } from '@/lib/firebase';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '../ui/tooltip';
 
@@ -56,29 +42,10 @@ interface SearchFormProps {
   setProgressMessage: Dispatch<SetStateAction<string>>;
 }
 
-const industries = [
-  { value: 'technology', label: 'Technology' },
-  { value: 'healthcare', label: 'Healthcare' },
-  { value: 'finance', label: 'Finance' },
-  { value: 'real-estate', label: 'Real Estate' },
-  { value: 'ecommerce', label: 'E-commerce' },
-  { value: 'education', label: 'Education' },
-  { value: 'marketing', label: 'Marketing' },
-  { value: 'manufacturing', label: 'Manufacturing' },
-  { value: 'hospitality', label: 'Hospitality' },
-  { value: 'automotive', label: 'Automotive' },
-  { value: 'construction', label: 'Construction' },
-  { value: 'retail', label: 'Retail' },
-  { value: 'non-profit', label: 'Non-profit' },
-  { value: 'legal', label: 'Legal' },
-  { value: 'consulting', label: 'Consulting' },
-];
-
 const maxLeadsPerSearch = 100;
 
 const formSchema = z.object({
   keyword: z.string().min(3, { message: 'Keyword must be at least 3 characters.' }),
-  industry: z.string().optional(),
   numLeads: z.coerce
     .number({ invalid_type_error: 'Please enter a valid number.' })
     .min(1, { message: 'Please generate at least 1 lead.' })
@@ -91,7 +58,6 @@ const formSchema = z.object({
 
 export function SearchForm({ setIsLoading, setLeads, setSearchQuery, setShowSuggestions, selectedSuggestion, remainingLeads, remainingLeadsText, setShowUpgradeBanner, setProgress, setProgressMessage }: SearchFormProps) {
   const [isGenerating, setIsGenerating] = useState(false);
-  const [openIndustry, setOpenIndustry] = useState(false);
   const router = useRouter();
   const { toast } = useToast();
   const { user, userProfile } = useAuth();
@@ -177,8 +143,7 @@ export function SearchForm({ setIsLoading, setLeads, setSearchQuery, setShowSugg
     }, Math.max(200, estimatedTime / 20));
 
     try {
-      const industryLabel = industries.find(i => i.value === values.industry)?.label;
-      const fullQuery = values.industry && industryLabel ? `${values.keyword} in the ${industryLabel} industry` : values.keyword;
+      const fullQuery = values.keyword;
       const isProOrAgency = userProfile.plan === 'Pro' || userProfile.plan === 'Agency';
       
       const result = await generateLeads({
@@ -288,7 +253,7 @@ export function SearchForm({ setIsLoading, setLeads, setSearchQuery, setShowSugg
         <div>
           <FormLabel className="text-base font-semibold">Configuration</FormLabel>
           <FormDescription>Fine-tune the search parameters to match your needs.</FormDescription>
-           <div className="grid md:grid-cols-2 gap-x-6 gap-y-4 pt-4">
+           <div className="grid grid-cols-1 gap-y-4 pt-4">
                <FormField
                 control={form.control}
                 name="numLeads"
@@ -307,87 +272,12 @@ export function SearchForm({ setIsLoading, setLeads, setSearchQuery, setShowSugg
                   </FormItem>
                 )}
               />
-              <FormField
-                control={form.control}
-                name="industry"
-                render={({ field }) => (
-                  <FormItem className="flex flex-col">
-                    <FormLabel>Industry / Category</FormLabel>
-                    <TooltipProvider>
-                      <Tooltip>
-                        <TooltipTrigger asChild>
-                           <div tabIndex={isFreePlan ? 0 : -1}>
-                            <Popover open={openIndustry} onOpenChange={setOpenIndustry}>
-                              <PopoverTrigger asChild>
-                                <FormControl>
-                                  <Button
-                                    variant="outline"
-                                    role="combobox"
-                                    disabled={isFreePlan}
-                                    className={cn(
-                                      "w-full justify-between",
-                                      !field.value && "text-muted-foreground",
-                                      isFreePlan && 'cursor-not-allowed opacity-70'
-                                    )}
-                                  >
-                                    {field.value
-                                      ? industries.find(
-                                          (industry) => industry.value === field.value
-                                        )?.label
-                                      : "Select an industry"}
-                                    <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-                                  </Button>
-                                </FormControl>
-                              </PopoverTrigger>
-                              <PopoverContent className="w-[var(--radix-popover-trigger-width)] p-0">
-                                <Command>
-                                  <CommandInput placeholder="Search industry..." />
-                                  <CommandList>
-                                    <CommandEmpty>No industry found.</CommandEmpty>
-                                    <CommandGroup>
-                                      {industries.map((industry) => (
-                                        <CommandItem
-                                          value={industry.label}
-                                          key={industry.value}
-                                          onSelect={() => {
-                                            form.setValue("industry", industry.value === field.value ? undefined : industry.value);
-                                            setOpenIndustry(false);
-                                          }}
-                                        >
-                                          <Check
-                                            className={cn(
-                                              "mr-2 h-4 w-4",
-                                              industry.value === field.value
-                                                ? "opacity-100"
-                                                : "opacity-0"
-                                            )}
-                                          />
-                                          {industry.label}
-                                        </CommandItem>
-                                      ))}
-                                    </CommandGroup>
-                                  </CommandList>
-                                </Command>
-                              </PopoverContent>
-                            </Popover>
-                          </div>
-                        </TooltipTrigger>
-                        {isFreePlan && (
-                           <TooltipContent>
-                            <p>Industry filter is a premium feature. Please upgrade.</p>
-                          </TooltipContent>
-                        )}
-                      </Tooltip>
-                    </TooltipProvider>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+              
                <FormField
                 control={form.control}
                 name="radius"
                 render={({ field }) => (
-                  <FormItem className="space-y-3 md:col-span-2">
+                  <FormItem className="space-y-3">
                     <FormLabel>Search Radius</FormLabel>
                     <FormControl>
                       <RadioGroup
