@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useState } from 'react';
@@ -11,6 +10,15 @@ import { BulkUploadForm } from '@/components/dashboard/bulk-upload-form';
 import { Separator } from '@/components/ui/separator';
 import { UpgradeBanner } from '@/components/dashboard/upgrade-banner';
 import { calculateRemainingLeads } from '@/lib/utils';
+import { Button } from '@/components/ui/button';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
+import { UploadCloud } from 'lucide-react';
 
 export default function DashboardPage() {
   const [leads, setLeads] = useState<Lead[]>([]);
@@ -22,6 +30,7 @@ export default function DashboardPage() {
   const [showUpgradeBanner, setShowUpgradeBanner] = useState(false);
   const [progress, setProgress] = useState(0);
   const [progressMessage, setProgressMessage] = useState('');
+  const [isBulkUploadOpen, setIsBulkUploadOpen] = useState(false);
 
   // Centralize quota calculation
   const { remainingLeads, remainingLeadsText } = calculateRemainingLeads(userProfile);
@@ -40,7 +49,7 @@ export default function DashboardPage() {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-12 items-start">
-        <div className="lg:col-span-2 space-y-12">
+        <div className="lg:col-span-2 space-y-8">
           <SearchForm
             setIsLoading={setIsLoading}
             setLeads={setLeads}
@@ -54,13 +63,13 @@ export default function DashboardPage() {
             setProgressMessage={setProgressMessage}
           />
           {userProfile?.plan === 'Agency' && (
-            <BulkUploadForm 
-              setIsLoading={setIsLoading}
-              setLeads={setLeads}
-              remainingLeads={remainingLeads}
-              remainingLeadsText={remainingLeadsText}
-              setShowUpgradeBanner={setShowUpgradeBanner}
-            />
+             <div className="text-center border-t pt-8">
+              <p className="text-sm text-muted-foreground mb-4">Have multiple prompts? Save time with a bulk upload.</p>
+              <Button variant="outline" size="lg" onClick={() => setIsBulkUploadOpen(true)}>
+                  <UploadCloud className="mr-2 h-4 w-4" />
+                  Bulk Prompt Upload
+              </Button>
+            </div>
           )}
         </div>
         <div className="lg:col-span-1 sticky top-20">
@@ -78,6 +87,30 @@ export default function DashboardPage() {
       />
 
       <UpgradeBanner isOpen={showUpgradeBanner} onClose={() => setShowUpgradeBanner(false)} />
+
+      {userProfile?.plan === 'Agency' && (
+        <Dialog open={isBulkUploadOpen} onOpenChange={setIsBulkUploadOpen}>
+            <DialogContent className="sm:max-w-2xl">
+                <DialogHeader>
+                    <DialogTitle className="font-headline flex items-center gap-2 text-2xl">
+                        <UploadCloud className="text-primary"/>
+                        Bulk Prompt Upload
+                    </DialogTitle>
+                    <DialogDescription>
+                        Upload a CSV with a &quot;query&quot; column to generate leads in bulk. {remainingLeadsText}
+                    </DialogDescription>
+                </DialogHeader>
+                <BulkUploadForm 
+                  setIsLoading={setIsLoading}
+                  setLeads={setLeads}
+                  remainingLeads={remainingLeads}
+                  remainingLeadsText={remainingLeadsText}
+                  setShowUpgradeBanner={setShowUpgradeBanner}
+                  onComplete={() => setIsBulkUploadOpen(false)}
+                />
+            </DialogContent>
+        </Dialog>
+      )}
     </div>
   );
 }

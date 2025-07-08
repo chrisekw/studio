@@ -7,7 +7,6 @@ import { z } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
 import Papa from 'papaparse';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { useToast } from '@/hooks/use-toast';
@@ -26,6 +25,7 @@ interface BulkUploadFormProps {
   remainingLeads: number;
   remainingLeadsText: string;
   setShowUpgradeBanner: React.Dispatch<React.SetStateAction<boolean>>;
+  onComplete?: () => void;
 }
 
 const formSchema = z.object({
@@ -36,7 +36,7 @@ const formSchema = z.object({
     .max(50, 'Cannot exceed 50 leads per query in bulk mode.'),
 });
 
-export function BulkUploadForm({ setLeads, setIsLoading, remainingLeads, remainingLeadsText, setShowUpgradeBanner }: BulkUploadFormProps) {
+export function BulkUploadForm({ setLeads, setIsLoading, remainingLeads, remainingLeadsText, setShowUpgradeBanner, onComplete }: BulkUploadFormProps) {
   const { toast } = useToast();
   const { user, userProfile } = useAuth();
   const [isProcessing, setIsProcessing] = useState(false);
@@ -64,6 +64,7 @@ export function BulkUploadForm({ setLeads, setIsLoading, remainingLeads, remaini
 
     if (remainingLeads <= 0) {
       setShowUpgradeBanner(true);
+      onComplete?.();
       return;
     }
 
@@ -88,6 +89,7 @@ export function BulkUploadForm({ setLeads, setIsLoading, remainingLeads, remaini
           });
           setIsProcessing(false);
           setIsLoading(false);
+          onComplete?.();
           return;
         }
 
@@ -100,6 +102,7 @@ export function BulkUploadForm({ setLeads, setIsLoading, remainingLeads, remaini
             });
             setIsProcessing(false);
             setIsLoading(false);
+            onComplete?.();
             return;
         }
 
@@ -187,6 +190,7 @@ export function BulkUploadForm({ setLeads, setIsLoading, remainingLeads, remaini
         setIsLoading(false);
         setProgressMessage('');
         form.reset();
+        onComplete?.();
       },
       error: (error) => {
         toast({
@@ -196,77 +200,66 @@ export function BulkUploadForm({ setLeads, setIsLoading, remainingLeads, remaini
         });
         setIsProcessing(false);
         setIsLoading(false);
+        onComplete?.();
       }
     });
   }
 
   return (
-    <Card className="border-primary/20 bg-background/30 backdrop-blur-lg">
-      <CardHeader>
-        <CardTitle className="font-headline flex items-center gap-2 text-2xl">
-          <UploadCloud className="text-primary"/>
-          Bulk Prompt Upload
-        </CardTitle>
-        <CardDescription>
-          For Agency plans. Upload a CSV with a &quot;query&quot; column to generate leads in bulk.
-          {remainingLeadsText}
-        </CardDescription>
-      </CardHeader>
-      <CardContent>
-        <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-            <div className="grid gap-4 md:grid-cols-2 md:items-end">
-              <FormField
-                control={form.control}
-                name="file"
-                render={({ field }) => (
-                  <FormItem className="md:col-span-1">
-                    <FormLabel>CSV File</FormLabel>
-                    <FormControl>
-                      <Input type="file" accept=".csv" {...fileRef} disabled={isProcessing} className="file:text-primary file:font-semibold" />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={form.control}
-                name="numLeadsPerQuery"
-                render={({ field }) => (
-                  <FormItem className="md:col-span-1">
-                    <FormLabel>Leads per Prompt</FormLabel>
-                    <FormControl>
-                      <Input type="number" {...field} disabled={isProcessing} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            </div>
-             <Alert>
-                <Info className="h-4 w-4" />
-                <AlertTitle className="font-semibold">How to Use</AlertTitle>
-                <AlertDescription>
-                   <ol className="list-decimal list-inside space-y-1 mt-2">
-                       <li>Create a CSV file with a single column header: <code className="bg-muted px-1.5 py-0.5 rounded-md font-mono text-xs">query</code></li>
-                       <li>Add your list of search prompts under that column.</li>
-                       <li>Upload the file, set leads per prompt, and generate.</li>
-                   </ol>
-                </AlertDescription>
-            </Alert>
-            <Button type="submit" disabled={isProcessing} className="w-full shadow-lg shadow-primary/30">
-              {isProcessing ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <UploadCloud className="mr-2 h-4 w-4" />}
-              {isProcessing ? 'Processing...' : 'Upload and Generate'}
-            </Button>
-          </form>
-        </Form>
-        {isProcessing && progressMessage && (
-            <div className="mt-4 text-sm text-muted-foreground flex items-center">
-                <Loader2 className="mr-2 h-4 w-4 animate-spin"/>
-                {progressMessage}
-            </div>
-        )}
-      </CardContent>
-    </Card>
+    <div className="pt-4">
+      <Form {...form}>
+        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+          <div className="grid gap-4 md:grid-cols-2 md:items-end">
+            <FormField
+              control={form.control}
+              name="file"
+              render={({ field }) => (
+                <FormItem className="md:col-span-1">
+                  <FormLabel>CSV File</FormLabel>
+                  <FormControl>
+                    <Input type="file" accept=".csv" {...fileRef} disabled={isProcessing} className="file:text-primary file:font-semibold" />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="numLeadsPerQuery"
+              render={({ field }) => (
+                <FormItem className="md:col-span-1">
+                  <FormLabel>Leads per Prompt</FormLabel>
+                  <FormControl>
+                    <Input type="number" {...field} disabled={isProcessing} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          </div>
+            <Alert>
+              <Info className="h-4 w-4" />
+              <AlertTitle className="font-semibold">How to Use</AlertTitle>
+              <AlertDescription>
+                  <ol className="list-decimal list-inside space-y-1 mt-2">
+                      <li>Create a CSV file with a single column header: <code className="bg-muted px-1.5 py-0.5 rounded-md font-mono text-xs">query</code></li>
+                      <li>Add your list of search prompts under that column.</li>
+                      <li>Upload the file, set leads per prompt, and generate.</li>
+                  </ol>
+              </AlertDescription>
+          </Alert>
+          <Button type="submit" disabled={isProcessing} className="w-full shadow-lg shadow-primary/30">
+            {isProcessing ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <UploadCloud className="mr-2 h-4 w-4" />}
+            {isProcessing ? 'Processing...' : 'Upload and Generate'}
+          </Button>
+        </form>
+      </Form>
+      {isProcessing && progressMessage && (
+          <div className="mt-4 text-sm text-muted-foreground flex items-center">
+              <Loader2 className="mr-2 h-4 w-4 animate-spin"/>
+              {progressMessage}
+          </div>
+      )}
+    </div>
   );
 }
