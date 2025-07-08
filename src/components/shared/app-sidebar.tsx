@@ -56,37 +56,16 @@ export function AppSidebar() {
             xmlns="http://www.w3.org/2000/svg"
           >
             <path
-              d="M12 2L2 7V17L12 22L22 17V7L12 2Z"
-              stroke="currentColor"
-              strokeWidth="2"
-              strokeLinejoin="round"
+                d="M12 22C17.5228 22 22 17.5228 22 12C22 6.47715 17.5228 2 12 2C6.47715 2 2 6.47715 2 12C2 17.5228 6.47715 22 12 22Z"
+                stroke="currentColor"
+                strokeWidth="2"
             />
             <path
-              d="M12 12L22 7"
-              stroke="currentColor"
-              strokeWidth="2"
-              strokeLinejoin="round"
-            />
-            <path
-              d="M12 12V22"
-              stroke="currentColor"
-              strokeWidth="2"
-              strokeLinejoin="round"
-            />
-            <path
-              d="M12 12L2 7"
-              stroke="currentColor"
-              strokeWidth="2"
-              strokeLinejoin="round"
-            />
-            <path
-              d="M17 4.5L7 9.5"
-              stroke="currentColor"
-              strokeWidth="2"
-              strokeLinejoin="round"
+                d="M12 15C13.6569 15 15 13.6569 15 12C15 10.3431 13.6569 9 12 9C10.3431 9 9 10.3431 9 12C9 13.6569 10.3431 15 12 15Z"
+                fill="currentColor"
             />
           </svg>
-          <span className={state === 'collapsed' ? 'hidden': 'font-headline text-lg font-bold'}>LeadGen</span>
+          <span className={state === 'collapsed' ? 'hidden': 'font-headline text-lg font-bold'}>oPilot</span>
         </Link>
       </SidebarHeader>
       <SidebarContent>

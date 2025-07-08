@@ -42,43 +42,22 @@ export default function AuthLayout({
                 className="group flex items-center justify-center gap-2 mb-4"
             >
                 <svg
-                className="h-8 w-8 text-primary transition-all group-hover:scale-110"
-                viewBox="0 0 24 24"
-                fill="none"
-                xmlns="http://www.w3.org/2000/svg"
+                    className="h-8 w-8 text-primary transition-all group-hover:scale-110"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    xmlns="http://www.w3.org/2000/svg"
                 >
-                <path
-                    d="M12 2L2 7V17L12 22L22 17V7L12 2Z"
-                    stroke="currentColor"
-                    strokeWidth="2"
-                    strokeLinejoin="round"
-                />
-                <path
-                    d="M12 12L22 7"
-                    stroke="currentColor"
-                    strokeWidth="2"
-                    strokeLinejoin="round"
-                />
-                <path
-                    d="M12 12V22"
-                    stroke="currentColor"
-                    strokeWidth="2"
-                    strokeLinejoin="round"
-                />
-                <path
-                    d="M12 12L2 7"
-                    stroke="currentColor"
-                    strokeWidth="2"
-                    strokeLinejoin="round"
-                />
-                <path
-                    d="M17 4.5L7 9.5"
-                    stroke="currentColor"
-                    strokeWidth="2"
-                    strokeLinejoin="round"
-                />
+                    <path
+                        d="M12 22C17.5228 22 22 17.5228 22 12C22 6.47715 17.5228 2 12 2C6.47715 2 2 6.47715 2 12C2 17.5228 6.47715 22 12 22Z"
+                        stroke="currentColor"
+                        strokeWidth="2"
+                    />
+                    <path
+                        d="M12 15C13.6569 15 15 13.6569 15 12C15 10.3431 13.6569 9 12 9C10.3431 9 9 10.3431 9 12C9 13.6569 10.3431 15 12 15Z"
+                        fill="currentColor"
+                    />
                 </svg>
-                <span className="text-3xl font-headline font-bold text-foreground">LeadGen</span>
+                <span className="text-3xl font-headline font-bold text-foreground">oPilot</span>
             </Link>
             {children}
         </div>
@@ -89,43 +68,22 @@ export default function AuthLayout({
             className="group flex items-center justify-center gap-4 mb-8"
         >
             <svg
-            className="h-10 w-10 text-primary transition-all group-hover:scale-110"
-            viewBox="0 0 24 24"
-            fill="none"
-            xmlns="http://www.w3.org/2000/svg"
+                className="h-10 w-10 text-primary transition-all group-hover:scale-110"
+                viewBox="0 0 24 24"
+                fill="none"
+                xmlns="http://www.w3.org/2000/svg"
             >
-            <path
-                d="M12 2L2 7V17L12 22L22 17V7L12 2Z"
-                stroke="currentColor"
-                strokeWidth="2"
-                strokeLinejoin="round"
-            />
-            <path
-                d="M12 12L22 7"
-                stroke="currentColor"
-                strokeWidth="2"
-                strokeLinejoin="round"
-            />
-            <path
-                d="M12 12V22"
-                stroke="currentColor"
-                strokeWidth="2"
-                strokeLinejoin="round"
-            />
-            <path
-                d="M12 12L2 7"
-                stroke="currentColor"
-                strokeWidth="2"
-                strokeLinejoin="round"
-            />
-            <path
-                d="M17 4.5L7 9.5"
-                stroke="currentColor"
-                strokeWidth="2"
-                strokeLinejoin="round"
-            />
+                <path
+                    d="M12 22C17.5228 22 22 17.5228 22 12C22 6.47715 17.5228 2 12 2C6.47715 2 2 6.47715 2 12C2 17.5228 6.47715 22 12 22Z"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                />
+                <path
+                    d="M12 15C13.6569 15 15 13.6569 15 12C15 10.3431 13.6569 9 12 9C10.3431 9 9 10.3431 9 12C9 13.6569 10.3431 15 12 15Z"
+                    fill="currentColor"
+                />
             </svg>
-            <span className="text-4xl font-headline font-bold text-foreground">LeadGen</span>
+            <span className="text-4xl font-headline font-bold text-foreground">oPilot</span>
         </Link>
         <Image 
           src="https://placehold.co/600x400.png"
@@ -136,7 +94,7 @@ export default function AuthLayout({
           data-ai-hint="futuristic abstract"
         />
         <p className="mt-8 text-lg text-muted-foreground">
-          The next generation of AI-powered lead generation.
+          Your AI copilot for lead generation.
         </p>
       </div>
     </div>

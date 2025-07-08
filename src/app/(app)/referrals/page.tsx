@@ -33,8 +33,8 @@ export default function ReferralsPage() {
   const handleShare = () => {
      if (navigator.share && referralLink) {
       navigator.share({
-        title: 'Join me on Leadgen!',
-        text: 'Sign up for Leadgen using my referral link and get started with AI-powered lead generation.',
+        title: 'Join me on oPilot!',
+        text: 'Sign up for oPilot using my referral link and get started with AI-powered lead generation.',
         url: referralLink,
       }).catch(error => console.error('Error sharing:', error));
     } else {
