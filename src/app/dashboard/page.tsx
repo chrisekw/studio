@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState } from 'react';
@@ -5,7 +6,6 @@ import dynamic from 'next/dynamic';
 import { SearchForm } from '@/components/dashboard/search-form';
 import { type Lead } from '@/lib/types';
 import { useAuth } from '@/context/auth-context';
-import { BulkUploadForm } from '@/components/dashboard/bulk-upload-form';
 import { Separator } from '@/components/ui/separator';
 import { UpgradeBanner } from '@/components/dashboard/upgrade-banner';
 import { calculateRemainingLeads } from '@/lib/utils';
@@ -58,6 +58,12 @@ const LeadsTable = dynamic(
   () => import('@/components/dashboard/leads-table').then(mod => mod.LeadsTable),
   { loading: () => <div />, ssr: false } // Use a simpler loader here, the component has its own
 );
+
+const BulkUploadForm = dynamic(
+  () => import('@/components/dashboard/bulk-upload-form').then(mod => mod.BulkUploadForm),
+  { loading: () => <Skeleton className="h-48 w-full" />, ssr: false }
+);
+
 
 export default function DashboardPage() {
   const [leads, setLeads] = useState<Lead[]>([]);
