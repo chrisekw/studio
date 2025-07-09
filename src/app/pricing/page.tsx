@@ -149,7 +149,7 @@ export default function PricingPage() {
 
         <div className="space-y-6">
             <div className="rounded-lg border bg-card text-card-foreground p-6 space-y-3 text-sm text-muted-foreground">
-                 <p>All payments are securely processed via Stripe.</p>
+                 <p>All payments are securely processed via Flutterwave .</p>
                  <p>Cancel anytime, no hidden fees.</p>
                  <p>7-day money-back guarantee on all paid plans.</p>
             </div>

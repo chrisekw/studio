@@ -153,7 +153,11 @@ export function BulkUploadForm({ setLeads, setIsLoading, remainingLeads, remaini
             // 1. Deduct from plan quota
             const planLeadsToUse = Math.min(leadsToDeduct, Math.max(0, remainingPlanLeads));
             if (planLeadsToUse > 0) {
-              updatePayload.leadsGeneratedThisMonth = increment(planLeadsToUse);
+              if (userProfile.lastLeadGenerationMonth === currentMonth) {
+                updatePayload.leadsGeneratedThisMonth = increment(planLeadsToUse);
+              } else {
+                updatePayload.leadsGeneratedThisMonth = planLeadsToUse;
+              }
               updatePayload.lastLeadGenerationMonth = currentMonth;
               leadsToDeduct -= planLeadsToUse;
             }

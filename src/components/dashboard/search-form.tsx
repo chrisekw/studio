@@ -1,3 +1,4 @@
+
 'use client';
 
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -172,10 +173,18 @@ export function SearchForm({ setIsLoading, setLeads, setSearchQuery, setShowSugg
         const planLeadsToUse = Math.min(leadsToDeduct, Math.max(0, remainingPlanLeads));
         if (planLeadsToUse > 0) {
           if (isFreePlan) {
-            updatePayload.leadsGeneratedToday = increment(planLeadsToUse);
+            if (userProfile.lastLeadGenerationDate === today) {
+              updatePayload.leadsGeneratedToday = increment(planLeadsToUse);
+            } else {
+              updatePayload.leadsGeneratedToday = planLeadsToUse;
+            }
             updatePayload.lastLeadGenerationDate = today;
           } else {
-            updatePayload.leadsGeneratedThisMonth = increment(planLeadsToUse);
+            if (userProfile.lastLeadGenerationMonth === currentMonth) {
+              updatePayload.leadsGeneratedThisMonth = increment(planLeadsToUse);
+            } else {
+              updatePayload.leadsGeneratedThisMonth = planLeadsToUse;
+            }
             updatePayload.lastLeadGenerationMonth = currentMonth;
           }
           leadsToDeduct -= planLeadsToUse;
