@@ -64,7 +64,7 @@ const plans = [
     description: 'Built for teams and resellers who need maximum power.',
     features: [
       'Everything in Pro',
-      'Team access (up to 5 users)',
+      '5000 leads per month',
       'White-label reports',
       'Bulk prompt upload (CSV)',
       'Webhook & Zapier support',
