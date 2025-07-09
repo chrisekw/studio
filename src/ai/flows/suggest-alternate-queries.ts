@@ -19,7 +19,7 @@ const SuggestAlternateQueriesInputSchema = z.object({
 });
 export type SuggestAlternateQueriesInput = z.infer<typeof SuggestAlternateQueriesInputSchema>;
 
-const SuggestAlternateQueriesOutputSchema = z.array(z.string()).describe('An array of suggested alternative queries.');
+const SuggestAlternateQueriesOutputSchema = z.array(z.string()).describe('An array of 5 suggested alternative queries.');
 export type SuggestAlternateQueriesOutput = z.infer<typeof SuggestAlternateQueriesOutputSchema>;
 
 export async function suggestAlternateQueries(input: SuggestAlternateQueriesInput): Promise<SuggestAlternateQueriesOutput> {
@@ -33,11 +33,11 @@ const suggestAlternateQueriesPrompt = ai.definePrompt({
   output: {schema: SuggestAlternateQueriesOutputSchema},
   prompt: `You are an expert in generating alternative search queries.
 
-  Given the following search query, suggest a list of alternative queries that are semantically identical but use different keywords or phrasing. The goal is to broaden the search and explore different avenues for lead generation.
+  Given the following search query, suggest a list of exactly 5 alternative queries that are semantically identical but use different keywords or phrasing. The goal is to broaden the search and explore different avenues for lead generation.
 
   Original Query: {{{query}}}
 
-  Alternative Queries:`, // Ensure the prompt is well-formatted and clear
+  Return the 5 alternative queries in the specified format.`,
 });
 
 const suggestAlternateQueriesFlow = ai.defineFlow(
@@ -49,7 +49,8 @@ const suggestAlternateQueriesFlow = ai.defineFlow(
   async (input) => {
     try {
       const {output} = await suggestAlternateQueriesPrompt(input);
-      return output!;
+      // Return the first 5 suggestions, in case the model returns more than requested.
+      return (output || []).slice(0, 5);
     } catch (error: any) {
       console.error('Error in suggestAlternateQueriesFlow:', error);
       throw new Error(error.message || 'Could not fetch AI suggestions.');
