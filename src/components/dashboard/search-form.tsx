@@ -1,3 +1,4 @@
+
 'use client';
 
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -464,3 +465,4 @@ export function SearchForm({ setIsLoading, setLeads, setSearchQuery, setShowSugg
     </Form>
   );
 }
+

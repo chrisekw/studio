@@ -1,3 +1,4 @@
+
 'use client';
 
 import {
@@ -213,10 +214,10 @@ export function LeadsTable({ leads, isLoading, progress, progressMessage }: Lead
       <div className="w-full max-w-md text-center p-4">
         <Loader2 className="h-16 w-16 text-primary animate-spin mb-4 mx-auto" />
         <h3 className="text-xl font-headline font-medium text-foreground">
-          {progressMessage.split('...')[0] || 'Processing...'}
+          {progressMessage || 'Processing...'}
         </h3>
         <p className="text-muted-foreground/80 mt-2 mb-4">
-          {progressMessage.split('...')[1] || 'Please wait.'}
+          Please wait. Large searches may take a few moments.
         </p>
         <Progress value={progress} className="w-full" />
       </div>
@@ -350,7 +351,7 @@ export function LeadsTable({ leads, isLoading, progress, progressMessage }: Lead
   );
 
   const renderContent = () => {
-    if (isLoading && progress > 0 && progressMessage) {
+    if (isLoading && progress > 0) {
       return renderProgress();
     }
     if (isLoading) {
