@@ -30,6 +30,7 @@ import { useAuth } from '@/context/auth-context';
 import { calculateRemainingLeads } from '@/lib/utils';
 import { db } from '@/lib/firebase';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '../ui/tooltip';
+import { Switch } from '@/components/ui/switch';
 
 interface SearchFormProps {
   setIsLoading: Dispatch<SetStateAction<boolean>>;
@@ -53,6 +54,7 @@ export function SearchForm({ setIsLoading, setLeads, setSearchQuery, setShowSugg
 
   const isAgencyPlan = userProfile?.plan === 'Agency';
   const maxLeadsPerSearch = isAgencyPlan ? 1000 : 100;
+  const largeSearchThreshold = 100;
 
   const formSchema = z.object({
     keyword: z.string().min(3, { message: 'Keyword must be at least 3 characters.' }),
@@ -63,6 +65,7 @@ export function SearchForm({ setIsLoading, setLeads, setSearchQuery, setShowSugg
     radius: z.enum(['local', 'broad']),
     includeAddress: z.boolean().default(false).optional(),
     includeLinkedIn: z.boolean().default(false).optional(),
+    confirmLargeSearch: z.boolean().default(false).optional(),
   });
 
   const form = useForm<z.infer<typeof formSchema>>({
@@ -73,6 +76,7 @@ export function SearchForm({ setIsLoading, setLeads, setSearchQuery, setShowSugg
       numLeads: 10,
       includeAddress: true,
       includeLinkedIn: true,
+      confirmLargeSearch: false,
     },
     onSettled: (data, error) => {
         if (error) {
@@ -91,6 +95,9 @@ export function SearchForm({ setIsLoading, setLeads, setSearchQuery, setShowSugg
         }
     }
   });
+
+  const numLeadsValue = form.watch('numLeads');
+  const showLargeSearchToggle = isAgencyPlan && numLeadsValue > largeSearchThreshold;
   
   const isFreePlan = userProfile?.plan === 'Free';
 
@@ -185,60 +192,78 @@ export function SearchForm({ setIsLoading, setLeads, setSearchQuery, setShowSugg
       });
       return;
     }
+
+    if (showLargeSearchToggle && !values.confirmLargeSearch) {
+        toast({
+            variant: 'destructive',
+            title: 'Confirmation Required',
+            description: 'Please confirm you want to start a large search operation.',
+        });
+        return;
+    }
     
     setIsGenerating(true);
     setIsLoading(true);
     setLeads([]);
     setShowSuggestions(false);
     setSearchQuery(values.keyword);
-
-    const totalLeadsToGenerate = values.numLeads;
+    
     const isProOrAgency = userProfile.plan === 'Pro' || userProfile.plan === 'Agency';
+    const totalLeadsToGenerate = values.numLeads;
+    const chunkSize = 100;
+    let allNewLeads: Lead[] = [];
+    let generatedCount = 0;
 
-    // Step 1: Generate Leads without scores
-    setProgress(10);
-    setProgressMessage(`Generating ${totalLeadsToGenerate.toLocaleString()} leads...`);
+    const numChunks = Math.ceil(totalLeadsToGenerate / chunkSize);
 
-    const result = await generateLeads({
-        query: values.keyword,
-        numLeads: totalLeadsToGenerate,
-        includeAddress: !isFreePlan && (values.includeAddress ?? false),
-        includeLinkedIn: !isFreePlan && (values.includeLinkedIn ?? false),
-        extractContactInfo: true,
-        includeDescription: !isFreePlan,
-        scoreLeads: false, // Scoring is done separately now
-    });
+    for (let i = 0; i < numChunks; i++) {
+        const leadsForThisChunk = Math.min(chunkSize, totalLeadsToGenerate - generatedCount);
+        if (leadsForThisChunk <= 0) break;
 
-    const newLeads = result.map((lead, index) => ({
-        ...lead,
-        id: `${Date.now()}-${index}`,
-    }));
+        setProgress(10 + (i / numChunks) * 40);
+        setProgressMessage(`Generating leads... (${generatedCount}/${totalLeadsToGenerate})`);
 
-    await updateQuotaInFirestore(newLeads.length);
-    setLeads(newLeads); // Show unscored leads immediately
-    setProgress(50);
+        const result = await generateLeads({
+            query: values.keyword,
+            numLeads: leadsForThisChunk,
+            includeAddress: !isFreePlan && (values.includeAddress ?? false),
+            includeLinkedIn: !isFreePlan && (values.includeLinkedIn ?? false),
+            extractContactInfo: true,
+            includeDescription: !isFreePlan,
+            scoreLeads: false,
+        });
+
+        const newLeads = result.map((lead, index) => ({
+            ...lead,
+            id: `${Date.now()}-${i}-${index}`,
+        }));
+        
+        generatedCount += newLeads.length;
+        allNewLeads = [...allNewLeads, ...newLeads];
+        
+        await updateQuotaInFirestore(newLeads.length);
+        setLeads(allNewLeads);
+    }
+    
     setIsLoading(false); // Stop main loader, but keep generating loader
 
     // Step 2: Score leads if on a premium plan
-    if (isProOrAgency && newLeads.length > 0) {
+    if (isProOrAgency && allNewLeads.length > 0) {
         setProgressMessage('Scoring leads with AI...');
-        const scoringPromises = newLeads.map((lead, index) =>
+        const scoringPromises = allNewLeads.map((lead, index) =>
             scoreLead({
                 name: lead.name,
                 website: lead.website,
                 description: lead.description,
             }).then(scoreResult => {
-                // Update the specific lead in the UI with its new score
                 setLeads(currentLeads =>
                     currentLeads.map(l =>
                         l.id === lead.id ? { ...l, score: scoreResult.score, scoreRationale: scoreResult.rationale } : l
                     )
                 );
-                // Update progress
-                setProgress(50 + ((index + 1) / newLeads.length) * 50);
+                setProgress(50 + ((index + 1) / allNewLeads.length) * 50);
             }).catch(err => {
                 console.error(`Failed to score lead ${lead.name}:`, err);
-                // Optionally update the UI to show an error for this specific lead
             })
         );
         await Promise.all(scoringPromises);
@@ -246,7 +271,7 @@ export function SearchForm({ setIsLoading, setLeads, setSearchQuery, setShowSugg
     
     toast({
         title: 'Search Complete',
-        description: `We've found and processed ${newLeads.length.toLocaleString()} potential leads.`,
+        description: `We've found and processed ${generatedCount.toLocaleString()} potential leads.`,
     });
 
     // Final cleanup
@@ -424,9 +449,34 @@ export function SearchForm({ setIsLoading, setLeads, setSearchQuery, setShowSugg
                 />
             </div>
         </div>
+        
+        {showLargeSearchToggle && (
+            <FormField
+                control={form.control}
+                name="confirmLargeSearch"
+                render={({ field }) => (
+                <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4 bg-amber-500/10 border-amber-500/30">
+                    <div className="space-y-0.5">
+                    <FormLabel className="text-base text-amber-900 dark:text-amber-200">Confirm Large Search</FormLabel>
+                    <FormDescription className="text-amber-800 dark:text-amber-300">
+                        This will generate over 100 leads and may take some time to complete.
+                    </FormDescription>
+                    </div>
+                    <FormControl>
+                    <Switch
+                        checked={field.value}
+                        onCheckedChange={field.onChange}
+                        aria-readonly
+                    />
+                    </FormControl>
+                </FormItem>
+                )}
+            />
+        )}
+
 
         <div className="flex justify-end">
-            <Button type="submit" size="lg" disabled={isGenerating} className="w-full sm:w-auto shadow-lg shadow-primary/30">
+            <Button type="submit" size="lg" disabled={isGenerating || (showLargeSearchToggle && !form.getValues('confirmLargeSearch'))} className="w-full sm:w-auto shadow-lg shadow-primary/30">
             {isGenerating ? (
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
             ) : (
