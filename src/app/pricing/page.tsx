@@ -59,7 +59,7 @@ const plans = [
   },
   {
     name: 'Agency',
-    price: '$199',
+    price: '$299',
     pricePeriod: '/month',
     description: 'Built for teams and resellers who need maximum power.',
     features: [

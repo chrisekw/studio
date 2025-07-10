@@ -1,11 +1,13 @@
 'use client';
 
-import { SidebarTrigger } from '../ui/sidebar';
+import { SidebarTrigger, useSidebar } from '../ui/sidebar';
 import Link from 'next/link';
-import { Menu } from 'lucide-react';
+import { Menu, PanelLeftClose, PanelLeftOpen } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
 export function AppHeader() {
+  const { isMobile, toggleSidebar, state } = useSidebar();
+  const isCollapsed = state === 'collapsed';
 
   return (
     <header className="flex h-14 items-center gap-4 border-b bg-background/60 px-4 backdrop-blur-sm sm:px-6 sticky top-0 z-10">
@@ -30,10 +32,18 @@ export function AppHeader() {
           <span className="font-headline text-lg font-bold">oPilot</span>
         </Link>
       </div>
+      
+      {isMobile ? (
+        <SidebarTrigger>
+          <Menu className="h-6 w-6" />
+        </SidebarTrigger>
+      ) : (
+        <Button onClick={toggleSidebar} variant="ghost" size="icon">
+          {isCollapsed ? <PanelLeftOpen /> : <PanelLeftClose />}
+          <span className="sr-only">Toggle Sidebar</span>
+        </Button>
+      )}
 
-      <SidebarTrigger>
-        <Menu className="h-6 w-6" />
-      </SidebarTrigger>
     </header>
   );
 }

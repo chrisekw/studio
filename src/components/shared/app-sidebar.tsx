@@ -11,7 +11,7 @@ import { AppSidebarNav } from './app-sidebar-nav';
 import { useSidebar } from '@/components/ui/sidebar';
 import { QuotaDisplay } from './quota-display';
 import { Button } from '@/components/ui/button';
-import { PanelLeftClose, PanelLeftOpen, LogOut } from 'lucide-react';
+import { LogOut } from 'lucide-react';
 import { useAuth } from '@/context/auth-context';
 import { signOut } from 'firebase/auth';
 import { auth } from '@/lib/firebase';
@@ -19,8 +19,7 @@ import { useToast } from '@/hooks/use-toast';
 import { useRouter } from 'next/navigation';
 
 export function AppSidebar() {
-  const { state, toggleSidebar } = useSidebar();
-  const isCollapsed = state === 'collapsed';
+  const { state } = useSidebar();
   const { user } = useAuth();
   const router = useRouter();
   const { toast } = useToast();
@@ -85,13 +84,6 @@ export function AppSidebar() {
             </div>
           </>
         )}
-        <SidebarSeparator />
-        <div className="hidden md:flex p-2 pt-2">
-            <Button onClick={toggleSidebar} variant="ghost" className="w-full justify-start p-2 h-auto">
-                {isCollapsed ? <PanelLeftOpen /> : <PanelLeftClose />}
-                <span className="group-data-[collapsible=icon]:hidden ml-2">Collapse</span>
-            </Button>
-        </div>
       </SidebarFooter>
     </Sidebar>
   );

@@ -4,7 +4,6 @@ import { createContext, useContext, useEffect, useState, type ReactNode } from '
 import { onAuthStateChanged, signOut, type User } from 'firebase/auth';
 import { doc, setDoc, onSnapshot, runTransaction, query, collection, where, getDocs, writeBatch, increment, arrayUnion, type DocumentReference } from 'firebase/firestore';
 import { auth, db } from '@/lib/firebase';
-import { Loader2 } from 'lucide-react';
 import type { UserProfile } from '@/lib/types';
 import { useToast } from '@/hooks/use-toast';
 import { generateReferralCode } from '@/lib/utils';
@@ -14,6 +13,30 @@ interface AuthContextType {
   loading: boolean;
   userProfile: UserProfile | null;
 }
+
+const Splash = () => (
+  <div className="flex h-screen w-full items-center justify-center bg-background">
+      <div className="relative flex items-center justify-center animate-pulse">
+          <svg
+            className="h-24 w-24 text-primary"
+            viewBox="0 0 24 24"
+            fill="none"
+            xmlns="http://www.w3.org/2000/svg"
+          >
+            <path
+                d="M12 22C17.5228 22 22 17.5228 22 12C22 6.47715 17.5228 2 12 2C6.47715 2 2 6.47715 2 12C2 17.5228 6.47715 22 12 22Z"
+                stroke="currentColor"
+                strokeWidth="1.5"
+            />
+            <path
+                d="M12 15C13.6569 15 15 13.6569 15 12C15 10.3431 13.6569 9 12 9C10.3431 9 9 10.3431 9 12C9 13.6569 10.3431 15 12 15Z"
+                fill="currentColor"
+            />
+          </svg>
+      </div>
+  </div>
+);
+
 
 const AuthContext = createContext<AuthContextType>({
   user: null,
@@ -139,11 +162,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, [toast]);
 
   if (loading) {
-    return (
-      <div className="flex h-screen w-full items-center justify-center">
-        <Loader2 className="h-8 w-8 animate-spin" />
-      </div>
-    );
+    return <Splash />;
   }
 
   return (

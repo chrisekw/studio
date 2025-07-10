@@ -3,7 +3,6 @@
 import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/context/auth-context';
-import { Loader2 } from 'lucide-react';
 
 export default function Home() {
   const { user, loading } = useAuth();
@@ -21,11 +20,7 @@ export default function Home() {
     }
   }, [user, loading, router]);
 
-  // Render a loader while the redirect is in progress.
-  // This prevents any flicker of content before the redirect happens.
-  return (
-    <div className="flex h-screen w-full items-center justify-center">
-      <Loader2 className="h-8 w-8 animate-spin" />
-    </div>
-  );
+  // The loading state is now handled by AuthProvider, so we don't need a spinner here.
+  // Returning null or an empty fragment is sufficient.
+  return null;
 }
