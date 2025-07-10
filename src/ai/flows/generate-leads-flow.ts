@@ -1,3 +1,4 @@
+
 'use server';
 /**
  * @fileOverview A flow for generating business leads.
@@ -51,7 +52,7 @@ const prompt = ai.definePrompt({
   For each lead, provide a fictional but realistic-looking company name, and a full website URL including the protocol (e.g. https://example.com).
   
   {{#if extractContactInfo}}
-  Also provide an email address and phone number.
+  Also provide a realistic-looking email address and phone number.
   {{else}}
   For the email and phone fields, return an empty string.
   {{/if}}
@@ -61,18 +62,18 @@ const prompt = ai.definePrompt({
   {{/if}}
 
   {{#if includeLinkedIn}}
-  Also include a specific, realistic-looking LinkedIn company profile URL for each company (e.g., https://www.linkedin.com/company/some-company). Do not just use "www.linkedin.com".
+  Also include a specific, realistic-looking LinkedIn company profile URL for each company (e.g., https://www.linkedin.com/company/some-company). Do not just use "www.linkedin.com". If a valid-looking URL cannot be created, return an empty string for this field.
   {{/if}}
 
   {{#if includeSocials}}
-  Also include specific, realistic-looking company profile URLs for Facebook and X (formerly Twitter).
+  Also include specific, realistic-looking company profile URLs for Facebook and X (formerly Twitter). If a valid-looking URL cannot be created, return an empty string for these fields.
   {{/if}}
 
   {{#if includeDescription}}
   Also include a concise, one-line description of what the company is all about.
   {{/if}}
 
-  Ensure the generated data is plausible for the given query.
+  Ensure all generated data is plausible and realistic for the given query. Do not return empty fields unless specified.
   
   Return the list of leads in the specified JSON format.
   `,

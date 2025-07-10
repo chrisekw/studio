@@ -121,7 +121,7 @@ export function BulkUploadForm({ setLeads, setIsLoading, remainingLeads, remaini
               includeAddress: userProfile.defaultIncludeAddress,
               includeLinkedIn: userProfile.defaultIncludeLinkedIn,
               includeDescription: true,
-              scoreLeads: isProOrAgency,
+              includeSocials: isProOrAgency,
             });
 
             const newLeads = result.map((lead, index) => ({

@@ -77,22 +77,6 @@ export function SearchForm({ setIsLoading, setLeads, setSearchQuery, setShowSugg
       includeLinkedIn: true,
       confirmLargeSearch: false,
     },
-    onSettled: (data, error) => {
-        if (error) {
-            console.error('Server Action Error:', error);
-            toast({
-                variant: 'destructive',
-                title: 'Generation Failed',
-                description: (error as any).message || 'An unexpected error occurred.',
-            });
-            // Reset UI state on failure
-            setIsGenerating(false);
-            setIsLoading(false);
-            setShowSuggestions(false);
-            setProgress(0);
-            setProgressMessage('');
-        }
-    }
   });
 
   const numLeadsValue = form.watch('numLeads');
@@ -204,61 +188,51 @@ export function SearchForm({ setIsLoading, setLeads, setSearchQuery, setShowSugg
     setIsGenerating(true);
     setIsLoading(true);
     setLeads([]);
-    setShowSuggestions(false);
     setSearchQuery(values.keyword);
     setProgress(10);
+    setProgressMessage(`Generating ${values.numLeads.toLocaleString()} leads...`);
     
-    const totalLeadsToGenerate = values.numLeads;
-    const chunkSize = 100;
-    let allNewLeads: Lead[] = [];
-    let generatedCount = 0;
+    try {
+      const result = await generateLeads({
+          query: values.keyword,
+          numLeads: values.numLeads,
+          includeAddress: !isFreePlan && (values.includeAddress ?? false),
+          includeLinkedIn: !isFreePlan && (values.includeLinkedIn ?? false),
+          includeSocials: isAgencyPlan,
+          extractContactInfo: true,
+          includeDescription: !isFreePlan,
+      });
 
-    const numChunks = Math.ceil(totalLeadsToGenerate / chunkSize);
+      const newLeads = result.map((lead, index) => ({
+          ...lead,
+          id: `${Date.now()}-${index}`,
+      }));
+      
+      await updateQuotaInFirestore(newLeads.length);
+      setLeads(newLeads);
+      
+      toast({
+          title: 'Search Complete',
+          description: `We've found and processed ${newLeads.length.toLocaleString()} potential leads.`,
+      });
 
-    for (let i = 0; i < numChunks; i++) {
-        const leadsForThisChunk = Math.min(chunkSize, totalLeadsToGenerate - generatedCount);
-        if (leadsForThisChunk <= 0) break;
+      setProgress(100);
+      setProgressMessage(`Complete! ${newLeads.length.toLocaleString()} leads found.`);
 
-        const overallProgress = 10 + (generatedCount / totalLeadsToGenerate) * 80;
-        setProgress(overallProgress);
-        setProgressMessage(`Generating leads... (${generatedCount.toLocaleString()}/${totalLeadsToGenerate.toLocaleString()})`);
-
-        const result = await generateLeads({
-            query: values.keyword,
-            numLeads: leadsForThisChunk,
-            includeAddress: !isFreePlan && (values.includeAddress ?? false),
-            includeLinkedIn: !isFreePlan && (values.includeLinkedIn ?? false),
-            includeSocials: isAgencyPlan,
-            extractContactInfo: true,
-            includeDescription: !isFreePlan,
-        });
-
-        const newLeads = result.map((lead, index) => ({
-            ...lead,
-            id: `${Date.now()}-${i}-${index}`,
-        }));
-        
-        generatedCount += newLeads.length;
-        allNewLeads = [...allNewLeads, ...newLeads];
-        
-        await updateQuotaInFirestore(newLeads.length);
-        setLeads(allNewLeads);
+    } catch (error: any) {
+       toast({
+          variant: 'destructive',
+          title: 'Generation Failed',
+          description: error.message || 'An unexpected error occurred.',
+      });
+    } finally {
+        setIsGenerating(false);
+        setIsLoading(false);
+        setTimeout(() => {
+            setProgress(0);
+            setProgressMessage('');
+        }, 2000);
     }
-    
-    toast({
-        title: 'Search Complete',
-        description: `We've found and processed ${generatedCount.toLocaleString()} potential leads.`,
-    });
-
-    // Final cleanup
-    setProgress(100);
-    setProgressMessage(`Complete! ${generatedCount.toLocaleString()} leads found.`);
-    setIsGenerating(false);
-    setIsLoading(false);
-    setTimeout(() => {
-        setProgress(0);
-        setProgressMessage('');
-    }, 2000);
   }
 
   return (
