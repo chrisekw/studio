@@ -88,7 +88,7 @@ export function SearchForm({ setIsLoading, setLeads, setSearchQuery, setShowSugg
             // Reset UI state on failure
             setIsGenerating(false);
             setIsLoading(false);
-            setShowSuggestions(true);
+            setShowSuggestions(false);
             setProgress(0);
             setProgressMessage('');
         }
@@ -219,8 +219,9 @@ export function SearchForm({ setIsLoading, setLeads, setSearchQuery, setShowSugg
         const leadsForThisChunk = Math.min(chunkSize, totalLeadsToGenerate - generatedCount);
         if (leadsForThisChunk <= 0) break;
 
-        setProgress(10 + (i / numChunks) * 80);
-        setProgressMessage(`Generating leads... (${generatedCount}/${totalLeadsToGenerate})`);
+        const overallProgress = 10 + (generatedCount / totalLeadsToGenerate) * 80;
+        setProgress(overallProgress);
+        setProgressMessage(`Generating leads... (${generatedCount.toLocaleString()}/${totalLeadsToGenerate.toLocaleString()})`);
 
         const result = await generateLeads({
             query: values.keyword,
@@ -250,13 +251,14 @@ export function SearchForm({ setIsLoading, setLeads, setSearchQuery, setShowSugg
     });
 
     // Final cleanup
+    setProgress(100);
+    setProgressMessage(`Complete! ${generatedCount.toLocaleString()} leads found.`);
     setIsGenerating(false);
     setIsLoading(false);
-    setShowSuggestions(true);
     setTimeout(() => {
         setProgress(0);
         setProgressMessage('');
-    }, 1000);
+    }, 2000);
   }
 
   return (
@@ -435,7 +437,7 @@ export function SearchForm({ setIsLoading, setLeads, setSearchQuery, setShowSugg
                     <div className="space-y-0.5">
                     <FormLabel className="text-base text-amber-900 dark:text-amber-200">Confirm Large Search</FormLabel>
                     <FormDescription className="text-amber-800 dark:text-amber-300">
-                        This will generate over 100 leads and may take some time to complete.
+                        This will generate over {largeSearchThreshold} leads and may take some time to complete.
                     </FormDescription>
                     </div>
                     <FormControl>
@@ -465,4 +467,3 @@ export function SearchForm({ setIsLoading, setLeads, setSearchQuery, setShowSugg
     </Form>
   );
 }
-

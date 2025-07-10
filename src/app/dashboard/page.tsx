@@ -21,18 +21,6 @@ import { UploadCloud } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
 
 // Skeletons for lazy loading
-const SuggestedQueriesSkeleton = () => (
-    <div className="p-4 border rounded-lg bg-card/60">
-        <Skeleton className="h-6 w-32 mb-4" />
-        <Skeleton className="h-4 w-full mb-2" />
-        <div className="flex flex-wrap gap-2">
-            <Skeleton className="h-7 w-24" />
-            <Skeleton className="h-7 w-32" />
-            <Skeleton className="h-7 w-28" />
-        </div>
-    </div>
-);
-
 const LeadsTableSkeleton = () => (
     <div className="space-y-6">
         <div className="flex justify-between items-center">
@@ -49,11 +37,6 @@ const LeadsTableSkeleton = () => (
 );
 
 // Lazy load components
-const SuggestedQueries = dynamic(
-  () => import('@/components/dashboard/suggested-queries').then(mod => mod.SuggestedQueries),
-  { loading: () => <SuggestedQueriesSkeleton />, ssr: false }
-);
-
 const LeadsTable = dynamic(
   () => import('@/components/dashboard/leads-table').then(mod => mod.LeadsTable),
   { loading: () => <div />, ssr: false } // Use a simpler loader here, the component has its own
@@ -79,10 +62,6 @@ export default function DashboardPage() {
 
   // Centralize quota calculation
   const { remainingLeads, remainingLeadsText } = calculateRemainingLeads(userProfile);
-
-  const handleSuggestionClick = (suggestion: string) => {
-    setSelectedSuggestion(suggestion);
-  };
 
   return (
     <div className="space-y-8 py-6 animate-in fade-in-50">
@@ -116,9 +95,6 @@ export default function DashboardPage() {
               </Button>
             </div>
           )}
-        </div>
-        <div className="lg:col-span-1 sticky top-20">
-          {showSuggestions && <SuggestedQueries query={searchQuery} onSuggestionClick={handleSuggestionClick} />}
         </div>
       </div>
 
