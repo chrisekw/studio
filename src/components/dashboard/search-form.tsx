@@ -43,20 +43,6 @@ interface SearchFormProps {
   setProgressMessage: Dispatch<SetStateAction<string>>;
 }
 
-const maxLeadsPerSearch = 100;
-
-const formSchema = z.object({
-  keyword: z.string().min(3, { message: 'Keyword must be at least 3 characters.' }),
-  numLeads: z.coerce
-    .number({ invalid_type_error: 'Please enter a valid number.' })
-    .min(1, { message: 'Please generate at least 1 lead.' })
-    .max(maxLeadsPerSearch, { message: `You can generate up to ${maxLeadsPerSearch} leads per search.` }),
-  radius: z.enum(['local', 'broad']),
-  includeAddress: z.boolean().default(false).optional(),
-  includeLinkedIn: z.boolean().default(false).optional(),
-});
-
-
 export function SearchForm({ setIsLoading, setLeads, setSearchQuery, setShowSuggestions, selectedSuggestion, remainingLeads, remainingLeadsText, setShowUpgradeBanner, setProgress, setProgressMessage }: SearchFormProps) {
   const [isGenerating, setIsGenerating] = useState(false);
   const router = useRouter();
@@ -64,6 +50,20 @@ export function SearchForm({ setIsLoading, setLeads, setSearchQuery, setShowSugg
   const { user, userProfile } = useAuth();
   const defaultsSet = useRef(false);
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
+
+  const isAgencyPlan = userProfile?.plan === 'Agency';
+  const maxLeadsPerSearch = isAgencyPlan ? 1000 : 100;
+
+  const formSchema = z.object({
+    keyword: z.string().min(3, { message: 'Keyword must be at least 3 characters.' }),
+    numLeads: z.coerce
+      .number({ invalid_type_error: 'Please enter a valid number.' })
+      .min(1, { message: 'Please generate at least 1 lead.' })
+      .max(maxLeadsPerSearch, { message: `You can generate up to ${maxLeadsPerSearch.toLocaleString()} leads per search.` }),
+    radius: z.enum(['local', 'broad']),
+    includeAddress: z.boolean().default(false).optional(),
+    includeLinkedIn: z.boolean().default(false).optional(),
+  });
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -95,6 +95,58 @@ export function SearchForm({ setIsLoading, setLeads, setSearchQuery, setShowSugg
     }
   }, [selectedSuggestion, form]);
   
+  const updateQuotaInFirestore = async (leadsGeneratedCount: number) => {
+    if (!user || leadsGeneratedCount <= 0) return;
+  
+    // Re-fetch the latest remainingLeads count before updating
+    const freshProfile = calculateRemainingLeads(userProfile);
+    let leadsToDeduct = leadsGeneratedCount;
+    const updatePayload: any = {};
+    const today = new Date().toISOString().split('T')[0];
+    const currentMonth = new Date().toISOString().slice(0, 7);
+  
+    const planLeadsToUse = Math.min(leadsToDeduct, Math.max(0, freshProfile.remainingPlanLeads));
+    if (planLeadsToUse > 0) {
+      if (isFreePlan) {
+        if (userProfile?.lastLeadGenerationDate === today) {
+          updatePayload.leadsGeneratedToday = increment(planLeadsToUse);
+        } else {
+          updatePayload.leadsGeneratedToday = planLeadsToUse;
+        }
+        updatePayload.lastLeadGenerationDate = today;
+      } else {
+        if (userProfile?.lastLeadGenerationMonth === currentMonth) {
+          updatePayload.leadsGeneratedThisMonth = increment(planLeadsToUse);
+        } else {
+          updatePayload.leadsGeneratedThisMonth = planLeadsToUse;
+        }
+        updatePayload.lastLeadGenerationMonth = currentMonth;
+      }
+      leadsToDeduct -= planLeadsToUse;
+    }
+  
+    if (leadsToDeduct > 0) {
+      const pointsToUse = Math.min(leadsToDeduct, Math.max(0, freshProfile.leadPoints));
+      if (pointsToUse > 0) {
+        updatePayload.leadPoints = increment(-pointsToUse);
+        leadsToDeduct -= pointsToUse;
+      }
+    }
+  
+    if (leadsToDeduct > 0) {
+      const addonsToUse = Math.min(leadsToDeduct, Math.max(0, freshProfile.addonCredits));
+      if (addonsToUse > 0) {
+        updatePayload.addonCredits = increment(-addonsToUse);
+        leadsToDeduct -= addonsToUse;
+      }
+    }
+    
+    if (Object.keys(updatePayload).length > 0) {
+      const userDocRef = doc(db, 'users', user.uid);
+      await updateDoc(userDocRef, updatePayload);
+    }
+  };
+
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
     if (!user || !userProfile) {
@@ -126,115 +178,69 @@ export function SearchForm({ setIsLoading, setLeads, setSearchQuery, setShowSugg
     setShowSuggestions(false);
     setSearchQuery(values.keyword);
 
-    if (intervalRef.current) clearInterval(intervalRef.current);
-    
-    const numLeads = values.numLeads;
-    const estimatedTime = numLeads * 1500; // 1.5s per lead
-    setProgressMessage(`Generating ${numLeads} leads... This can take up to ${Math.ceil(estimatedTime / 1000)} seconds. Please don't close the window.`);
+    const totalLeadsToGenerate = values.numLeads;
+    const chunkSize = 100; // Generate in chunks of 100
+    const numChunks = Math.ceil(totalLeadsToGenerate / chunkSize);
+    let allNewLeads: Lead[] = [];
+    let totalLeadsGenerated = 0;
+
     setProgress(5);
 
-    intervalRef.current = setInterval(() => {
-      setProgress(prev => {
-        if (prev >= 95) {
-          if(intervalRef.current) clearInterval(intervalRef.current);
-          return 95;
-        }
-        return prev + 5;
-      });
-    }, Math.max(200, estimatedTime / 20));
-
-    try {
-      const fullQuery = values.keyword;
-      const isProOrAgency = userProfile.plan === 'Pro' || userProfile.plan === 'Agency';
-      
-      const result = await generateLeads({
-        query: fullQuery,
-        numLeads: values.numLeads,
-        includeAddress: !isFreePlan && (values.includeAddress ?? false),
-        includeLinkedIn: !isFreePlan && (values.includeLinkedIn ?? false),
-        extractContactInfo: true,
-        includeDescription: !isFreePlan,
-        scoreLeads: isProOrAgency,
-      });
-
-      const newLeads = result.map((lead, index) => ({
-        ...lead,
-        id: `${Date.now()}-${index}`,
-      }));
-
-      const leadsGeneratedCount = newLeads.length;
-      if (leadsGeneratedCount > 0) {
-        const userDocRef = doc(db, 'users', user.uid);
-        let leadsToDeduct = leadsGeneratedCount;
-        const updatePayload: any = {};
-        const today = new Date().toISOString().split('T')[0];
-        const currentMonth = new Date().toISOString().slice(0, 7);
+    for (let i = 0; i < numChunks; i++) {
+        const leadsForThisChunk = Math.min(chunkSize, totalLeadsToGenerate - totalLeadsGenerated);
+        const progressStart = (i / numChunks) * 100;
+        const progressEnd = ((i + 1) / numChunks) * 100;
         
-        const planLeadsToUse = Math.min(leadsToDeduct, Math.max(0, remainingPlanLeads));
-        if (planLeadsToUse > 0) {
-          if (isFreePlan) {
-            if (userProfile.lastLeadGenerationDate === today) {
-              updatePayload.leadsGeneratedToday = increment(planLeadsToUse);
-            } else {
-              updatePayload.leadsGeneratedToday = planLeadsToUse;
-            }
-            updatePayload.lastLeadGenerationDate = today;
-          } else {
-            if (userProfile.lastLeadGenerationMonth === currentMonth) {
-              updatePayload.leadsGeneratedThisMonth = increment(planLeadsToUse);
-            } else {
-              updatePayload.leadsGeneratedThisMonth = planLeadsToUse;
-            }
-            updatePayload.lastLeadGenerationMonth = currentMonth;
-          }
-          leadsToDeduct -= planLeadsToUse;
-        }
+        setProgressMessage(`Generating leads... (${totalLeadsGenerated.toLocaleString()}/${totalLeadsToGenerate.toLocaleString()})`);
 
-        if (leadsToDeduct > 0) {
-          const pointsToUse = Math.min(leadsToDeduct, Math.max(0, leadPoints));
-          if (pointsToUse > 0) {
-            updatePayload.leadPoints = increment(-pointsToUse);
-            leadsToDeduct -= pointsToUse;
-          }
-        }
+        try {
+            const isProOrAgency = userProfile.plan === 'Pro' || userProfile.plan === 'Agency';
+            const result = await generateLeads({
+                query: values.keyword,
+                numLeads: leadsForThisChunk,
+                includeAddress: !isFreePlan && (values.includeAddress ?? false),
+                includeLinkedIn: !isFreePlan && (values.includeLinkedIn ?? false),
+                extractContactInfo: true,
+                includeDescription: !isFreePlan,
+                scoreLeads: isProOrAgency,
+            });
 
-        if (leadsToDeduct > 0) {
-          const addonsToUse = Math.min(leadsToDeduct, Math.max(0, addonCredits));
-          if (addonsToUse > 0) {
-            updatePayload.addonCredits = increment(-addonsToUse);
-            leadsToDeduct -= addonsToUse;
-          }
+            const newLeads = result.map((lead, index) => ({
+                ...lead,
+                id: `${Date.now()}-${i}-${index}`,
+            }));
+
+            totalLeadsGenerated += newLeads.length;
+            allNewLeads = [...allNewLeads, ...newLeads];
+            setLeads(allNewLeads); // Update UI incrementally
+
+            // We update the quota in Firestore after each successful chunk
+            await updateQuotaInFirestore(newLeads.length);
+
+        } catch (error: any) {
+            console.error(`Error in chunk ${i + 1}:`, error);
+            toast({
+                variant: 'destructive',
+                title: `Error in Batch ${i + 1}`,
+                description: error.message || 'An error occurred during this batch. The process will stop.',
+            });
+            break; // Stop processing further chunks if one fails
         }
-        
-        if (Object.keys(updatePayload).length > 0) {
-          await updateDoc(userDocRef, updatePayload);
-        }
-      }
-      
-      setLeads(newLeads);
-      
-      toast({
+        setProgress(progressEnd);
+    }
+    
+    toast({
         title: 'Search Complete',
-        description: `We've found ${newLeads.length} potential leads for "${values.keyword}".`,
-      });
-    } catch (error: any) {
-       console.error('Failed to generate leads:', error);
-       toast({
-        variant: 'destructive',
-        title: 'Generation Failed',
-        description: error.message || 'Failed to generate leads. Please try again.',
-      });
-    } finally {
-      if (intervalRef.current) clearInterval(intervalRef.current);
-      setProgress(100);
-      setIsGenerating(false);
-      setIsLoading(false);
-      setShowSuggestions(true);
-      setTimeout(() => {
+        description: `We've found ${totalLeadsGenerated.toLocaleString()} potential leads for "${values.keyword}".`,
+    });
+
+    setIsGenerating(false);
+    setIsLoading(false);
+    setShowSuggestions(true);
+    setTimeout(() => {
         setProgress(0);
         setProgressMessage('');
-      }, 1000);
-    }
+    }, 1000);
   }
 
   return (
