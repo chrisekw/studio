@@ -120,8 +120,15 @@ const generateLeadsFlow = ai.defineFlow(
 
     } catch (error: any) {
       console.error('Error in generateLeadsFlow:', error);
+      let errorMessage = error.message || 'An unexpected error occurred while generating leads.';
+
+      // Specifically handle the 503 Service Unavailable error from Google AI
+      if (errorMessage.includes('503 Service Unavailable')) {
+          errorMessage = 'The AI model is currently overloaded. Please try again in a few moments.';
+      }
+
       // Re-throw a clear error message for the client-side to catch and display.
-      throw new Error(error.message || 'An unexpected error occurred while generating leads.');
+      throw new Error(errorMessage);
     }
   }
 );
