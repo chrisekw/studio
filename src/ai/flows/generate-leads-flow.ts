@@ -119,9 +119,11 @@ const generateLeadsFlow = ai.defineFlow(
       console.error('Error in generateLeadsFlow:', error);
       let errorMessage = error.message || 'An unexpected error occurred while generating leads.';
 
-      // Specifically handle the 503 Service Unavailable error from Google AI
+      // Specifically handle API errors from Google AI
       if (errorMessage.includes('503 Service Unavailable')) {
           errorMessage = 'The AI model is currently overloaded. Please try again in a few moments.';
+      } else if (errorMessage.includes('429 Too Many Requests')) {
+          errorMessage = 'The daily free limit for the AI model has been reached. Please check your AI provider plan or try again tomorrow.';
       }
 
       // Re-throw a clear error message for the client-side to catch and display.
