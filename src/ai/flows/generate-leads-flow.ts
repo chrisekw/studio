@@ -96,7 +96,7 @@ const generateLeadsFlow = ai.defineFlow(
         const candidate = response.candidates[0];
         let reason = "The AI model returned an empty or invalid response.";
 
-        if (candidate) {
+        if (candidate?.finishReason) {
           switch (candidate.finishReason) {
             case 'SAFETY':
               reason = 'The request was blocked due to safety settings. Please adjust your query and try again.';
@@ -120,7 +120,7 @@ const generateLeadsFlow = ai.defineFlow(
 
     } catch (error: any) {
       console.error('Error in generateLeadsFlow:', error);
-      // Re-throw the original error for better client-side debugging.
+      // Re-throw a clear error message for the client-side to catch and display.
       throw new Error(error.message || 'An unexpected error occurred while generating leads.');
     }
   }
