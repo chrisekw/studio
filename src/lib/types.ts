@@ -27,7 +27,7 @@ export interface Lead {
   website: string;
   address?: string;
   linkedin?: string;
+  facebook?: string;
+  x?: string;
   tags?: string[];
-  score?: number;
-  scoreRationale?: string;
 }

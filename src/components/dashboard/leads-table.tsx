@@ -1,4 +1,3 @@
-
 'use client';
 
 import {
@@ -42,7 +41,6 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '../ui/
 import { useAuth } from '@/context/auth-context';
 import { collection, doc, increment, runTransaction } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
-import { Badge, type BadgeProps } from '../ui/badge';
 import { Progress } from '@/components/ui/progress';
 
 interface LeadsTableProps {
@@ -52,13 +50,18 @@ interface LeadsTableProps {
   progressMessage: string;
 }
 
-const getScoreBadgeVariant = (score?: number): BadgeProps['variant'] => {
-  if (score === undefined) return 'secondary';
-  if (score >= 80) return 'accent';
-  if (score >= 50) return 'default';
-  if (score > 0) return 'secondary';
-  return 'destructive';
-};
+const XIcon = () => (
+    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-x">
+      <path d="M18 6 6 18"/><path d="m6 6 12 12"/>
+    </svg>
+);
+
+const FacebookIcon = () => (
+    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-facebook">
+        <path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z"/>
+    </svg>
+);
+
 
 export function LeadsTable({ leads, isLoading, progress, progressMessage }: LeadsTableProps) {
   const { toast } = useToast();
@@ -145,7 +148,7 @@ export function LeadsTable({ leads, isLoading, progress, progressMessage }: Lead
   const exportToCSV = () => {
     if (leads.length === 0) return;
     let csvContent = 'data:text/csv;charset=utf-8,';
-    csvContent += 'Name,Description,Email,Phone,Website,Address,LinkedIn,Score,Score Rationale\n';
+    csvContent += 'Name,Description,Email,Phone,Website,Address,LinkedIn,Facebook,X\n';
     leads.forEach((lead) => {
        const row = [
         lead.name,
@@ -155,8 +158,8 @@ export function LeadsTable({ leads, isLoading, progress, progressMessage }: Lead
         lead.website,
         lead.address,
         lead.linkedin,
-        lead.score,
-        lead.scoreRationale
+        lead.facebook,
+        lead.x
       ].map(field => `"${(String(field ?? '')).replace(/"/g, '""')}"`).join(',');
       csvContent += row + '\r\n';
     });
@@ -237,22 +240,6 @@ export function LeadsTable({ leads, isLoading, progress, progressMessage }: Lead
                     </Avatar>
                     <CardTitle className="text-lg font-medium">{lead.name}</CardTitle>
                 </div>
-                {lead.score !== undefined && (
-                <TooltipProvider>
-                    <Tooltip>
-                    <TooltipTrigger asChild>
-                        <div className="flex items-center gap-2 cursor-default pl-16">
-                        <Badge variant={getScoreBadgeVariant(lead.score)} className="text-xs font-bold">
-                            Lead Score: {lead.score}
-                        </Badge>
-                        </div>
-                    </TooltipTrigger>
-                    <TooltipContent>
-                        <p className="max-w-xs">{lead.scoreRationale || 'No rationale provided.'}</p>
-                    </TooltipContent>
-                    </Tooltip>
-                </TooltipProvider>
-                )}
             </div>
 
             <DropdownMenu>
@@ -323,6 +310,30 @@ export function LeadsTable({ leads, isLoading, progress, progressMessage }: Lead
                     <TooltipContent><p>View on LinkedIn</p></TooltipContent>
                   </Tooltip>
               )}
+              {lead.facebook && (
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Button asChild size="icon" variant="outline">
+                          <a href={getFullUrl(lead.facebook)} target="_blank" rel="noopener noreferrer">
+                              <FacebookIcon />
+                          </a>
+                      </Button>
+                    </TooltipTrigger>
+                    <TooltipContent><p>View on Facebook</p></TooltipContent>
+                  </Tooltip>
+              )}
+              {lead.x && (
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Button asChild size="icon" variant="outline">
+                          <a href={getFullUrl(lead.x)} target="_blank" rel="noopener noreferrer">
+                              <XIcon />
+                          </a>
+                      </Button>
+                    </TooltipTrigger>
+                    <TooltipContent><p>View on X</p></TooltipContent>
+                  </Tooltip>
+              )}
              </TooltipProvider>
           </CardFooter>
         </Card>
@@ -357,7 +368,7 @@ export function LeadsTable({ leads, isLoading, progress, progressMessage }: Lead
         <div>
           <h2 className="text-3xl font-headline font-bold">Generated Leads</h2>
           <p className="text-muted-foreground mt-1 max-w-2xl">
-            Review the generated leads below. For Pro and Agency plans, our AI scores each lead from 1-100 based on its potential quality—hover over a score for the rationale.
+            Review the generated leads below. Agency plan users get additional social media profile links.
           </p>
         </div>
         <DropdownMenu>

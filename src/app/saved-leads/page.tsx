@@ -43,7 +43,7 @@ export default function SavedLeadsPage() {
   const exportToCSV = () => {
     if (savedLeads.length === 0) return;
     let csvContent = "data:text/csv;charset=utf-8,";
-    csvContent += "Name,Description,Email,Phone,Website,Address,LinkedIn,Tags,Score,Score Rationale\n";
+    csvContent += "Name,Description,Email,Phone,Website,Address,LinkedIn,Tags\n";
     savedLeads.forEach(lead => {
       const tags = lead.tags ? lead.tags.join(';') : '';
       const row = [
@@ -55,8 +55,6 @@ export default function SavedLeadsPage() {
         lead.address,
         lead.linkedin,
         `"${tags}"`,
-        lead.score,
-        lead.scoreRationale,
       ].map(field => `"${(String(field ?? '')).replace(/"/g, '""')}"`).join(',');
       csvContent += row + "\r\n";
     });

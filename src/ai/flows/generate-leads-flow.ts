@@ -17,8 +17,8 @@ const LeadSchema = z.object({
   website: z.string().describe('The full company website URL, including the protocol (e.g., https://example.com).'),
   address: z.string().optional().describe('The physical address of the company.'),
   linkedin: z.string().optional().describe('The specific LinkedIn company profile URL (e.g., https://www.linkedin.com/company/company-name).'),
-  score: z.number().optional().describe('A lead quality score from 1-100.'),
-  scoreRationale: z.string().optional().describe('The rationale behind the lead score.'),
+  facebook: z.string().optional().describe('The specific Facebook company profile URL.'),
+  x: z.string().optional().describe('The specific X (formerly Twitter) company profile URL.'),
 });
 
 const GenerateLeadsInputSchema = z.object({
@@ -26,10 +26,9 @@ const GenerateLeadsInputSchema = z.object({
   numLeads: z.number().describe('The number of leads to generate.'),
   includeAddress: z.boolean().optional().describe('Whether to include the physical address.'),
   includeLinkedIn: z.boolean().optional().describe('Whether to include the LinkedIn profile URL.'),
+  includeSocials: z.boolean().optional().describe('Whether to include Facebook and X profile URLs.'),
   extractContactInfo: z.boolean().optional().describe('Whether to extract email and phone number. Defaults to true.'),
   includeDescription: z.boolean().optional().describe('Whether to include a one-line company description. Defaults to false.'),
-  // The scoreLeads parameter is kept for schema compatibility but is no longer used in the prompt.
-  scoreLeads: z.boolean().optional().describe('Whether to perform AI-based scoring on the leads. This is handled in a separate step.'),
 });
 export type GenerateLeadsInput = z.infer<typeof GenerateLeadsInputSchema>;
 
@@ -65,11 +64,13 @@ const prompt = ai.definePrompt({
   Also include a specific, realistic-looking LinkedIn company profile URL for each company (e.g., https://www.linkedin.com/company/some-company). Do not just use "www.linkedin.com".
   {{/if}}
 
+  {{#if includeSocials}}
+  Also include specific, realistic-looking company profile URLs for Facebook and X (formerly Twitter).
+  {{/if}}
+
   {{#if includeDescription}}
   Also include a concise, one-line description of what the company is all about.
   {{/if}}
-
-  Do NOT score the leads or provide a score rationale. The 'score' and 'scoreRationale' fields should be left empty. Scoring will be handled in a separate process.
 
   Ensure the generated data is plausible for the given query.
   

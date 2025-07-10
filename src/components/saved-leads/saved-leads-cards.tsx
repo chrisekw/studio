@@ -6,7 +6,6 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge, type BadgeProps } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { useAuth } from '@/context/auth-context';
 import { useToast } from '@/hooks/use-toast';
 import { db } from '@/lib/firebase';
@@ -17,14 +16,6 @@ import { Globe, Linkedin, Mail, MapPin, MoreHorizontal, Phone, Tag, Trash2 } fro
 interface SavedLeadsCardsProps {
   leads: Lead[];
 }
-
-const getScoreBadgeVariant = (score?: number): BadgeProps['variant'] => {
-  if (score === undefined) return 'secondary';
-  if (score >= 80) return 'accent';
-  if (score >= 50) return 'default';
-  if (score > 0) return 'secondary';
-  return 'destructive';
-};
 
 const getHostname = (url: string) => {
     if (!url) return '';
@@ -101,20 +92,6 @@ export function SavedLeadsCards({ leads }: SavedLeadsCardsProps) {
                 {lead.website && <p className="text-sm text-muted-foreground">{getHostname(lead.website)}</p>}
               </div>
             </div>
-             {lead.score !== undefined && (
-                <TooltipProvider>
-                    <Tooltip>
-                    <TooltipTrigger asChild>
-                        <Badge variant={getScoreBadgeVariant(lead.score)} className="mx-4">
-                            {lead.score}
-                        </Badge>
-                    </TooltipTrigger>
-                    <TooltipContent>
-                        <p className="max-w-xs">{lead.scoreRationale}</p>
-                    </TooltipContent>
-                    </Tooltip>
-                </TooltipProvider>
-            )}
           </AccordionTrigger>
           <AccordionContent className="p-4 pt-0">
              <div className="border-t pt-4 space-y-4">

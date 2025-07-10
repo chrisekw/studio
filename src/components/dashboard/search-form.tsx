@@ -1,4 +1,3 @@
-
 'use client';
 
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -23,7 +22,6 @@ import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
 import { generateLeads } from '@/ai/flows/generate-leads-flow';
-import { scoreLead } from '@/ai/flows/score-lead-flow';
 import type { Lead } from '@/lib/types';
 import { Checkbox } from '@/components/ui/checkbox';
 import { useAuth } from '@/context/auth-context';
@@ -207,8 +205,8 @@ export function SearchForm({ setIsLoading, setLeads, setSearchQuery, setShowSugg
     setLeads([]);
     setShowSuggestions(false);
     setSearchQuery(values.keyword);
+    setProgress(10);
     
-    const isProOrAgency = userProfile.plan === 'Pro' || userProfile.plan === 'Agency';
     const totalLeadsToGenerate = values.numLeads;
     const chunkSize = 100;
     let allNewLeads: Lead[] = [];
@@ -220,7 +218,7 @@ export function SearchForm({ setIsLoading, setLeads, setSearchQuery, setShowSugg
         const leadsForThisChunk = Math.min(chunkSize, totalLeadsToGenerate - generatedCount);
         if (leadsForThisChunk <= 0) break;
 
-        setProgress(10 + (i / numChunks) * 40);
+        setProgress(10 + (i / numChunks) * 80);
         setProgressMessage(`Generating leads... (${generatedCount}/${totalLeadsToGenerate})`);
 
         const result = await generateLeads({
@@ -228,9 +226,9 @@ export function SearchForm({ setIsLoading, setLeads, setSearchQuery, setShowSugg
             numLeads: leadsForThisChunk,
             includeAddress: !isFreePlan && (values.includeAddress ?? false),
             includeLinkedIn: !isFreePlan && (values.includeLinkedIn ?? false),
+            includeSocials: isAgencyPlan,
             extractContactInfo: true,
             includeDescription: !isFreePlan,
-            scoreLeads: false,
         });
 
         const newLeads = result.map((lead, index) => ({
@@ -245,30 +243,6 @@ export function SearchForm({ setIsLoading, setLeads, setSearchQuery, setShowSugg
         setLeads(allNewLeads);
     }
     
-    setIsLoading(false); // Stop main loader, but keep generating loader
-
-    // Step 2: Score leads if on a premium plan
-    if (isProOrAgency && allNewLeads.length > 0) {
-        setProgressMessage('Scoring leads with AI...');
-        const scoringPromises = allNewLeads.map((lead, index) =>
-            scoreLead({
-                name: lead.name,
-                website: lead.website,
-                description: lead.description,
-            }).then(scoreResult => {
-                setLeads(currentLeads =>
-                    currentLeads.map(l =>
-                        l.id === lead.id ? { ...l, score: scoreResult.score, scoreRationale: scoreResult.rationale } : l
-                    )
-                );
-                setProgress(50 + ((index + 1) / allNewLeads.length) * 50);
-            }).catch(err => {
-                console.error(`Failed to score lead ${lead.name}:`, err);
-            })
-        );
-        await Promise.all(scoringPromises);
-    }
-    
     toast({
         title: 'Search Complete',
         description: `We've found and processed ${generatedCount.toLocaleString()} potential leads.`,
@@ -276,6 +250,7 @@ export function SearchForm({ setIsLoading, setLeads, setSearchQuery, setShowSugg
 
     // Final cleanup
     setIsGenerating(false);
+    setIsLoading(false);
     setShowSuggestions(true);
     setTimeout(() => {
         setProgress(0);

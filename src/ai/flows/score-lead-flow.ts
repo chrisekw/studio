@@ -1,10 +1,6 @@
 'use server';
 /**
- * @fileOverview A flow for scoring a business lead based on its potential value.
- *
- * - scoreLead - A function that scores a single lead.
- * - ScoreLeadInput - The input type for the scoreLead function.
- * - ScoreLeadOutput - The return type for the scoreLead function.
+ * @fileOverview This flow is currently unused. It was previously used for scoring leads.
  */
 import { ai } from '@/ai/genkit';
 import { z } from 'zod';
