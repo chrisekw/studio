@@ -28,7 +28,8 @@ const GenerateLeadsInputSchema = z.object({
   includeLinkedIn: z.boolean().optional().describe('Whether to include the LinkedIn profile URL.'),
   extractContactInfo: z.boolean().optional().describe('Whether to extract email and phone number. Defaults to true.'),
   includeDescription: z.boolean().optional().describe('Whether to include a one-line company description. Defaults to false.'),
-  scoreLeads: z.boolean().optional().describe('Whether to perform AI-based scoring on the leads. Defaults to false.'),
+  // The scoreLeads parameter is kept for schema compatibility but is no longer used in the prompt.
+  scoreLeads: z.boolean().optional().describe('Whether to perform AI-based scoring on the leads. This is handled in a separate step.'),
 });
 export type GenerateLeadsInput = z.infer<typeof GenerateLeadsInputSchema>;
 
@@ -68,12 +69,7 @@ const prompt = ai.definePrompt({
   Also include a concise, one-line description of what the company is all about.
   {{/if}}
 
-  {{#if scoreLeads}}
-  You are also an expert B2B sales development representative. For each lead, analyze its potential value for outreach.
-  Provide a score from 1 to 100, where 100 is the highest quality lead. 
-  Also provide a brief, one-sentence rationale explaining your score. For example, consider factors like the company's industry, apparent size, and the professionalism of their online presence.
-  Populate the 'score' and 'scoreRationale' fields for each lead in the output.
-  {{/if}}
+  Do NOT score the leads or provide a score rationale. The 'score' and 'scoreRationale' fields should be left empty. Scoring will be handled in a separate process.
 
   Ensure the generated data is plausible for the given query.
   

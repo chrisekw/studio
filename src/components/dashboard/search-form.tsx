@@ -23,6 +23,7 @@ import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
 import { generateLeads } from '@/ai/flows/generate-leads-flow';
+import { scoreLead } from '@/ai/flows/score-lead-flow';
 import type { Lead } from '@/lib/types';
 import { Checkbox } from '@/components/ui/checkbox';
 import { useAuth } from '@/context/auth-context';
@@ -49,7 +50,6 @@ export function SearchForm({ setIsLoading, setLeads, setSearchQuery, setShowSugg
   const { toast } = useToast();
   const { user, userProfile } = useAuth();
   const defaultsSet = useRef(false);
-  const intervalRef = useRef<NodeJS.Timeout | null>(null);
 
   const isAgencyPlan = userProfile?.plan === 'Agency';
   const maxLeadsPerSearch = isAgencyPlan ? 1000 : 100;
@@ -93,7 +93,6 @@ export function SearchForm({ setIsLoading, setLeads, setSearchQuery, setShowSugg
   });
   
   const isFreePlan = userProfile?.plan === 'Free';
-  const { remainingPlanLeads, leadPoints, addonCredits } = calculateRemainingLeads(userProfile);
 
   useEffect(() => {
     if (userProfile && !defaultsSet.current) {
@@ -163,7 +162,6 @@ export function SearchForm({ setIsLoading, setLeads, setSearchQuery, setShowSugg
     }
   };
 
-
   async function onSubmit(values: z.infer<typeof formSchema>) {
     if (!user || !userProfile) {
       toast({
@@ -195,54 +193,64 @@ export function SearchForm({ setIsLoading, setLeads, setSearchQuery, setShowSugg
     setSearchQuery(values.keyword);
 
     const totalLeadsToGenerate = values.numLeads;
-    const chunkSize = 100; // Generate in chunks of 100
-    const numChunks = Math.ceil(totalLeadsToGenerate / chunkSize);
-    let allNewLeads: Lead[] = [];
-    let totalLeadsGenerated = 0;
+    const isProOrAgency = userProfile.plan === 'Pro' || userProfile.plan === 'Agency';
 
-    setProgress(5);
+    // Step 1: Generate Leads without scores
+    setProgress(10);
+    setProgressMessage(`Generating ${totalLeadsToGenerate.toLocaleString()} leads...`);
 
-    for (let i = 0; i < numChunks; i++) {
-        const leadsForThisChunk = Math.min(chunkSize, totalLeadsToGenerate - totalLeadsGenerated);
-        const progressStart = (i / numChunks) * 100;
-        const progressEnd = ((i + 1) / numChunks) * 100;
-        
-        setProgressMessage(`Generating leads... (${totalLeadsGenerated.toLocaleString()}/${totalLeadsToGenerate.toLocaleString()})`);
+    const result = await generateLeads({
+        query: values.keyword,
+        numLeads: totalLeadsToGenerate,
+        includeAddress: !isFreePlan && (values.includeAddress ?? false),
+        includeLinkedIn: !isFreePlan && (values.includeLinkedIn ?? false),
+        extractContactInfo: true,
+        includeDescription: !isFreePlan,
+        scoreLeads: false, // Scoring is done separately now
+    });
 
-        // The try/catch is removed here, errors will be handled by onSettled
-        const isProOrAgency = userProfile.plan === 'Pro' || userProfile.plan === 'Agency';
-        const result = await generateLeads({
-            query: values.keyword,
-            numLeads: leadsForThisChunk,
-            includeAddress: !isFreePlan && (values.includeAddress ?? false),
-            includeLinkedIn: !isFreePlan && (values.includeLinkedIn ?? false),
-            extractContactInfo: true,
-            includeDescription: !isFreePlan,
-            scoreLeads: isProOrAgency,
-        });
+    const newLeads = result.map((lead, index) => ({
+        ...lead,
+        id: `${Date.now()}-${index}`,
+    }));
 
-        const newLeads = result.map((lead, index) => ({
-            ...lead,
-            id: `${Date.now()}-${i}-${index}`,
-        }));
+    await updateQuotaInFirestore(newLeads.length);
+    setLeads(newLeads); // Show unscored leads immediately
+    setProgress(50);
+    setIsLoading(false); // Stop main loader, but keep generating loader
 
-        totalLeadsGenerated += newLeads.length;
-        allNewLeads = [...allNewLeads, ...newLeads];
-        setLeads(allNewLeads); // Update UI incrementally
-
-        // We update the quota in Firestore after each successful chunk
-        await updateQuotaInFirestore(newLeads.length);
-
-        setProgress(progressEnd);
+    // Step 2: Score leads if on a premium plan
+    if (isProOrAgency && newLeads.length > 0) {
+        setProgressMessage('Scoring leads with AI...');
+        const scoringPromises = newLeads.map((lead, index) =>
+            scoreLead({
+                name: lead.name,
+                website: lead.website,
+                description: lead.description,
+            }).then(scoreResult => {
+                // Update the specific lead in the UI with its new score
+                setLeads(currentLeads =>
+                    currentLeads.map(l =>
+                        l.id === lead.id ? { ...l, score: scoreResult.score, scoreRationale: scoreResult.rationale } : l
+                    )
+                );
+                // Update progress
+                setProgress(50 + ((index + 1) / newLeads.length) * 50);
+            }).catch(err => {
+                console.error(`Failed to score lead ${lead.name}:`, err);
+                // Optionally update the UI to show an error for this specific lead
+            })
+        );
+        await Promise.all(scoringPromises);
     }
     
     toast({
         title: 'Search Complete',
-        description: `We've found ${totalLeadsGenerated.toLocaleString()} potential leads for "${values.keyword}".`,
+        description: `We've found and processed ${newLeads.length.toLocaleString()} potential leads.`,
     });
 
+    // Final cleanup
     setIsGenerating(false);
-    setIsLoading(false);
     setShowSuggestions(true);
     setTimeout(() => {
         setProgress(0);
