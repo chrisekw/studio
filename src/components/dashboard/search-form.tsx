@@ -74,6 +74,22 @@ export function SearchForm({ setIsLoading, setLeads, setSearchQuery, setShowSugg
       includeAddress: true,
       includeLinkedIn: true,
     },
+    onSettled: (data, error) => {
+        if (error) {
+            console.error('Server Action Error:', error);
+            toast({
+                variant: 'destructive',
+                title: 'Generation Failed',
+                description: (error as any).message || 'An unexpected error occurred.',
+            });
+            // Reset UI state on failure
+            setIsGenerating(false);
+            setIsLoading(false);
+            setShowSuggestions(true);
+            setProgress(0);
+            setProgressMessage('');
+        }
+    }
   });
   
   const isFreePlan = userProfile?.plan === 'Free';
@@ -193,39 +209,30 @@ export function SearchForm({ setIsLoading, setLeads, setSearchQuery, setShowSugg
         
         setProgressMessage(`Generating leads... (${totalLeadsGenerated.toLocaleString()}/${totalLeadsToGenerate.toLocaleString()})`);
 
-        try {
-            const isProOrAgency = userProfile.plan === 'Pro' || userProfile.plan === 'Agency';
-            const result = await generateLeads({
-                query: values.keyword,
-                numLeads: leadsForThisChunk,
-                includeAddress: !isFreePlan && (values.includeAddress ?? false),
-                includeLinkedIn: !isFreePlan && (values.includeLinkedIn ?? false),
-                extractContactInfo: true,
-                includeDescription: !isFreePlan,
-                scoreLeads: isProOrAgency,
-            });
+        // The try/catch is removed here, errors will be handled by onSettled
+        const isProOrAgency = userProfile.plan === 'Pro' || userProfile.plan === 'Agency';
+        const result = await generateLeads({
+            query: values.keyword,
+            numLeads: leadsForThisChunk,
+            includeAddress: !isFreePlan && (values.includeAddress ?? false),
+            includeLinkedIn: !isFreePlan && (values.includeLinkedIn ?? false),
+            extractContactInfo: true,
+            includeDescription: !isFreePlan,
+            scoreLeads: isProOrAgency,
+        });
 
-            const newLeads = result.map((lead, index) => ({
-                ...lead,
-                id: `${Date.now()}-${i}-${index}`,
-            }));
+        const newLeads = result.map((lead, index) => ({
+            ...lead,
+            id: `${Date.now()}-${i}-${index}`,
+        }));
 
-            totalLeadsGenerated += newLeads.length;
-            allNewLeads = [...allNewLeads, ...newLeads];
-            setLeads(allNewLeads); // Update UI incrementally
+        totalLeadsGenerated += newLeads.length;
+        allNewLeads = [...allNewLeads, ...newLeads];
+        setLeads(allNewLeads); // Update UI incrementally
 
-            // We update the quota in Firestore after each successful chunk
-            await updateQuotaInFirestore(newLeads.length);
+        // We update the quota in Firestore after each successful chunk
+        await updateQuotaInFirestore(newLeads.length);
 
-        } catch (error: any) {
-            console.error(`Error in chunk ${i + 1}:`, error);
-            toast({
-                variant: 'destructive',
-                title: `Error in Batch ${i + 1}`,
-                description: error.message || 'An error occurred during this batch. The process will stop.',
-            });
-            break; // Stop processing further chunks if one fails
-        }
         setProgress(progressEnd);
     }
     
