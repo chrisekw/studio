@@ -6,19 +6,13 @@ import { Button } from '../ui/button';
 import Link from 'next/link';
 import { Skeleton } from '../ui/skeleton';
 import { Progress } from '../ui/progress';
+import { PLAN_LIMITS } from '@/lib/utils';
 
 const PLAN_BADGE_VARIANTS: { [key: string]: BadgeProps['variant'] } = {
     Free: 'secondary',
     Starter: 'default',
     Pro: 'accent',
     Agency: 'destructive',
-};
-
-const PLAN_LIMITS = {
-    Free: 5, // Daily
-    Starter: 200, // Monthly
-    Pro: 1000, // Monthly
-    Agency: 5000, // Monthly
 };
 
 export function QuotaDisplay() {
@@ -42,17 +36,24 @@ export function QuotaDisplay() {
   const { plan } = userProfile;
   const planBadgeVariant = PLAN_BADGE_VARIANTS[plan];
   const isFreePlan = plan === 'Free';
-  const planLimit = PLAN_LIMITS[plan];
   const addonCredits = userProfile.addonCredits ?? 0;
   const leadPoints = userProfile.leadPoints ?? 0;
-
-  const today = new Date().toISOString().split('T')[0];
-  const leadsUsedToday = (isFreePlan && userProfile.lastLeadGenerationDate === today) ? userProfile.leadsGeneratedToday ?? 0 : 0;
-  const dailyUsagePercentage = isFreePlan ? (leadsUsedToday / planLimit) * 100 : 0;
-
   const currentMonth = new Date().toISOString().slice(0, 7);
-  const leadsUsedThisMonth = (!isFreePlan && userProfile.lastLeadGenerationMonth === currentMonth) ? userProfile.leadsGeneratedThisMonth ?? 0 : 0;
-  const monthlyUsagePercentage = !isFreePlan ? (leadsUsedThisMonth / planLimit) * 100 : 0;
+  
+  const today = new Date().toISOString().split('T')[0];
+
+  const leadsUsedToday = (isFreePlan && userProfile.lastLeadGenerationDate === today) 
+    ? userProfile.leadsGeneratedToday ?? 0 
+    : 0;
+  const dailyLimit = PLAN_LIMITS.Free;
+  const dailyUsagePercentage = (leadsUsedToday / dailyLimit) * 100;
+
+  const leadsUsedThisMonth = userProfile.lastLeadGenerationMonth === currentMonth
+    ? (isFreePlan ? userProfile.monthlyLeadsGenerated : userProfile.leadsGeneratedThisMonth) ?? 0
+    : 0;
+
+  const monthlyLimit = isFreePlan ? PLAN_LIMITS.FreeMonthly : PLAN_LIMITS[plan];
+  const monthlyUsagePercentage = (leadsUsedThisMonth / monthlyLimit) * 100;
 
   return (
     <div className="p-2 space-y-3 group-data-[collapsible=icon]:hidden">
@@ -64,10 +65,15 @@ export function QuotaDisplay() {
         {isFreePlan ? (
              <div className="px-2 pt-1 space-y-2">
                 <div className="text-xs text-sidebar-foreground/80 flex justify-between">
-                    <span>Daily Lead Quota</span>
-                    <span>{leadsUsedToday} / {planLimit}</span>
+                    <span>Daily Usage</span>
+                    <span>{leadsUsedToday} / {dailyLimit}</span>
                 </div>
                 <Progress value={dailyUsagePercentage} className="h-2" />
+                <div className="text-xs text-sidebar-foreground/80 flex justify-between">
+                    <span>Monthly Usage</span>
+                    <span>{leadsUsedThisMonth} / {monthlyLimit}</span>
+                </div>
+                <Progress value={monthlyUsagePercentage} className="h-2" />
                 {leadPoints > 0 && (
                     <div className="text-xs text-sidebar-foreground/80 flex justify-between pt-2">
                         <span>Referral Points</span>
@@ -79,7 +85,7 @@ export function QuotaDisplay() {
              <div className="px-2 pt-1 space-y-2">
                 <div className="text-xs text-sidebar-foreground/80 flex justify-between">
                     <span>Monthly Lead Quota</span>
-                    <span>{leadsUsedThisMonth.toLocaleString()} / {planLimit.toLocaleString()}</span>
+                    <span>{leadsUsedThisMonth.toLocaleString()} / {monthlyLimit.toLocaleString()}</span>
                 </div>
                 <Progress value={monthlyUsagePercentage} className="h-2" />
                  {leadPoints > 0 && (

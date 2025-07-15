@@ -9,6 +9,7 @@ export interface UserProfile {
   lastLeadGenerationDate?: string;
   leadsGeneratedThisMonth?: number;
   lastLeadGenerationMonth?: string;
+  monthlyLeadsGenerated?: number; // New field for free plan monthly tracking
   addonCredits?: number;
   savedLeadsCount?: number;
   // New referral fields

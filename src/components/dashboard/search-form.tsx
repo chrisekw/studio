@@ -88,7 +88,7 @@ export function SearchForm({ setIsLoading, setLeads, setSearchQuery, setShowSugg
     if (userProfile && !defaultsSet.current) {
       form.setValue('includeAddress', userProfile.defaultIncludeAddress ?? true);
       form.setValue('includeLinkedIn', userProfile.defaultIncludeLinkedIn ?? true);
-      const defaultLeads = isFreePlan ? Math.min(5, remainingLeads) : Math.min(10, remainingLeads);
+      const defaultLeads = isFreePlan ? Math.min(10, remainingLeads) : Math.min(10, remainingLeads);
       form.setValue('numLeads', Math.max(1, defaultLeads));
       defaultsSet.current = true;
     }
@@ -101,45 +101,58 @@ export function SearchForm({ setIsLoading, setLeads, setSearchQuery, setShowSugg
   }, [selectedSuggestion, form]);
   
   const updateQuotaInFirestore = async (leadsGeneratedCount: number) => {
-    if (!user || leadsGeneratedCount <= 0) return;
+    if (!user || !userProfile || leadsGeneratedCount <= 0) return;
   
-    // Re-fetch the latest remainingLeads count before updating
-    const freshProfile = calculateRemainingLeads(userProfile);
+    const { remainingPlanLeads, leadPoints, addonCredits } = calculateRemainingLeads(userProfile);
     let leadsToDeduct = leadsGeneratedCount;
     const updatePayload: any = {};
     const today = new Date().toISOString().split('T')[0];
     const currentMonth = new Date().toISOString().slice(0, 7);
   
-    const planLeadsToUse = Math.min(leadsToDeduct, Math.max(0, freshProfile.remainingPlanLeads));
+    // Determine how many leads to pull from the main plan quota
+    const planLeadsToUse = Math.min(leadsToDeduct, Math.max(0, remainingPlanLeads));
+    
     if (planLeadsToUse > 0) {
       if (isFreePlan) {
-        if (userProfile?.lastLeadGenerationDate === today) {
+        // For free plan, update both daily and monthly counts
+        updatePayload.lastLeadGenerationDate = today;
+        updatePayload.lastLeadGenerationMonth = currentMonth;
+        
+        if (userProfile.lastLeadGenerationDate === today) {
           updatePayload.leadsGeneratedToday = increment(planLeadsToUse);
         } else {
-          updatePayload.leadsGeneratedToday = planLeadsToUse;
+          updatePayload.leadsGeneratedToday = planLeadsToUse; // Reset for the new day
         }
-        updatePayload.lastLeadGenerationDate = today;
-      } else {
-        if (userProfile?.lastLeadGenerationMonth === currentMonth) {
+        
+        if (userProfile.lastLeadGenerationMonth === currentMonth) {
+          updatePayload.monthlyLeadsGenerated = increment(planLeadsToUse);
+        } else {
+          updatePayload.monthlyLeadsGenerated = planLeadsToUse; // Reset for the new month
+        }
+
+      } else { // For paid plans
+        updatePayload.lastLeadGenerationMonth = currentMonth;
+        if (userProfile.lastLeadGenerationMonth === currentMonth) {
           updatePayload.leadsGeneratedThisMonth = increment(planLeadsToUse);
         } else {
-          updatePayload.leadsGeneratedThisMonth = planLeadsToUse;
+          updatePayload.leadsGeneratedThisMonth = planLeadsToUse; // Reset for the new month
         }
-        updatePayload.lastLeadGenerationMonth = currentMonth;
       }
       leadsToDeduct -= planLeadsToUse;
     }
   
+    // Deduct from lead points if necessary
     if (leadsToDeduct > 0) {
-      const pointsToUse = Math.min(leadsToDeduct, Math.max(0, freshProfile.leadPoints));
+      const pointsToUse = Math.min(leadsToDeduct, Math.max(0, leadPoints));
       if (pointsToUse > 0) {
         updatePayload.leadPoints = increment(-pointsToUse);
         leadsToDeduct -= pointsToUse;
       }
     }
   
+    // Deduct from add-on credits if necessary
     if (leadsToDeduct > 0) {
-      const addonsToUse = Math.min(leadsToDeduct, Math.max(0, freshProfile.addonCredits));
+      const addonsToUse = Math.min(leadsToDeduct, Math.max(0, addonCredits));
       if (addonsToUse > 0) {
         updatePayload.addonCredits = increment(-addonsToUse);
         leadsToDeduct -= addonsToUse;
@@ -170,7 +183,7 @@ export function SearchForm({ setIsLoading, setLeads, setSearchQuery, setShowSugg
     if (values.numLeads > remainingLeads) {
       toast({
         variant: 'destructive',
-        title: isFreePlan ? 'Daily Limit Exceeded' : 'Quota Exceeded',
+        title: 'Quota Exceeded',
         description: `You only have ${remainingLeads.toLocaleString()} leads remaining. Please request ${remainingLeads.toLocaleString()} or fewer.`,
       });
       return;

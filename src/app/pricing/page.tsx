@@ -16,7 +16,7 @@ const plans = [
     pricePeriod: '/month',
     description: 'Perfect for beginners and testers to get a feel for the platform.',
     features: [
-      '5 leads per day',
+      '10 leads per day (30/month)',
       'Basic search functionality',
       'Limited search filters',
       'No export options',

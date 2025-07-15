@@ -16,7 +16,8 @@ export function generateReferralCode(length: number = 8): string {
 }
 
 export const PLAN_LIMITS = {
-  Free: 5, // Daily
+  Free: 10, // Daily
+  FreeMonthly: 30, // Monthly cap for Free plan
   Starter: 200, // Monthly
   Pro: 1000, // Monthly
   Agency: 5000, // Monthly
@@ -34,7 +35,8 @@ export function calculateRemainingLeads(userProfile: UserProfile | null) {
   }
 
   const isFreePlan = userProfile.plan === 'Free';
-  const planLimit = PLAN_LIMITS[userProfile.plan] || 0;
+  const dailyLimit = PLAN_LIMITS.Free;
+  const monthlyLimit = isFreePlan ? PLAN_LIMITS.FreeMonthly : PLAN_LIMITS[userProfile.plan] || 0;
   const addonCredits = userProfile.addonCredits ?? 0;
   const leadPoints = userProfile.leadPoints ?? 0;
 
@@ -45,16 +47,20 @@ export function calculateRemainingLeads(userProfile: UserProfile | null) {
     isFreePlan && userProfile.lastLeadGenerationDate === today
       ? userProfile.leadsGeneratedToday ?? 0
       : 0;
-  const leadsUsedThisMonth =
-    !isFreePlan && userProfile.lastLeadGenerationMonth === currentMonth
-      ? userProfile.leadsGeneratedThisMonth ?? 0
-      : 0;
 
-  const remainingPlanLeads = isFreePlan
-    ? planLimit - leadsUsedToday
-    : planLimit - leadsUsedThisMonth;
+  const leadsUsedThisMonth = 
+    userProfile.lastLeadGenerationMonth === currentMonth
+    ? (isFreePlan ? userProfile.monthlyLeadsGenerated : userProfile.leadsGeneratedThisMonth) ?? 0
+    : 0;
+
+  const remainingDaily = dailyLimit - leadsUsedToday;
+  const remainingMonthly = monthlyLimit - leadsUsedThisMonth;
+
+  const remainingPlanLeads = isFreePlan 
+    ? Math.min(remainingDaily, remainingMonthly)
+    : remainingMonthly;
   
-  const remainingLeads = remainingPlanLeads + addonCredits + leadPoints;
+  const remainingLeads = Math.max(0, remainingPlanLeads) + addonCredits + leadPoints;
 
   const parts = [];
   if (isFreePlan) {
