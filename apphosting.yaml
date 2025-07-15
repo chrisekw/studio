@@ -5,3 +5,17 @@ runConfig:
   # Increase this value if you'd like to automatically spin up
   # more instances in response to increased traffic.
   maxInstances: 1
+headers:
+  - source: /api/sitemap
+    headers:
+      - key: 'Content-Type'
+        value: 'application/xml'
+  - source: /api/robots
+    headers:
+      - key: 'Content-Type'
+        value: 'text/plain'
+rewrites:
+  - source: /sitemap.xml
+    destination: /api/sitemap
+  - source: /robots.txt
+    destination: /api/robots

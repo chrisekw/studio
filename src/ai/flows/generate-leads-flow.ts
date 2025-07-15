@@ -42,7 +42,7 @@ export async function generateLeads(input: GenerateLeadsInput): Promise<Generate
 
 const prompt = ai.definePrompt({
   name: 'generateLeadsPrompt',
-  model: 'googleai/gemini-1.5-flash-latest',
+  model: 'googleai/gemini-1.5-flash',
   input: {schema: GenerateLeadsInputSchema},
   output: {schema: GenerateLeadsOutputSchema},
   prompt: `You are an expert business development assistant. Your task is to generate a list of business leads based on a given query.
