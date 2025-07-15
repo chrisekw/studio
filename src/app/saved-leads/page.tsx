@@ -67,6 +67,7 @@ export default function SavedLeadsPage() {
     link.click();
     document.body.removeChild(link);
     toast({
+      variant: 'success',
       title: 'Export Successful',
       description: 'Saved leads have been exported to CSV.',
     });

@@ -60,6 +60,7 @@ export function RegisterForm() {
       await sendEmailVerification(userCredential.user);
       
       toast({
+        variant: 'success',
         title: 'Account Created',
         description: "Please check your email to verify your account.",
       });
@@ -101,6 +102,7 @@ export function RegisterForm() {
       const provider = new GoogleAuthProvider();
       await signInWithPopup(auth, provider);
       toast({
+        variant: 'success',
         title: 'Account Created',
         description: "Welcome to oPilot! We're redirecting you to the dashboard.",
       });

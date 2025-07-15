@@ -63,7 +63,7 @@ export default function SettingsPage() {
         defaultIncludeAddress: data.defaultIncludeAddress,
         defaultIncludeLinkedIn: data.defaultIncludeLinkedIn,
       });
-      toast({ title: 'Settings saved', description: 'Your preferences have been updated.' });
+      toast({ variant: 'success', title: 'Settings saved', description: 'Your preferences have been updated.' });
     } catch (error) {
       console.error('Error saving settings:', error);
       toast({ variant: 'destructive', title: 'Error', description: 'Could not save settings.' });
@@ -83,7 +83,7 @@ export default function SettingsPage() {
         leadsGeneratedThisMonth: 0,
         lastLeadGenerationMonth: new Date().toISOString().slice(0, 7),
       });
-      toast({ title: 'Test Upgrade Successful', description: 'Your account has been upgraded to the Agency plan.' });
+      toast({ variant: 'success', title: 'Test Upgrade Successful', description: 'Your account has been upgraded to the Agency plan.' });
     } catch (error) {
       console.error('Error performing test upgrade:', error);
       toast({ variant: 'destructive', title: 'Error', description: 'Could not perform test upgrade.' });

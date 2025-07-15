@@ -1,4 +1,3 @@
-
 'use client';
 
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -205,14 +204,13 @@ export function SearchForm({ setIsLoading, setLeads, setSearchQuery, setShowSugg
     
     try {
       setProgress(10);
-      setProgressMessage('Initializing search...');
+      setProgressMessage('Initializing...');
 
-      // Add a small delay for the animation to be visible
       await new Promise(resolve => setTimeout(resolve, 500));
 
       setProgress(30);
-      setProgressMessage('Searching the web for leads...');
-
+      setProgressMessage('Searching the web...');
+      
       const result = await generateLeads({
           query: values.keyword,
           numLeads: values.numLeads,
@@ -222,9 +220,9 @@ export function SearchForm({ setIsLoading, setLeads, setSearchQuery, setShowSugg
           extractContactInfo: true,
           includeDescription: !isFreePlan,
       });
-      
+
       setProgress(70);
-      setProgressMessage('Analyzing results and extracting data...');
+      setProgressMessage('Analyzing & compiling leads...');
 
       const newLeads = result.map((lead, index) => ({
           ...lead,
@@ -238,9 +236,10 @@ export function SearchForm({ setIsLoading, setLeads, setSearchQuery, setShowSugg
       setLeads(newLeads);
       
       setProgress(100);
-      setProgressMessage(`Complete! ${newLeads.length.toLocaleString()} leads found.`);
+      setProgressMessage(`Success! Found ${newLeads.length.toLocaleString()} leads.`);
       
       toast({
+          variant: 'success',
           title: 'Search Complete',
           description: `We've found and processed ${newLeads.length.toLocaleString()} potential leads.`,
       });
@@ -255,7 +254,6 @@ export function SearchForm({ setIsLoading, setLeads, setSearchQuery, setShowSugg
       });
     } finally {
         setIsGenerating(false);
-        // We set loading to false in the leads table after the progress bar animation is done
         setTimeout(() => {
           setIsLoading(false);
           setProgress(0);

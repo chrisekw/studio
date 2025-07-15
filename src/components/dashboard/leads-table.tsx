@@ -1,4 +1,3 @@
-
 'use client';
 
 import {
@@ -104,6 +103,7 @@ export function LeadsTable({ leads, isLoading, progress, progressMessage }: Lead
       });
 
       toast({
+        variant: 'success',
         title: 'Lead Saved',
         description: `${leadToSave.name} has been added to your saved leads.`,
       });
@@ -174,6 +174,7 @@ export function LeadsTable({ leads, isLoading, progress, progressMessage }: Lead
     link.click();
     document.body.removeChild(link);
     toast({
+      variant: 'success',
       title: 'Export Successful',
       description: `Leads have been exported to CSV.`,
     });
@@ -213,14 +214,14 @@ export function LeadsTable({ leads, isLoading, progress, progressMessage }: Lead
   const renderProgress = () => (
     <div className="flex flex-col items-center justify-center h-64 rounded-lg border-2 border-dashed border-border bg-card/60 backdrop-blur-xl">
       <div className="w-full max-w-md text-center p-4">
-        <Sparkles className="h-16 w-16 text-primary animate-pulse mb-4 mx-auto" />
+        <Sparkles className="h-12 w-12 text-primary animate-pulse mb-4 mx-auto" />
         <h3 className="text-xl font-headline font-medium text-foreground">
           {progressMessage || 'Processing...'}
         </h3>
         <p className="text-muted-foreground/80 mt-2 mb-4">
           Our AI is hard at work. This may take a few moments.
         </p>
-        <Progress value={progress} className="w-full" />
+        <Progress value={progress} className="w-full h-2" />
       </div>
     </div>
   );

@@ -77,6 +77,7 @@ function SuccessPageContent() {
 
         }).then(() => {
           toast({
+            variant: 'success',
             title: 'Upgrade Successful!',
             description: `Your plan has been upgraded to ${plan}.`,
           });
@@ -103,6 +104,7 @@ function SuccessPageContent() {
             addonCredits: increment(creditsToAdd) // Use Firestore increment for safety
           }).then(() => {
             toast({
+              variant: 'success',
               title: 'Purchase Successful!',
               description: `You've successfully added ${creditsToAdd.toLocaleString()} credits to your account.`,
             });

@@ -53,6 +53,7 @@ export function LoginForm() {
       if (isEmailPasswordUser && !user.emailVerified) {
         await sendEmailVerification(user);
         toast({
+          variant: 'default',
           title: 'Verification Required',
           description: "We've sent a new verification link to your email. Please verify to continue.",
         });
@@ -61,6 +62,7 @@ export function LoginForm() {
       }
 
       toast({
+        variant: 'success',
         title: 'Login Successful',
         description: "Welcome back to oPilot! Redirecting you to the dashboard.",
       });
@@ -100,6 +102,7 @@ export function LoginForm() {
       const provider = new GoogleAuthProvider();
       await signInWithPopup(auth, provider);
       toast({
+        variant: 'success',
         title: 'Login Successful',
         description: "Welcome to oPilot! You're now signed in with Google.",
       });

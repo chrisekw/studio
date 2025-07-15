@@ -25,6 +25,7 @@ export default function ReferralsPage() {
     if (!referralLink) return;
     navigator.clipboard.writeText(referralLink);
     toast({
+      variant: 'success',
       title: 'Link Copied!',
       description: 'Your referral link has been copied to the clipboard.',
     });

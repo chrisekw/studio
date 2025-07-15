@@ -18,6 +18,7 @@ export default function VerifyEmailPage() {
   useEffect(() => {
     if (user?.emailVerified) {
       toast({
+        variant: 'success',
         title: 'Email Verified!',
         description: 'Thank you for verifying your email. Welcome aboard!',
       });
