@@ -189,10 +189,17 @@ export function SearchForm({ setIsLoading, setLeads, setSearchQuery, setShowSugg
     setIsLoading(true);
     setLeads([]);
     setSearchQuery(values.keyword);
-    setProgress(10);
-    setProgressMessage(`Generating ${values.numLeads.toLocaleString()} leads...`);
     
     try {
+      setProgress(10);
+      setProgressMessage('Initializing search...');
+
+      // Add a small delay for the animation to be visible
+      await new Promise(resolve => setTimeout(resolve, 500));
+
+      setProgress(30);
+      setProgressMessage('Searching the web for leads...');
+
       const result = await generateLeads({
           query: values.keyword,
           numLeads: values.numLeads,
@@ -202,24 +209,32 @@ export function SearchForm({ setIsLoading, setLeads, setSearchQuery, setShowSugg
           extractContactInfo: true,
           includeDescription: !isFreePlan,
       });
+      
+      setProgress(70);
+      setProgressMessage('Analyzing results and extracting data...');
 
       const newLeads = result.map((lead, index) => ({
           ...lead,
           id: `${Date.now()}-${index}`,
       }));
       
-      await updateQuotaInFirestore(newLeads.length);
+      if (!newLeads[0]?.mock) {
+        await updateQuotaInFirestore(newLeads.length);
+      }
+      
       setLeads(newLeads);
+      
+      setProgress(100);
+      setProgressMessage(`Complete! ${newLeads.length.toLocaleString()} leads found.`);
       
       toast({
           title: 'Search Complete',
           description: `We've found and processed ${newLeads.length.toLocaleString()} potential leads.`,
       });
 
-      setProgress(100);
-      setProgressMessage(`Complete! ${newLeads.length.toLocaleString()} leads found.`);
-
     } catch (error: any) {
+       setProgress(100); // Complete the bar even on error
+       setProgressMessage('An error occurred.');
        toast({
           variant: 'destructive',
           title: 'Generation Failed',
@@ -227,10 +242,11 @@ export function SearchForm({ setIsLoading, setLeads, setSearchQuery, setShowSugg
       });
     } finally {
         setIsGenerating(false);
-        setIsLoading(false);
+        // We set loading to false in the leads table after the progress bar animation is done
         setTimeout(() => {
-            setProgress(0);
-            setProgressMessage('');
+          setIsLoading(false);
+          setProgress(0);
+          setProgressMessage('');
         }, 2000);
     }
   }

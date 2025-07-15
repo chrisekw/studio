@@ -30,4 +30,5 @@ export interface Lead {
   facebook?: string;
   x?: string;
   tags?: string[];
+  mock?: boolean;
 }
