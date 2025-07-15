@@ -15,8 +15,9 @@ export default function ReferralsPage() {
   const { toast } = useToast();
 
   useEffect(() => {
-    if (typeof window !== 'undefined' && userProfile?.referralCode) {
-      setReferralLink(`${window.location.origin}/register?ref=${userProfile.referralCode}`);
+    if (userProfile?.referralCode) {
+      const liveUrl = process.env.NEXT_PUBLIC_APP_URL || window.location.origin;
+      setReferralLink(`${liveUrl}/register?ref=${userProfile.referralCode}`);
     }
   }, [userProfile]);
 
