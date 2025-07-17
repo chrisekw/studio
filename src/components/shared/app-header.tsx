@@ -11,7 +11,7 @@ export function AppHeader() {
 
   return (
     <header className="flex h-14 items-center gap-4 border-b bg-background/60 px-4 backdrop-blur-sm sm:px-6 sticky top-0 z-10">
-      <div className="flex-1">
+      <div className="flex-1 md:hidden">
         <Link href="/dashboard" className="flex items-center gap-2 font-semibold">
           <svg
             className="h-8 w-8 text-primary"
@@ -38,7 +38,7 @@ export function AppHeader() {
           <Menu className="h-6 w-6" />
         </SidebarTrigger>
       ) : (
-        <Button onClick={toggleSidebar} variant="ghost" size="icon">
+        <Button onClick={toggleSidebar} variant="ghost" size="icon" className="ml-auto">
           {isCollapsed ? <PanelLeftOpen /> : <PanelLeftClose />}
           <span className="sr-only">Toggle Sidebar</span>
         </Button>
