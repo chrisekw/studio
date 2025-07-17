@@ -66,11 +66,11 @@ export default function AuthLayout({
       <div className="hidden bg-muted lg:flex items-center justify-center flex-col p-8 text-center">
         <Image 
           src="https://placehold.co/600x400.png"
-          alt="Futuristic abstract graphic"
+          alt="AI Copilot graphic"
           width={600}
           height={400}
           className="rounded-lg shadow-2xl shadow-primary/20"
-          data-ai-hint="futuristic abstract"
+          data-ai-hint="ai copilot"
         />
         <p className="mt-8 text-lg text-muted-foreground">
           Your AI copilot for lead generation.

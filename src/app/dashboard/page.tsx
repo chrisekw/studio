@@ -7,6 +7,7 @@ import { type Lead } from '@/lib/types';
 import { useAuth } from '@/context/auth-context';
 import { SearchForm } from '@/components/dashboard/search-form';
 import { Sparkles } from 'lucide-react';
+import { UpgradeBanner } from '@/components/dashboard/upgrade-banner';
 
 const LeadsTable = dynamic(
   () => import('@/components/dashboard/leads-table').then(mod => mod.LeadsTable),
@@ -25,7 +26,7 @@ export default function DashboardPage() {
       <div className="bg-primary/10 p-4 rounded-full mb-4">
         <Sparkles className="h-10 w-10 text-primary" />
       </div>
-      <h2 className="text-2xl font-headline font-semibold">Welcome to ProspectIQ</h2>
+      <h2 className="text-2xl font-headline font-semibold">Welcome to oPilot</h2>
       <p className="text-muted-foreground mt-2 max-w-md">
         Your AI-powered lead generation copilot. Start a search below to find your next customers.
       </p>
@@ -60,6 +61,7 @@ export default function DashboardPage() {
           />
         </div>
       </div>
+      <UpgradeBanner isOpen={showUpgradeBanner} onClose={() => setShowUpgradeBanner(false)} />
     </div>
   );
 }
