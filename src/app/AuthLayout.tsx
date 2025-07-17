@@ -70,7 +70,7 @@ export default function AuthLayout({
           width={600}
           height={400}
           className="rounded-lg shadow-2xl shadow-primary/20"
-          data-ai-hint="ai copilot"
+          data-ai-hint="abstract geometric"
         />
         <p className="mt-8 text-lg text-muted-foreground">
           Your AI copilot for lead generation.
