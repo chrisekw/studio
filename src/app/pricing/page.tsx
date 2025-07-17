@@ -55,7 +55,7 @@ const plans = [
       'Priority scraping queue',
     ],
     buttonText: 'Choose Pro',
-    paymentLink: 'https://flutterwave.com/pay/2oaxhcai6ava',
+    paymentLink: 'https://flutterwave.com/pay/zq3tsgikaagt',
     isFeatured: true,
   },
   {
