@@ -61,6 +61,11 @@ export function SearchForm({
 
     const planLeadsToUse = Math.min(leadsToDeduct, Math.max(0, remainingPlanLeads));
     if (planLeadsToUse > 0) {
+      if (userProfile.lastLeadGenerationMonth !== currentMonth) {
+        // Reset monthly count if it's a new month
+        updatePayload.leadsGeneratedThisMonth = 0;
+        updatePayload.monthlyLeadsGenerated = 0;
+      }
       if (isFreePlan) {
         updatePayload.lastLeadGenerationDate = today;
         updatePayload.lastLeadGenerationMonth = currentMonth;
@@ -107,21 +112,24 @@ export function SearchForm({
     
     // Quick check on the number of leads requested from the query string
     const parts = values.query.split(',');
-    const numLeads = parts.length > 1 ? parseInt(parts[1].trim(), 10) : 10; // Default to 10 if not specified
+    const numLeadsStr = parts.length > 1 ? parts[1].trim() : '10';
+    const numLeads = parseInt(numLeadsStr, 10);
     
     if (isNaN(numLeads) || numLeads <= 0) {
-        toast({ variant: 'destructive', title: 'Invalid Query', description: 'Please specify a valid number of leads in your query.' });
+        toast({ variant: 'destructive', title: 'Invalid Query', description: 'Please specify a valid number of leads in your query. E.g., "SaaS companies, 25, USA"' });
         return;
     }
 
-    if (remainingLeads <= 0 || numLeads > remainingLeads) {
+    if (remainingLeads < numLeads) {
       setShowUpgradeBanner(true);
+      toast({ variant: 'destructive', title: 'Quota Exceeded', description: `You need ${numLeads} leads, but only have ${remainingLeads} left.` });
       return;
     }
 
     setIsGenerating(true);
     setIsLoading(true);
     setLeads([]);
+    form.reset();
 
     try {
       setProgress(10);
@@ -202,7 +210,7 @@ export function SearchForm({
           type="submit"
           size="icon"
           disabled={isGenerating}
-          className="absolute right-3 top-2.5"
+          className="absolute right-3 top-[calc(50%-1.25rem)] -translate-y-px h-8 w-8"
         >
           {isGenerating ? (
             <Loader2 className="h-4 w-4 animate-spin" />

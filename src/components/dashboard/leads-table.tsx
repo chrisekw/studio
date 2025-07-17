@@ -191,7 +191,7 @@ export function LeadsTable({ leads, isLoading, progress, progressMessage }: Lead
   const canExport = userProfile?.plan !== 'Free';
 
   const renderSkeleton = () => (
-    <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3">
+    <div className="grid gap-6 p-4 sm:p-6 md:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3">
       {Array.from({ length: 6 }).map((_, index) => (
         <Card key={index} className="flex flex-col border-primary/10 bg-card/60 backdrop-blur-xl">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 p-4 pb-2">
@@ -213,22 +213,22 @@ export function LeadsTable({ leads, isLoading, progress, progressMessage }: Lead
   );
 
   const renderProgress = () => (
-    <div className="flex flex-col items-center justify-center h-64 rounded-lg border-2 border-dashed border-border bg-card/60 backdrop-blur-xl">
-      <div className="w-full max-w-md text-center p-4">
-        <Sparkles className="h-12 w-12 text-primary animate-pulse mb-4 mx-auto" />
-        <h3 className="text-xl font-headline font-medium text-foreground">
-          {progressMessage || 'Processing...'}
-        </h3>
-        <p className="text-muted-foreground/80 mt-2 mb-4">
-          Our AI is hard at work. This may take a few moments.
-        </p>
-        <Progress value={progress} className="w-full h-2" />
-      </div>
+    <div className="flex flex-col items-center justify-center h-full min-h-[400px]">
+        <div className="w-full max-w-md text-center p-4">
+            <Sparkles className="h-12 w-12 text-primary animate-pulse mb-4 mx-auto" />
+            <h3 className="text-xl font-headline font-medium text-foreground">
+            {progressMessage || 'Processing...'}
+            </h3>
+            <p className="text-muted-foreground/80 mt-2 mb-4">
+            Our AI is hard at work. This may take a few moments.
+            </p>
+            <Progress value={progress} className="w-full h-2" />
+        </div>
     </div>
   );
 
   const renderLeads = () => (
-    <div className="space-y-6">
+    <div className="space-y-6 p-4 sm:p-6">
        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div>
           <h2 className="text-3xl font-headline font-bold">Generated Leads</h2>

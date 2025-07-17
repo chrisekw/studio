@@ -6,7 +6,7 @@ import dynamic from 'next/dynamic';
 import { type Lead } from '@/lib/types';
 import { useAuth } from '@/context/auth-context';
 import { SearchForm } from '@/components/dashboard/search-form';
-import { SearchX, Sparkles } from 'lucide-react';
+import { Sparkles } from 'lucide-react';
 
 const LeadsTable = dynamic(
   () => import('@/components/dashboard/leads-table').then(mod => mod.LeadsTable),
@@ -18,7 +18,6 @@ export default function DashboardPage() {
   const [isLoading, setIsLoading] = useState(false);
   const [progress, setProgress] = useState(0);
   const [progressMessage, setProgressMessage] = useState('');
-  const { userProfile } = useAuth();
   const [showUpgradeBanner, setShowUpgradeBanner] = useState(false);
 
   const renderEmptyState = () => (
@@ -34,18 +33,20 @@ export default function DashboardPage() {
   );
 
   return (
-    <div className="h-[calc(100vh-theme(height.14))] flex flex-col">
-      <div className="flex-grow overflow-y-auto p-4 sm:p-6 space-y-8">
-        {leads.length > 0 || isLoading ? (
-           <LeadsTable
-              leads={leads}
-              isLoading={isLoading}
-              progress={progress}
-              progressMessage={progressMessage}
-            />
-        ) : (
-          renderEmptyState()
-        )}
+    <div className="h-full flex flex-col">
+      <div className="flex-grow overflow-y-auto">
+        <div className="h-full">
+            {leads.length > 0 || isLoading ? (
+              <LeadsTable
+                  leads={leads}
+                  isLoading={isLoading}
+                  progress={progress}
+                  progressMessage={progressMessage}
+                />
+            ) : (
+              renderEmptyState()
+            )}
+        </div>
       </div>
 
       <div className="p-4 bg-background/80 backdrop-blur-sm border-t">
