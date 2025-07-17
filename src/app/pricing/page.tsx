@@ -21,31 +21,32 @@ const plans = [
       'Limited search filters',
       'No export options',
     ],
-    buttonText: 'Get Started',
+    buttonText: 'Current Plan',
     paymentLink: '#',
     isFeatured: false,
+    isDisabled: true,
   },
   {
     name: 'Starter',
     price: '$19',
     pricePeriod: '/month',
-    description: 'Ideal for freelancers and solo marketers ready to scale.',
+    description: 'Best for testing the full power of AI lead generation.',
     features: [
       'Everything in Free',
-      '200 leads per month',
+      '250 leads per month',
       'CSV export',
       'Save lead history',
       'AI-powered email & phone extraction',
     ],
     buttonText: 'Choose Starter',
     paymentLink: 'https://flutterwave.com/pay/ynsnxtinxodm',
-    isFeatured: true,
+    isFeatured: false,
   },
   {
     name: 'Pro',
-    price: '$99',
+    price: '$59',
     pricePeriod: '/month',
-    description: 'The ultimate toolkit for agencies and growth-focused teams.',
+    description: 'Best for solo founders and small teams ready to scale outreach.',
     features: [
       'Everything in Starter',
       '1,000 leads per month',
@@ -55,17 +56,17 @@ const plans = [
     ],
     buttonText: 'Choose Pro',
     paymentLink: 'https://flutterwave.com/pay/2oaxhcai6ava',
-    isFeatured: false,
+    isFeatured: true,
   },
   {
     name: 'Agency',
-    price: '$299',
+    price: '$199',
     pricePeriod: '/month',
-    description: 'Built for teams and resellers who need maximum power.',
+    description: 'For power users and teams that need CRM exports.',
     features: [
       'Everything in Pro',
-      '5000 leads per month',
-      'White-label reports',
+      '3,000 leads per month',
+      'Teams, CRM export',
       'Bulk prompt upload (CSV)',
       'Webhook & Zapier support',
     ],
@@ -85,7 +86,7 @@ export default function PricingPage() {
   return (
     <div className="py-6">
       <div className="text-center mb-12">
-        <h1 className="text-4xl font-headline font-bold tracking-tight">Unlock Better Leads with Pro Tools</h1>
+        <h1 className="text-4xl font-headline font-bold tracking-tight">Simple Pricing, Scales With You</h1>
         <p className="text-muted-foreground mt-2 text-lg max-w-2xl mx-auto">
           Choose the plan that fits your business and start generating verified, high-converting leads with AI.
         </p>
@@ -115,8 +116,8 @@ export default function PricingPage() {
               </ul>
             </CardContent>
             <CardFooter>
-              <Button asChild className="w-full" variant={plan.isFeatured ? 'default' : 'outline'}>
-                <Link href={plan.paymentLink} target="_blank">
+              <Button asChild className="w-full" variant={plan.isFeatured ? 'default' : 'outline'} disabled={plan.isDisabled}>
+                <Link href={plan.paymentLink} target={plan.isDisabled ? "" : "_blank"}>
                   {plan.buttonText}
                 </Link>
               </Button>

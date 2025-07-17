@@ -18,9 +18,9 @@ export function generateReferralCode(length: number = 8): string {
 export const PLAN_LIMITS = {
   Free: 10, // Daily
   FreeMonthly: 30, // Monthly cap for Free plan
-  Starter: 200, // Monthly
+  Starter: 250, // Monthly
   Pro: 1000, // Monthly
-  Agency: 5000, // Monthly
+  Agency: 3000, // Monthly
 };
 
 export function calculateRemainingLeads(userProfile: UserProfile | null) {
