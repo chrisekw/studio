@@ -1,3 +1,4 @@
+
 'use client';
 
 import {
@@ -227,151 +228,12 @@ export function LeadsTable({ leads, isLoading, progress, progressMessage }: Lead
   );
 
   const renderLeads = () => (
-    <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3">
-      {leads.map((lead) => (
-        <Card key={lead.id} className="border-primary/10 bg-card/60 backdrop-blur-xl transition-all hover:border-primary/30 flex flex-col">
-          <CardHeader className="p-4 pb-2 flex-row items-start justify-between space-y-0">
-            <div className="flex-1 space-y-2">
-                <div className="flex items-center gap-4">
-                    <Avatar className="h-12 w-12 border-2 border-primary/20">
-                        <AvatarImage
-                        src={`https://logo.clearbit.com/${getHostname(lead.website)}`}
-                        alt={`${lead.name} logo`}
-                        data-ai-hint="company logo"
-                        />
-                        <AvatarFallback>{lead.name.split(' ').map(n => n[0]).join('').substring(0,2)}</AvatarFallback>
-                    </Avatar>
-                    <CardTitle className="text-lg font-medium">{lead.name}</CardTitle>
-                </div>
-            </div>
-
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button aria-haspopup="true" size="icon" variant="ghost">
-                  <MoreHorizontal className="h-4 w-4" />
-                  <span className="sr-only">Toggle menu</span>
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end">
-                <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                <DropdownMenuItem onClick={() => handleSaveLead(lead)}>
-                  <Save className="mr-2 h-4 w-4" /> Save Lead
-                </DropdownMenuItem>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem className="text-destructive">
-                  <Trash2 className="mr-2 h-4 w-4" /> Delete
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
-          </CardHeader>
-          <CardContent className="flex-grow space-y-3 p-4 pt-2">
-            {lead.description && (
-              <p className="text-sm text-muted-foreground italic mb-3">"{lead.description}"</p>
-            )}
-            {lead.email && (
-              <div className="flex items-center text-sm text-muted-foreground">
-                <Mail className="mr-3 h-4 w-4 flex-shrink-0 text-primary" />
-                <span className="truncate">{lead.email}</span>
-              </div>
-            )}
-            {lead.phone && (
-              <div className="flex items-center text-sm text-muted-foreground">
-                <Phone className="mr-3 h-4 w-4 flex-shrink-0 text-primary" />
-                <span className="truncate">{lead.phone}</span>
-              </div>
-            )}
-            {lead.address && (
-              <div className="flex items-start text-sm text-muted-foreground">
-                <MapPin className="mr-3 mt-0.5 h-4 w-4 flex-shrink-0 text-primary" />
-                <span>{lead.address}</span>
-              </div>
-            )}
-          </CardContent>
-           <CardFooter className="flex-wrap gap-2 p-4 pt-0">
-             <TooltipProvider>
-              {lead.website && (
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <Button asChild size="icon" variant="outline">
-                          <a href={getFullUrl(lead.website)} target="_blank" rel="noopener noreferrer">
-                              <Globe />
-                          </a>
-                      </Button>
-                    </TooltipTrigger>
-                    <TooltipContent><p>{getHostname(lead.website)}</p></TooltipContent>
-                  </Tooltip>
-              )}
-               {lead.linkedin && (
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <Button asChild size="icon" variant="outline">
-                          <a href={getFullUrl(lead.linkedin)} target="_blank" rel="noopener noreferrer">
-                              <Linkedin />
-                          </a>
-                      </Button>
-                    </TooltipTrigger>
-                    <TooltipContent><p>View on LinkedIn</p></TooltipContent>
-                  </Tooltip>
-              )}
-              {lead.facebook && (
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <Button asChild size="icon" variant="outline">
-                          <a href={getFullUrl(lead.facebook)} target="_blank" rel="noopener noreferrer">
-                              <FacebookIcon />
-                          </a>
-                      </Button>
-                    </TooltipTrigger>
-                    <TooltipContent><p>View on Facebook</p></TooltipContent>
-                  </Tooltip>
-              )}
-              {lead.x && (
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <Button asChild size="icon" variant="outline">
-                          <a href={getFullUrl(lead.x)} target="_blank" rel="noopener noreferrer">
-                              <XIcon />
-                          </a>
-                      </Button>
-                    </TooltipTrigger>
-                    <TooltipContent><p>View on X</p></TooltipContent>
-                  </Tooltip>
-              )}
-             </TooltipProvider>
-          </CardFooter>
-        </Card>
-      ))}
-    </div>
-  );
-
-  const renderEmptyState = () => (
-    <div className="flex flex-col items-center justify-center h-64 rounded-lg border-2 border-dashed border-border">
-      <SearchX className="h-16 w-16 text-muted-foreground/50 mb-4" />
-      <h3 className="text-xl font-headline font-medium text-muted-foreground">No Leads Generated Yet</h3>
-      <p className="text-muted-foreground/80 mt-1">Start a new search to see results here.</p>
-    </div>
-  );
-
-  const renderContent = () => {
-    if (isLoading && progress > 0) {
-      return renderProgress();
-    }
-    if (isLoading) {
-      return renderSkeleton();
-    }
-    if (leads.length > 0) {
-      return renderLeads();
-    }
-    return renderEmptyState();
-  };
-
-  return (
     <div className="space-y-6">
        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div>
           <h2 className="text-3xl font-headline font-bold">Generated Leads</h2>
           <p className="text-muted-foreground mt-1 max-w-2xl">
-            Review the generated leads below. Agency plan users get additional social media profile links.
+            Review the {leads.length} generated leads below.
           </p>
         </div>
         <DropdownMenu>
@@ -440,7 +302,137 @@ export function LeadsTable({ leads, isLoading, progress, progressMessage }: Lead
           </DropdownMenuContent>
         </DropdownMenu>
       </div>
-      {renderContent()}
+      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3">
+        {leads.map((lead) => (
+          <Card key={lead.id} className="border-primary/10 bg-card/60 backdrop-blur-xl transition-all hover:border-primary/30 flex flex-col">
+            <CardHeader className="p-4 pb-2 flex-row items-start justify-between space-y-0">
+              <div className="flex-1 space-y-2">
+                  <div className="flex items-center gap-4">
+                      <Avatar className="h-12 w-12 border-2 border-primary/20">
+                          <AvatarImage
+                          src={`https://logo.clearbit.com/${getHostname(lead.website)}`}
+                          alt={`${lead.name} logo`}
+                          data-ai-hint="company logo"
+                          />
+                          <AvatarFallback>{lead.name.split(' ').map(n => n[0]).join('').substring(0,2)}</AvatarFallback>
+                      </Avatar>
+                      <CardTitle className="text-lg font-medium">{lead.name}</CardTitle>
+                  </div>
+              </div>
+
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button aria-haspopup="true" size="icon" variant="ghost">
+                    <MoreHorizontal className="h-4 w-4" />
+                    <span className="sr-only">Toggle menu</span>
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end">
+                  <DropdownMenuLabel>Actions</DropdownMenuLabel>
+                  <DropdownMenuItem onClick={() => handleSaveLead(lead)}>
+                    <Save className="mr-2 h-4 w-4" /> Save Lead
+                  </DropdownMenuItem>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem className="text-destructive">
+                    <Trash2 className="mr-2 h-4 w-4" /> Delete
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </CardHeader>
+            <CardContent className="flex-grow space-y-3 p-4 pt-2">
+              {lead.description && (
+                <p className="text-sm text-muted-foreground italic mb-3">"{lead.description}"</p>
+              )}
+              {lead.email && (
+                <div className="flex items-center text-sm text-muted-foreground">
+                  <Mail className="mr-3 h-4 w-4 flex-shrink-0 text-primary" />
+                  <span className="truncate">{lead.email}</span>
+                </div>
+              )}
+              {lead.phone && (
+                <div className="flex items-center text-sm text-muted-foreground">
+                  <Phone className="mr-3 h-4 w-4 flex-shrink-0 text-primary" />
+                  <span className="truncate">{lead.phone}</span>
+                </div>
+              )}
+              {lead.address && (
+                <div className="flex items-start text-sm text-muted-foreground">
+                  <MapPin className="mr-3 mt-0.5 h-4 w-4 flex-shrink-0 text-primary" />
+                  <span>{lead.address}</span>
+                </div>
+              )}
+            </CardContent>
+             <CardFooter className="flex-wrap gap-2 p-4 pt-0">
+               <TooltipProvider>
+                {lead.website && (
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <Button asChild size="icon" variant="outline">
+                            <a href={getFullUrl(lead.website)} target="_blank" rel="noopener noreferrer">
+                                <Globe />
+                            </a>
+                        </Button>
+                      </TooltipTrigger>
+                      <TooltipContent><p>{getHostname(lead.website)}</p></TooltipContent>
+                    </Tooltip>
+                )}
+                 {lead.linkedin && (
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <Button asChild size="icon" variant="outline">
+                            <a href={getFullUrl(lead.linkedin)} target="_blank" rel="noopener noreferrer">
+                                <Linkedin />
+                            </a>
+                        </Button>
+                      </TooltipTrigger>
+                      <TooltipContent><p>View on LinkedIn</p></TooltipContent>
+                    </Tooltip>
+                )}
+                {lead.facebook && (
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <Button asChild size="icon" variant="outline">
+                            <a href={getFullUrl(lead.facebook)} target="_blank" rel="noopener noreferrer">
+                                <FacebookIcon />
+                            </a>
+                        </Button>
+                      </TooltipTrigger>
+                      <TooltipContent><p>View on Facebook</p></TooltipContent>
+                    </Tooltip>
+                )}
+                {lead.x && (
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <Button asChild size="icon" variant="outline">
+                            <a href={getFullUrl(lead.x)} target="_blank" rel="noopener noreferrer">
+                                <XIcon />
+                            </a>
+                        </Button>
+                      </TooltipTrigger>
+                      <TooltipContent><p>View on X</p></TooltipContent>
+                    </Tooltip>
+                )}
+               </TooltipProvider>
+            </CardFooter>
+          </Card>
+        ))}
+      </div>
     </div>
   );
+
+  const renderContent = () => {
+    if (isLoading && progress > 0) {
+      return renderProgress();
+    }
+    if (isLoading) {
+      return renderSkeleton();
+    }
+    if (leads.length > 0) {
+      return renderLeads();
+    }
+    // Empty state is now handled in the parent DashboardPage
+    return null;
+  };
+
+  return renderContent();
 }

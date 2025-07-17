@@ -12,9 +12,9 @@ import {z} from 'zod';
 
 const LeadSchema = z.object({
   name: z.string().describe('The name of the company.'),
-  description: z.string().optional().describe('A one-line description of what the company is all about. Will be empty if not requested.'),
-  email: z.string().describe('A contact email for the company. Should be an empty string if contact extraction is disabled.'),
-  phone: z.string().describe('A contact phone number for the company. Should be an empty string if contact extraction is disabled.'),
+  description: z.string().optional().describe('A one-line description of what the company is all about.'),
+  email: z.string().describe('A contact email for the company.'),
+  phone: z.string().describe('A contact phone number for the company.'),
   website: z.string().describe('The full company website URL, including the protocol (e.g., https://example.com).'),
   address: z.string().optional().describe('The physical address of the company.'),
   linkedin: z.string().optional().describe('The specific LinkedIn company profile URL (e.g., https://www.linkedin.com/company/company-name).'),
@@ -23,13 +23,7 @@ const LeadSchema = z.object({
 });
 
 const GenerateLeadsInputSchema = z.object({
-  query: z.string().describe('The search query for lead generation, e.g., "Marketing agencies in London".'),
-  numLeads: z.number().describe('The number of leads to generate.'),
-  includeAddress: z.boolean().optional().describe('Whether to include the physical address.'),
-  includeLinkedIn: z.boolean().optional().describe('Whether to include the LinkedIn profile URL.'),
-  includeSocials: z.boolean().optional().describe('Whether to include Facebook and X profile URLs.'),
-  extractContactInfo: z.boolean().optional().describe('Whether to extract email and phone number. Defaults to true.'),
-  includeDescription: z.boolean().optional().describe('Whether to include a one-line company description. Defaults to false.'),
+  query: z.string().describe('A comma-separated search query for lead generation. Format: "description, number of leads, location". Example: "SaaS companies in California, 25, USA"'),
 });
 export type GenerateLeadsInput = z.infer<typeof GenerateLeadsInputSchema>;
 
@@ -47,32 +41,23 @@ const prompt = ai.definePrompt({
   output: {schema: GenerateLeadsOutputSchema},
   prompt: `You are an expert business development assistant. Your task is to generate a list of business leads based on a given query.
 
-  Generate exactly {{{numLeads}}} leads based on the following query: "{{{query}}}"
-
-  For each lead, provide a fictional but realistic-looking company name, and a full website URL including the protocol (e.g. https://example.com).
+  The user has provided a query in the format: "description, number of leads, location".
+  Your task is to parse this query: "{{{query}}}"
   
-  {{#if extractContactInfo}}
-  Also provide a realistic-looking email address and phone number.
-  {{else}}
-  For the email and phone fields, return an empty string.
-  {{/if}}
+  First, identify the number of leads to generate from the query. If no number is specified, default to 10.
+  Then, use the description and location to find fictional but realistic-looking companies.
+
+  Generate the requested number of leads based on the parsed query.
+
+  For each lead, you MUST provide:
+  - A fictional but realistic-looking company name.
+  - A full website URL including the protocol (e.g., https://example.com).
+  - A realistic-looking email address and phone number.
+  - A concise, one-line description of what the company is all about.
+  - A physical address for the company.
+  - A specific, realistic-looking LinkedIn company profile URL (e.g., https://www.linkedin.com/company/some-company).
+  - Specific, realistic-looking company profile URLs for Facebook and X (formerly Twitter).
   
-  {{#if includeAddress}}
-  Also include a physical address for each company.
-  {{/if}}
-
-  {{#if includeLinkedIn}}
-  Also include a specific, realistic-looking LinkedIn company profile URL for each company (e.g., https://www.linkedin.com/company/some-company). Do not just use "www.linkedin.com". If a valid-looking URL cannot be created, return an empty string for this field.
-  {{/if}}
-
-  {{#if includeSocials}}
-  Also include specific, realistic-looking company profile URLs for Facebook and X (formerly Twitter). If a valid-looking URL cannot be created, return an empty string for these fields.
-  {{/if}}
-
-  {{#if includeDescription}}
-  Also include a concise, one-line description of what the company is all about.
-  {{/if}}
-
   Ensure all generated data is plausible and realistic for the given query. Do not return empty fields unless specified.
   
   Return the list of leads in the specified JSON format.
@@ -120,14 +105,12 @@ const generateLeadsFlow = ai.defineFlow(
       console.error('Error in generateLeadsFlow:', error);
       let errorMessage = error.message || 'An unexpected error occurred while generating leads.';
 
-      // Specifically handle API errors from Google AI
       if (errorMessage.includes('503 Service Unavailable')) {
           errorMessage = 'The AI model is currently overloaded. Please try again in a few moments.';
       } else if (errorMessage.includes('429 Too Many Requests')) {
           errorMessage = 'The daily free limit for the AI model has been reached. Please check your AI provider plan or try again tomorrow.';
       }
 
-      // Re-throw a clear error message for the client-side to catch and display.
       throw new Error(errorMessage);
     }
   }
