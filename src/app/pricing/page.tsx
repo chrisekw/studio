@@ -50,7 +50,6 @@ const plans = [
     features: [
       'Everything in Starter',
       '1,000 leads per month',
-      'AI-based lead scoring',
       'Social media profiles & websites',
       'Priority scraping queue',
     ],
@@ -66,9 +65,7 @@ const plans = [
     features: [
       'Everything in Pro',
       '3,000 leads per month',
-      'Teams, CRM export',
       'Bulk prompt upload (CSV)',
-      'Webhook & Zapier support',
     ],
     buttonText: 'Choose Agency',
     paymentLink: 'https://flutterwave.com/pay/fz56pnsdsp84',
@@ -153,17 +150,6 @@ export default function PricingPage() {
                  <p>All payments are securely processed via Flutterwave .</p>
                  <p>Cancel anytime, no hidden fees.</p>
                  <p>7-day money-back guarantee on all paid plans.</p>
-            </div>
-             <div className="rounded-lg border border-accent/50 bg-accent/10 p-6">
-                <div className="flex items-start gap-4">
-                    <div className="bg-accent/20 text-accent p-2 rounded-full">
-                        <Bell className="h-5 w-5" />
-                    </div>
-                    <div>
-                        <h4 className="font-headline font-semibold text-accent-foreground">Special Offer</h4>
-                        <p className="text-sm text-accent-foreground/80 mt-1">Upgrade within 24 hours of signup and get <strong>20% off</strong> your first month!</p>
-                    </div>
-                </div>
             </div>
         </div>
       </div>
