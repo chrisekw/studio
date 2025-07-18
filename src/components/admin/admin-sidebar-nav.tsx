@@ -24,7 +24,7 @@ export function AdminSidebarNav() {
   return (
     <SidebarMenu>
       {navItems.map((item) => {
-        const isActive = pathname === item.href || (pathname.startsWith(item.href) && item.href !== '/admin');
+        const isActive = pathname.startsWith(item.href);
         const Icon = item.icon;
         return (
           <SidebarMenuItem key={item.href}>
