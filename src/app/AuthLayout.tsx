@@ -13,18 +13,24 @@ export default function AuthLayout({
 }: {
   children: React.ReactNode;
 }) {
-  const { user, loading } = useAuth();
+  const { user, userProfile, loading } = useAuth();
   const router = useRouter();
 
   useEffect(() => {
-    // Wait for auth state to resolve, then redirect if user exists.
-    if (!loading && user) {
-      router.replace('/dashboard');
-    }
-  }, [user, loading, router]);
+    // Wait for auth state and profile to resolve.
+    if (loading) return;
 
-  // Show a loader while auth state is resolving or if a user exists
-  // (which means a redirect is in progress).
+    if (user && userProfile) {
+      // If user is logged in, redirect them.
+      if (userProfile.isAdmin) {
+        router.replace('/admin');
+      } else {
+        router.replace('/dashboard');
+      }
+    }
+  }, [user, userProfile, loading, router]);
+
+  // Show a loader while auth state is resolving or if a redirect is in progress.
   if (loading || user) {
      return (
       <div className="flex h-screen w-full items-center justify-center">
