@@ -3,24 +3,36 @@
 import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/context/auth-context';
+import { Loader2 } from 'lucide-react';
 
 export default function Home() {
-  const { user, loading } = useAuth();
+  const { user, userProfile, loading } = useAuth();
   const router = useRouter();
 
   useEffect(() => {
-    // The AuthProvider ensures that `user` and `loading` are resolved.
-    // We can now safely redirect based on the user's state.
-    if (!loading) {
-      if (user) {
-        router.replace('/dashboard');
-      } else {
-        router.replace('/login');
-      }
-    }
-  }, [user, loading, router]);
+    if (loading) return; // Wait until loading is false
 
-  // The loading state is now handled by AuthProvider, so we don't need a spinner here.
-  // Returning null or an empty fragment is sufficient.
-  return null;
+    if (user && userProfile) {
+      // If user is logged in, check their role and redirect
+      if (userProfile.isAdmin) {
+        router.replace('/admin');
+      } else {
+        router.replace('/dashboard');
+      }
+    } else if (!user) {
+      // If no user, redirect to login
+      router.replace('/login');
+    }
+    
+    // The case where `user` exists but `userProfile` is still loading
+    // is handled by the main `loading` flag.
+
+  }, [user, userProfile, loading, router]);
+
+  // Show a loader while authentication state is being determined.
+  return (
+    <div className="flex h-screen w-full items-center justify-center">
+      <Loader2 className="h-8 w-8 animate-spin text-primary" />
+    </div>
+  );
 }

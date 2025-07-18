@@ -20,6 +20,7 @@ import { Input } from '@/components/ui/input';
 import { Loader2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { auth } from '@/lib/firebase';
+import { useAuth } from '@/context/auth-context';
 
 const formSchema = z.object({
   email: z.string().email({ message: 'Please enter a valid email.' }),
@@ -31,6 +32,7 @@ export function LoginForm() {
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(false);
   const [isGoogleLoading, setIsGoogleLoading] = useState(false);
+  const { user, userProfile } = useAuth();
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -60,13 +62,10 @@ export function LoginForm() {
         router.push('/verify-email');
         return;
       }
+      
+      // The redirect is now handled by the AuthLayout or page layout
+      // which correctly checks for admin status.
 
-      toast({
-        variant: 'success',
-        title: 'Login Successful',
-        description: "Welcome back to oPilot! Redirecting you to the dashboard.",
-      });
-      router.push('/dashboard');
     } catch (error: any) {
       console.error('Login error:', error);
       let description = error.message || 'An unexpected error occurred. Please try again.';
@@ -101,12 +100,8 @@ export function LoginForm() {
     try {
       const provider = new GoogleAuthProvider();
       await signInWithPopup(auth, provider);
-      toast({
-        variant: 'success',
-        title: 'Login Successful',
-        description: "Welcome to oPilot! You're now signed in with Google.",
-      });
-      router.push('/dashboard');
+      // The redirect is now handled by the AuthLayout or page layout
+      // which correctly checks for admin status.
     } catch (error: any) {
       console.error('Google Sign-In Error:', error);
       toast({
