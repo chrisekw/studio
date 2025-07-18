@@ -1,30 +1,28 @@
-
 rules_version = '2';
-
 service cloud.firestore {
   match /databases/{database}/documents {
-    
-    // Helper function to check if the requesting user is an admin
-    function isAdmin() {
-      return get(/databases/$(database)/documents/users/$(request.auth.uid)).data.isAdmin == true;
+    // Helper function to check for admin role
+    function isAdmin(userId) {
+      return get(/databases/$(database)/documents/users/$(userId)).data.isAdmin == true;
     }
 
     match /users/{userId} {
-      // Allow users to read/write their own profile
-      allow read, update, delete: if request.auth.uid == userId;
-      // Allow new users to be created
-      allow create: if request.auth.uid != null;
-      
-      // Allow admins to read/write any user's profile
-      allow read, write: if isAdmin();
+      // Users can read and write to their own document
+      allow read, write: if request.auth != null && request.auth.uid == userId;
+
+      // Admins can read any user document
+      allow get: if request.auth != null && isAdmin(request.auth.uid);
     }
-    
+
+    // Admins can list all users
+    match /users {
+      allow list: if request.auth != null && isAdmin(request.auth.uid);
+    }
+
+    // Rules for savedLeads subcollection
     match /users/{userId}/savedLeads/{leadId} {
-        // Allow users to manage their own saved leads
-        allow read, write, delete: if request.auth.uid == userId;
-        
-        // Allow admins to read any user's saved leads
-        allow read: if isAdmin();
+        // Users can manage their own saved leads
+        allow read, write, delete, list: if request.auth != null && request.auth.uid == userId;
     }
   }
 }
