@@ -1,19 +1,30 @@
+
 rules_version = '2';
 
 service cloud.firestore {
   match /databases/{database}/documents {
     
-    // User profile and subcollections are private to the user.
-    match /users/{userId}/{documents=**} {
-      allow read, write: if request.auth.uid == userId;
+    // Helper function to check if the requesting user is an admin
+    function isAdmin() {
+      return get(/databases/$(database)/documents/users/$(request.auth.uid)).data.isAdmin == true;
     }
 
-    // Lead usage data is private to the user.
-    // The lead generation flow on the server uses the Admin SDK
-    // and bypasses these rules, but they are here to secure
-    // any potential client-side access.
-    match /userLeadUsage/{userId} {
-      allow read, write: if request.auth.uid == userId;
+    match /users/{userId} {
+      // Allow users to read/write their own profile
+      allow read, update, delete: if request.auth.uid == userId;
+      // Allow new users to be created
+      allow create: if request.auth.uid != null;
+      
+      // Allow admins to read/write any user's profile
+      allow read, write: if isAdmin();
+    }
+    
+    match /users/{userId}/savedLeads/{leadId} {
+        // Allow users to manage their own saved leads
+        allow read, write, delete: if request.auth.uid == userId;
+        
+        // Allow admins to read any user's saved leads
+        allow read: if isAdmin();
     }
   }
 }
