@@ -114,84 +114,147 @@ export function UsersTable({ users }: UsersTableProps) {
 
   return (
     <div className="rounded-lg border">
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead onClick={() => requestSort('email')}>
-                  <div className="flex items-center cursor-pointer">
-                    Email {getSortIcon('email')}
-                  </div>
-              </TableHead>
-              <TableHead onClick={() => requestSort('plan')}>
-                  <div className="flex items-center cursor-pointer">
-                    Plan {getSortIcon('plan')}
-                  </div>
-              </TableHead>
-              <TableHead onClick={() => requestSort('leadsGeneratedThisMonth')}>
-                 <div className="flex items-center cursor-pointer">
-                    Usage (Month) {getSortIcon('leadsGeneratedThisMonth')}
-                 </div>
-              </TableHead>
-              <TableHead>Actions</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {sortedUsers.map((user) => (
-              <TableRow key={user.id}>
-                <TableCell className="font-medium">{user.email}</TableCell>
-                <TableCell>
-                  <Badge variant={PLAN_BADGE_VARIANTS[user.plan]}>{user.plan}</Badge>
-                </TableCell>
-                <TableCell>{user.leadsGeneratedThisMonth ?? 0}</TableCell>
-                <TableCell>
-                    <AlertDialog>
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                          <Button variant="ghost" className="h-8 w-8 p-0">
-                            <span className="sr-only">Open menu</span>
-                            <MoreHorizontal className="h-4 w-4" />
-                          </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end">
-                          <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                          <DropdownMenuItem>View Profile</DropdownMenuItem>
-                          <DropdownMenuItem>
-                            <Edit className="mr-2 h-4 w-4" />
-                            Edit Plan
-                          </DropdownMenuItem>
-                          <DropdownMenuSeparator />
-                          <AlertDialogTrigger asChild>
-                            <DropdownMenuItem className="text-destructive focus:bg-destructive/10 focus:text-destructive">
-                              <Trash2 className="mr-2 h-4 w-4" />
-                              Delete User
+        <div className="hidden md:block">
+            <Table>
+            <TableHeader>
+                <TableRow>
+                <TableHead onClick={() => requestSort('email')}>
+                    <div className="flex items-center cursor-pointer">
+                        Email {getSortIcon('email')}
+                    </div>
+                </TableHead>
+                <TableHead onClick={() => requestSort('plan')}>
+                    <div className="flex items-center cursor-pointer">
+                        Plan {getSortIcon('plan')}
+                    </div>
+                </TableHead>
+                <TableHead onClick={() => requestSort('leadsGeneratedThisMonth')}>
+                    <div className="flex items-center cursor-pointer">
+                        Usage (Month) {getSortIcon('leadsGeneratedThisMonth')}
+                    </div>
+                </TableHead>
+                <TableHead>Actions</TableHead>
+                </TableRow>
+            </TableHeader>
+            <TableBody>
+                {sortedUsers.map((user) => (
+                <TableRow key={user.id}>
+                    <TableCell className="font-medium">{user.email}</TableCell>
+                    <TableCell>
+                    <Badge variant={PLAN_BADGE_VARIANTS[user.plan]}>{user.plan}</Badge>
+                    </TableCell>
+                    <TableCell>{user.leadsGeneratedThisMonth ?? 0}</TableCell>
+                    <TableCell>
+                        <AlertDialog>
+                        <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                            <Button variant="ghost" className="h-8 w-8 p-0">
+                                <span className="sr-only">Open menu</span>
+                                <MoreHorizontal className="h-4 w-4" />
+                            </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end">
+                            <DropdownMenuLabel>Actions</DropdownMenuLabel>
+                            <DropdownMenuItem>View Profile</DropdownMenuItem>
+                            <DropdownMenuItem>
+                                <Edit className="mr-2 h-4 w-4" />
+                                Edit Plan
                             </DropdownMenuItem>
-                          </AlertDialogTrigger>
-                        </DropdownMenuContent>
-                      </DropdownMenu>
-                      <AlertDialogContent>
-                            <AlertDialogHeader>
-                                <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
-                                <AlertDialogDescription>
-                                    This action cannot be undone. This will permanently delete the user
-                                    <span className="font-medium text-foreground"> {user.email}</span> and all their associated data from the database.
-                                </AlertDialogDescription>
-                            </AlertDialogHeader>
-                            <AlertDialogFooter>
-                                <AlertDialogCancel>Cancel</AlertDialogCancel>
-                                <AlertDialogAction 
-                                    onClick={() => handleDeleteUser(user.id, user.email)}
-                                    className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-                                >
-                                    Delete
-                                </AlertDialogAction>
-                            </AlertDialogFooter>
-                        </AlertDialogContent>
-                    </AlertDialog>
-                </TableCell>
-              </TableRow>
-            ))}
-          </TableBody>
-        </Table>
+                            <DropdownMenuSeparator />
+                            <AlertDialogTrigger asChild>
+                                <DropdownMenuItem className="text-destructive focus:bg-destructive/10 focus:text-destructive">
+                                <Trash2 className="mr-2 h-4 w-4" />
+                                Delete User
+                                </DropdownMenuItem>
+                            </AlertDialogTrigger>
+                            </DropdownMenuContent>
+                        </DropdownMenu>
+                        <AlertDialogContent>
+                                <AlertDialogHeader>
+                                    <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+                                    <AlertDialogDescription>
+                                        This action cannot be undone. This will permanently delete the user
+                                        <span className="font-medium text-foreground"> {user.email}</span> and all their associated data from the database.
+                                    </AlertDialogDescription>
+                                </AlertDialogHeader>
+                                <AlertDialogFooter>
+                                    <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                    <AlertDialogAction 
+                                        onClick={() => handleDeleteUser(user.id, user.email)}
+                                        className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                                    >
+                                        Delete
+                                    </AlertDialogAction>
+                                </AlertDialogFooter>
+                            </AlertDialogContent>
+                        </AlertDialog>
+                    </TableCell>
+                </TableRow>
+                ))}
+            </TableBody>
+            </Table>
+        </div>
+        <div className="block md:hidden">
+            <div className="space-y-4 p-4">
+                {sortedUsers.map(user => (
+                    <div key={user.id} className="border rounded-lg p-4 space-y-3">
+                        <div className="flex justify-between items-start">
+                             <div className="space-y-1">
+                                <p className="font-medium text-sm truncate">{user.email}</p>
+                                <Badge variant={PLAN_BADGE_VARIANTS[user.plan]}>{user.plan}</Badge>
+                            </div>
+                             <AlertDialog>
+                                <DropdownMenu>
+                                    <DropdownMenuTrigger asChild>
+                                    <Button variant="ghost" className="h-8 w-8 p-0">
+                                        <span className="sr-only">Open menu</span>
+                                        <MoreHorizontal className="h-4 w-4" />
+                                    </Button>
+                                    </DropdownMenuTrigger>
+                                    <DropdownMenuContent align="end">
+                                    <DropdownMenuLabel>Actions</DropdownMenuLabel>
+                                    <DropdownMenuItem>View Profile</DropdownMenuItem>
+                                    <DropdownMenuItem>
+                                        <Edit className="mr-2 h-4 w-4" />
+                                        Edit Plan
+                                    </DropdownMenuItem>
+                                    <DropdownMenuSeparator />
+                                    <AlertDialogTrigger asChild>
+                                        <DropdownMenuItem className="text-destructive focus:bg-destructive/10 focus:text-destructive">
+                                        <Trash2 className="mr-2 h-4 w-4" />
+                                        Delete User
+                                        </DropdownMenuItem>
+                                    </AlertDialogTrigger>
+                                    </DropdownMenuContent>
+                                </DropdownMenu>
+                                <AlertDialogContent>
+                                        <AlertDialogHeader>
+                                            <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+                                            <AlertDialogDescription>
+                                                This action cannot be undone. This will permanently delete the user
+                                                <span className="font-medium text-foreground"> {user.email}</span> and all their associated data from the database.
+                                            </AlertDialogDescription>
+                                        </AlertDialogHeader>
+                                        <AlertDialogFooter>
+                                            <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                            <AlertDialogAction 
+                                                onClick={() => handleDeleteUser(user.id, user.email)}
+                                                className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                                            >
+                                                Delete
+                                            </AlertDialogAction>
+                                        </AlertDialogFooter>
+                                    </AlertDialogContent>
+                                </AlertDialog>
+                        </div>
+                       
+                        <div className="text-xs text-muted-foreground">
+                            Usage (Month): {user.leadsGeneratedThisMonth ?? 0}
+                        </div>
+                    </div>
+                ))}
+            </div>
+        </div>
     </div>
   );
 }
