@@ -1,28 +1,30 @@
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
-    // Helper function to check for admin role
-    function isAdmin(userId) {
-      return get(/databases/$(database)/documents/users/$(userId)).data.isAdmin == true;
+
+    // Helper function to check if a user has the 'isAdmin' flag.
+    function isAdmin() {
+      // Check the user's document in Firestore to see if they are an admin.
+      return get(/databases/$(database)/documents/users/$(request.auth.uid)).data.isAdmin == true;
     }
 
     match /users/{userId} {
-      // Users can read and write to their own document
+      // A user can read and write to their own profile document.
       allow read, write: if request.auth != null && request.auth.uid == userId;
-
-      // Admins can read any user document
-      allow get: if request.auth != null && isAdmin(request.auth.uid);
+      
+      // An admin can read any individual user's profile.
+      allow get: if request.auth != null && isAdmin();
     }
 
-    // Admins can list all users
-    match /users {
-      allow list: if request.auth != null && isAdmin(request.auth.uid);
+    match /users/{document=**} {
+        // An admin can list the users collection to populate the admin dashboard.
+        allow list: if request.auth != null && isAdmin();
     }
-
-    // Rules for savedLeads subcollection
+    
+    // Rules for the 'savedLeads' subcollection within each user's document.
     match /users/{userId}/savedLeads/{leadId} {
-        // Users can manage their own saved leads
-        allow read, write, delete, list: if request.auth != null && request.auth.uid == userId;
+      // A user can fully manage (create, read, update, delete) their own saved leads.
+      allow read, write, delete: if request.auth != null && request.auth.uid == userId;
     }
   }
 }
