@@ -88,6 +88,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                 const newProfile: Omit<UserProfile, 'referredBy'> & { referredBy?: string } = {
                   email: user.email,
                   plan: 'Free',
+                  isAdmin: user.email === 'ekwchristian@gmail.com', // Assign admin role
                   defaultIncludeAddress: true,
                   defaultIncludeLinkedIn: true,
                   leadsGeneratedToday: 0,
