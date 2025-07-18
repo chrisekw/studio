@@ -1,3 +1,4 @@
+
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
@@ -12,8 +13,8 @@ service cloud.firestore {
       // A user can read and write to their own profile document.
       allow read, write: if request.auth != null && request.auth.uid == userId;
       
-      // An admin can read any individual user's profile.
-      allow get: if request.auth != null && isAdmin();
+      // An admin can read or delete any individual user's profile.
+      allow get, delete: if request.auth != null && isAdmin();
     }
 
     match /users/{document=**} {

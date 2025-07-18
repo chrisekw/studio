@@ -34,6 +34,8 @@ import type { UserProfile } from "@/lib/types";
 import { MoreHorizontal, Edit, Trash2, ArrowUpDown } from "lucide-react";
 import { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
+import { doc, deleteDoc } from "firebase/firestore";
+import { db } from "@/lib/firebase";
 
 
 interface UserWithId extends UserProfile {
@@ -57,15 +59,26 @@ export function UsersTable({ users }: UsersTableProps) {
     const { toast } = useToast();
     const [sortConfig, setSortConfig] = useState<{ key: SortKey; direction: 'ascending' | 'descending' } | null>(null);
 
-    const handleDeleteUser = (userId: string, userEmail: string | null | undefined) => {
-        // NOTE: Securely deleting a user requires a backend Cloud Function.
-        // This is a placeholder for the UI and client-side feedback.
-        console.log(`Attempting to delete user: ${userId}`);
-        toast({
-            variant: 'destructive',
-            title: 'Action Unavailable',
-            description: `Secure user deletion for ${userEmail} must be handled by a backend function.`,
-        });
+    const handleDeleteUser = async (userId: string, userEmail: string | null | undefined) => {
+        try {
+            const userDocRef = doc(db, 'users', userId);
+            await deleteDoc(userDocRef);
+            toast({
+                variant: 'success',
+                title: 'User Deleted',
+                description: `The user profile for ${userEmail} has been deleted from Firestore.`,
+            });
+            // IMPORTANT: This only deletes the user's data from Firestore, not their authentication record.
+            // For full user deletion, you must implement a secure Cloud Function that uses the Firebase Admin SDK
+            // to call `admin.auth().deleteUser(uid)`.
+        } catch (error: any) {
+            console.error("Error deleting user document: ", error);
+            toast({
+                variant: 'destructive',
+                title: 'Deletion Failed',
+                description: `Could not delete user ${userEmail}. Error: ${error.message}`,
+            });
+        }
     };
 
     const sortedUsers = [...users].sort((a, b) => {
@@ -174,7 +187,7 @@ export function UsersTable({ users }: UsersTableProps) {
                                     <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
                                     <AlertDialogDescription>
                                         This action cannot be undone. This will permanently delete the user
-                                        <span className="font-medium text-foreground"> {user.email}</span> and all their associated data from the database.
+                                        <span className="font-medium text-foreground"> {user.email}</span>'s profile from the database. This does not delete their authentication record.
                                     </AlertDialogDescription>
                                 </AlertDialogHeader>
                                 <AlertDialogFooter>
@@ -232,7 +245,7 @@ export function UsersTable({ users }: UsersTableProps) {
                                             <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
                                             <AlertDialogDescription>
                                                 This action cannot be undone. This will permanently delete the user
-                                                <span className="font-medium text-foreground"> {user.email}</span> and all their associated data from the database.
+                                                <span className="font-medium text-foreground"> {user.email}</span>'s profile from the database. This does not delete their authentication record.
                                             </AlertDialogDescription>
                                         </AlertDialogHeader>
                                         <AlertDialogFooter>
