@@ -63,8 +63,7 @@ export function LoginForm() {
         return;
       }
       
-      // The redirect is now handled by the AuthLayout or page layout
-      // which correctly checks for admin status.
+      // Redirect is handled by AuthLayout and page.tsx, which correctly check for admin status.
 
     } catch (error: any) {
       console.error('Login error:', error);
@@ -100,8 +99,7 @@ export function LoginForm() {
     try {
       const provider = new GoogleAuthProvider();
       await signInWithPopup(auth, provider);
-      // The redirect is now handled by the AuthLayout or page layout
-      // which correctly checks for admin status.
+      // Redirect is handled by AuthLayout and page.tsx, which correctly check for admin status.
     } catch (error: any) {
       console.error('Google Sign-In Error:', error);
       toast({

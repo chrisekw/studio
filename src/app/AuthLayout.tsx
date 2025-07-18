@@ -13,22 +13,18 @@ export default function AuthLayout({
 }: {
   children: React.ReactNode;
 }) {
-  const { user, userProfile, loading } = useAuth();
+  const { user, loading } = useAuth();
   const router = useRouter();
 
   useEffect(() => {
-    // Wait for auth state and profile to resolve.
+    // Wait for auth state to resolve.
     if (loading) return;
 
-    if (user && userProfile) {
-      // If user is logged in, redirect them.
-      if (userProfile.isAdmin) {
-        router.replace('/admin');
-      } else {
-        router.replace('/dashboard');
-      }
+    // If a user is found, the root page.tsx will handle the redirect.
+    if (user) {
+      router.replace('/');
     }
-  }, [user, userProfile, loading, router]);
+  }, [user, loading, router]);
 
   // Show a loader while auth state is resolving or if a redirect is in progress.
   if (loading || user) {
