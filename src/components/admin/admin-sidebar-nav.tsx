@@ -11,7 +11,7 @@ import {
 } from '@/components/ui/sidebar';
 
 const navItems = [
-  { href: '/admin', icon: LayoutDashboard, label: 'Dashboard' },
+  { href: '/admin', icon: LayoutDashboard, label: 'Dashboard', exact: true },
   { href: '/admin/users', icon: Users, label: 'Users' },
   { href: '/admin/sales', icon: Target, label: 'Sales Teams' },
   { href: '/admin/payments', icon: DollarSign, label: 'Payments' },
@@ -24,7 +24,7 @@ export function AdminSidebarNav() {
   return (
     <SidebarMenu>
       {navItems.map((item) => {
-        const isActive = pathname.startsWith(item.href);
+        const isActive = item.exact ? pathname === item.href : pathname.startsWith(item.href);
         const Icon = item.icon;
         return (
           <SidebarMenuItem key={item.href}>
