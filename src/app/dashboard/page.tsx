@@ -49,7 +49,7 @@ export default function DashboardPage() {
   );
 
   return (
-    <div className="flex flex-col h-[calc(100vh-theme(spacing.14))]">
+    <div className="flex flex-col h-[calc(100dvh-theme(spacing.14))]">
         <div className="flex-grow overflow-y-auto">
             {leads.length > 0 || isLoading ? (
                 <LeadsTable
