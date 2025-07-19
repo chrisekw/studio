@@ -49,33 +49,31 @@ export default function DashboardPage() {
   );
 
   return (
-    <div className="h-full flex flex-col">
-      <div className="flex-grow overflow-y-auto">
-        <div className="h-full">
+    <div className="flex flex-col h-[calc(100vh-theme(spacing.14))]">
+        <div className="flex-grow overflow-y-auto">
             {leads.length > 0 || isLoading ? (
-              <LeadsTable
-                  leads={leads}
-                  isLoading={isLoading}
-                  progress={progress}
-                  progressMessage={progressMessage}
+                <LeadsTable
+                    leads={leads}
+                    isLoading={isLoading}
+                    progress={progress}
+                    progressMessage={progressMessage}
                 />
             ) : (
-              renderEmptyState()
+                renderEmptyState()
             )}
         </div>
-      </div>
 
-      <div className="p-4 bg-background/80 backdrop-blur-sm border-t">
-        <div className="max-w-3xl mx-auto">
-          <SearchForm
-            setIsLoading={setIsLoading}
-            setLeads={setLeads}
-            setProgress={setProgress}
-            setProgressMessage={setProgressMessage}
-            setShowUpgradeBanner={setShowUpgradeBanner}
-          />
+        <div className="p-4 bg-background/80 backdrop-blur-sm">
+            <div className="max-w-3xl mx-auto">
+                <SearchForm
+                    setIsLoading={setIsLoading}
+                    setLeads={setLeads}
+                    setProgress={setProgress}
+                    setProgressMessage={setProgressMessage}
+                    setShowUpgradeBanner={setShowUpgradeBanner}
+                />
+            </div>
         </div>
-      </div>
       <UpgradeBanner isOpen={showUpgradeBanner} onClose={() => setShowUpgradeBanner(false)} />
     </div>
   );
