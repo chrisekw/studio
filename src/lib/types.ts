@@ -3,7 +3,8 @@ export type UserPlan = 'Free' | 'Starter' | 'Pro' | 'Agency';
 export interface UserProfile {
   plan: UserPlan;
   email?: string | null;
-  isAdmin?: boolean; // New field for admin role
+  isAdmin?: boolean;
+  isSalesMember?: boolean; // New field for sales team members
   defaultIncludeAddress?: boolean;
   defaultIncludeLinkedIn?: boolean;
   leadsGeneratedToday?: number;

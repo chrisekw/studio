@@ -2,13 +2,12 @@
 'use client';
 
 import { useEffect, useState, useMemo } from 'react';
-import { collection, onSnapshot, query, where, getDocs } from 'firebase/firestore';
+import { collection, onSnapshot, query } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import type { UserProfile } from '@/lib/types';
 import { SalesTeamTable } from '@/components/admin/sales/sales-team-table';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Button } from '@/components/ui/button';
-import { PlusCircle } from 'lucide-react';
+import { AddSalesMemberDialog } from '@/components/admin/sales/add-sales-member-dialog';
 
 interface UserWithId extends UserProfile {
     id: string;
@@ -42,13 +41,14 @@ export default function AdminSalesPage() {
     const salesMembers = useMemo(() => {
         if (isLoading || allUsers.length === 0) return [];
         
-        // A sales member is a user who has referred at least one person.
-        const referrers = allUsers.filter(user => user.referrals && user.referrals.length > 0);
+        // A sales member is a user with the isSalesMember flag.
+        const members = allUsers.filter(user => user.isSalesMember);
 
-        return referrers.map(referrer => {
-            const referredUsers = allUsers.filter(u => referrer.referrals?.includes(u.id));
+        return members.map(member => {
+            // Find all users who were referred by this member.
+            const referredUsers = allUsers.filter(u => u.referredBy === member.id);
             return {
-                ...referrer,
+                ...member,
                 referredUsers: referredUsers,
             };
         });
@@ -64,7 +64,7 @@ export default function AdminSalesPage() {
                 </div>
             );
         }
-        return <SalesTeamTable members={salesMembers} />;
+        return <SalesTeamTable members={salesMembers} allUsers={allUsers} />;
     }
 
     return (
@@ -76,10 +76,7 @@ export default function AdminSalesPage() {
                         View sales members, their referrals, and track payments.
                     </p>
                 </div>
-                <Button>
-                    <PlusCircle className="mr-2 h-4 w-4" />
-                    Add Member
-                </Button>
+                <AddSalesMemberDialog />
             </div>
             {renderContent()}
         </div>

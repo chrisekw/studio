@@ -15,7 +15,6 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import type { UserProfile } from "@/lib/types";
 
@@ -29,14 +28,15 @@ interface SalesMember extends UserWithId {
 
 interface SalesTeamTableProps {
   members: SalesMember[];
+  allUsers: UserWithId[];
 }
 
-export function SalesTeamTable({ members }: SalesTeamTableProps) {
+export function SalesTeamTable({ members, allUsers }: SalesTeamTableProps) {
 
   if (members.length === 0) {
     return (
       <div className="text-center h-48 flex items-center justify-center text-muted-foreground border rounded-lg">
-        No sales team members found. A user becomes a sales member once they refer someone.
+        No sales team members found. Add a member to get started.
       </div>
     );
   }
@@ -47,18 +47,6 @@ export function SalesTeamTable({ members }: SalesTeamTableProps) {
     const paidReferrals = member.referredUsers.filter(u => u.plan !== 'Free').length;
     return paidReferrals * 10;
   }
-
-  const getHostname = (url: string | undefined | null) => {
-    if (!url) return '';
-    try {
-      if (!/^https?:\/\//i.test(url)) {
-        url = 'https://' + url;
-      }
-      return new URL(url).hostname;
-    } catch (e) {
-      return '';
-    }
-  };
 
   return (
     <div className="rounded-lg border">
@@ -82,30 +70,36 @@ export function SalesTeamTable({ members }: SalesTeamTableProps) {
             <AccordionContent>
               <div className="bg-muted/50 p-4">
                   <h4 className="font-semibold mb-2 text-sm">Referred Users:</h4>
-                  <div className="rounded-md border bg-background">
-                     <Table>
-                        <TableHeader>
-                            <TableRow>
-                                <TableHead>User</TableHead>
-                                <TableHead>Plan</TableHead>
-                                <TableHead>Status</TableHead>
-                            </TableRow>
-                        </TableHeader>
-                        <TableBody>
-                            {member.referredUsers.map(referredUser => (
-                                <TableRow key={referredUser.id}>
-                                    <TableCell className="font-medium">{referredUser.email}</TableCell>
-                                    <TableCell><Badge variant="default">{referredUser.plan}</Badge></TableCell>
-                                    <TableCell>
-                                        <Badge variant={referredUser.plan !== 'Free' ? 'accent' : 'outline'}>
-                                            {referredUser.plan !== 'Free' ? 'Subscribed' : 'Trial'}
-                                        </Badge>
-                                    </TableCell>
-                                </TableRow>
-                            ))}
-                        </TableBody>
-                     </Table>
-                  </div>
+                  {member.referredUsers.length > 0 ? (
+                    <div className="rounded-md border bg-background">
+                        <Table>
+                          <TableHeader>
+                              <TableRow>
+                                  <TableHead>User</TableHead>
+                                  <TableHead>Plan</TableHead>
+                                  <TableHead>Status</TableHead>
+                              </TableRow>
+                          </TableHeader>
+                          <TableBody>
+                              {member.referredUsers.map(referredUser => (
+                                  <TableRow key={referredUser.id}>
+                                      <TableCell className="font-medium">{referredUser.email}</TableCell>
+                                      <TableCell><Badge variant="default">{referredUser.plan}</Badge></TableCell>
+                                      <TableCell>
+                                          <Badge variant={referredUser.plan !== 'Free' ? 'accent' : 'outline'}>
+                                              {referredUser.plan !== 'Free' ? 'Subscribed' : 'Trial'}
+                                          </Badge>
+                                      </TableCell>
+                                  </TableRow>
+                              ))}
+                          </TableBody>
+                        </Table>
+                    </div>
+                  ) : (
+                    <div className="text-center text-sm text-muted-foreground p-4 bg-background rounded-md">
+                      This member hasn't referred any users yet.
+                    </div>
+                  )}
               </div>
             </AccordionContent>
           </AccordionItem>
