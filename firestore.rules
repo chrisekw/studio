@@ -1,3 +1,4 @@
+
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
@@ -8,11 +9,11 @@ service cloud.firestore {
     }
 
     match /users/{userId} {
-      // Users can read and update their own profile.
+      // A user can read and write to their own profile document.
       allow read, write: if request.auth.uid == userId;
       
-      // Admins can get or delete any user's profile document.
-      allow get, delete: if isAdmin();
+      // An admin can get, update, or delete any user's profile.
+      allow get, update, delete: if isAdmin();
     }
 
     // Admins can list all users for the user management page.
@@ -20,9 +21,9 @@ service cloud.firestore {
       allow list: if isAdmin();
     }
     
-    // Rules for the 'savedLeads' subcollection.
+    // Rules for the 'savedLeads' subcollection within each user's document.
     match /users/{userId}/savedLeads/{leadId} {
-      // Users can manage their own saved leads.
+      // A user can fully manage (create, read, update, delete) their own saved leads.
       allow read, write, delete: if request.auth.uid == userId;
     }
   }
