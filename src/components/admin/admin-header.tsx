@@ -14,43 +14,27 @@ export function AdminHeader() {
 
   return (
     <header className="flex h-14 items-center gap-4 border-b bg-background px-4 lg:h-[60px] lg:px-6">
-      <Link href="/admin" className="flex items-center gap-2 font-semibold md:hidden">
-         <svg
-            className="h-8 w-8 text-primary"
-            viewBox="0 0 24 24"
-            fill="none"
-            xmlns="http://www.w3.org/2000/svg"
-            >
-             <path
-                d="M12 22C17.5228 22 22 17.5228 22 12C22 6.47715 17.5228 2 12 2C6.47715 2 2 6.47715 2 12C2 17.5228 6.47715 22 12 22Z"
-                stroke="currentColor"
-                strokeWidth="2"
-            />
-            <path
-                d="M12 15C13.6569 15 15 13.6569 15 12C15 10.3431 13.6569 9 12 9C10.3431 9 9 10.3431 9 12C9 13.6569 10.3431 15 12 15Z"
-                fill="currentColor"
-            />
-            </svg>
-        <span className="font-headline text-lg font-bold">oPilot Admin</span>
-      </Link>
-      
-      <div className="flex-1">
-        {isMobile ? (
-             <Button variant="outline" size="icon" className="shrink-0" onClick={toggleSidebar}>
-                <Menu className="h-5 w-5" />
-                <span className="sr-only">Toggle navigation menu</span>
-            </Button>
-        ) : (
-            <Button onClick={toggleSidebar} variant="ghost" size="icon">
-                {isCollapsed ? <PanelLeftOpen /> : <PanelLeftClose />}
-                <span className="sr-only">Toggle Sidebar</span>
-            </Button>
-      )}
+      {/* Mobile Header */}
+      <div className="flex w-full items-center gap-4 md:hidden">
+         <Button variant="outline" size="icon" className="shrink-0" onClick={toggleSidebar}>
+            <Menu className="h-5 w-5" />
+            <span className="sr-only">Toggle navigation menu</span>
+        </Button>
+        <div className="flex-1 text-right text-sm text-muted-foreground truncate">
+            {userProfile?.email}
+        </div>
       </div>
 
-       <div className="text-sm text-muted-foreground">
-          {userProfile?.email}
-       </div>
+      {/* Desktop Header */}
+      <div className="hidden flex-1 items-center gap-4 md:flex">
+        <Button onClick={toggleSidebar} variant="ghost" size="icon">
+            {isCollapsed ? <PanelLeftOpen /> : <PanelLeftClose />}
+            <span className="sr-only">Toggle Sidebar</span>
+        </Button>
+        <div className="flex-1 text-right text-sm text-muted-foreground">
+            {userProfile?.email}
+        </div>
+      </div>
     </header>
   );
 }

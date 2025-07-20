@@ -43,9 +43,9 @@ export default function AdminLayout({
   return (
     <SidebarProvider>
       <AdminSidebar />
-      <div className="flex flex-col flex-1">
+      <div className="flex flex-col flex-1 min-h-screen">
         <AdminHeader />
-        <main className="flex-1 p-6 bg-muted/40">
+        <main className="flex-1 p-4 sm:p-6 bg-muted/40">
           {children}
         </main>
       </div>
