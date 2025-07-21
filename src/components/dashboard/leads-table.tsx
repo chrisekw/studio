@@ -188,7 +188,7 @@ export function LeadsTable({ leads, isLoading, progress, progressMessage }: Lead
     });
   };
 
-  const canExport = userProfile?.plan !== 'Free';
+  const isPaidUser = userProfile?.plan !== 'Free';
 
   const renderSkeleton = () => (
     <div className="grid gap-6 p-4 sm:p-6 md:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3">
@@ -249,7 +249,7 @@ export function LeadsTable({ leads, isLoading, progress, progressMessage }: Lead
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end">
-            <DropdownMenuItem onClick={exportToCSV} disabled={!canExport}>
+            <DropdownMenuItem onClick={exportToCSV}>
               <FileSpreadsheet className="mr-2 h-4 w-4" />
               <span>Export to CSV</span>
             </DropdownMenuItem>
@@ -258,45 +258,45 @@ export function LeadsTable({ leads, isLoading, progress, progressMessage }: Lead
             <TooltipProvider>
               <Tooltip>
                 <TooltipTrigger asChild>
-                  <div className={!canExport ? 'cursor-not-allowed' : ''}>
+                  <div className={!isPaidUser ? 'cursor-not-allowed' : ''}>
                     <DropdownMenuItem
                       onClick={() => handlePremiumExport('HubSpot')}
-                      disabled={!canExport}
+                      disabled={!isPaidUser}
                     >
                       <Rocket className="mr-2 h-4 w-4" />
                       <span>HubSpot</span>
                     </DropdownMenuItem>
                   </div>
                 </TooltipTrigger>
-                {!canExport && <TooltipContent><p>Upgrade to use premium exports.</p></TooltipContent>}
+                {!isPaidUser && <TooltipContent><p>Upgrade to use premium exports.</p></TooltipContent>}
               </Tooltip>
               <Tooltip>
                 <TooltipTrigger asChild>
-                  <div className={!canExport ? 'cursor-not-allowed' : ''}>
+                  <div className={!isPaidUser ? 'cursor-not-allowed' : ''}>
                     <DropdownMenuItem
                       onClick={() => handlePremiumExport('Pipedrive')}
-                      disabled={!canExport}
+                      disabled={!isPaidUser}
                     >
                       <Database className="mr-2 h-4 w-4" />
                       <span>Pipedrive</span>
                     </DropdownMenuItem>
                   </div>
                 </TooltipTrigger>
-                {!canExport && <TooltipContent><p>Upgrade to use premium exports.</p></TooltipContent>}
+                {!isPaidUser && <TooltipContent><p>Upgrade to use premium exports.</p></TooltipContent>}
               </Tooltip>
               <Tooltip>
                 <TooltipTrigger asChild>
-                  <div className={!canExport ? 'cursor-not-allowed' : ''}>
+                  <div className={!isPaidUser ? 'cursor-not-allowed' : ''}>
                     <DropdownMenuItem
                       onClick={() => handlePremiumExport('Gmail Draft')}
-                      disabled={!canExport}
+                      disabled={!isPaidUser}
                     >
                       <Mail className="mr-2 h-4 w-4" />
                       <span>Gmail Draft</span>
                     </DropdownMenuItem>
                   </div>
                 </TooltipTrigger>
-                {!canExport && <TooltipContent><p>Upgrade to use premium exports.</p></TooltipContent>}
+                {!isPaidUser && <TooltipContent><p>Upgrade to use premium exports.</p></TooltipContent>}
               </Tooltip>
             </TooltipProvider>
           </DropdownMenuContent>
