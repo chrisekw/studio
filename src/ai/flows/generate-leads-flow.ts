@@ -15,11 +15,11 @@ const LeadSchema = z.object({
   email: z.string().describe('A contact email for the company.'),
   phone: z.string().describe('A contact phone number for the company.'),
   website: z.string().describe('The full company website URL, including the protocol (e.g., https://example.com).'),
-  address: z.string().optional().describe('The physical address of the company.'),
+  address: z.string().describe('The physical address of the company.'),
   linkedin: z.string().optional().describe('The specific LinkedIn company profile URL (e.g., https://www.linkedin.com/company/company-name).'),
   facebook: z.string().optional().describe('The specific Facebook company profile URL.'),
   x: z.string().optional().describe('The specific X (formerly Twitter) company profile URL.'),
-  location: z.string().optional().describe('The geographical location of the company.'),
+  location: z.string().describe('The geographical location of the company (e.g., "Berlin, Germany").'),
 });
 
 const GenerateLeadsInputSchema = z.object({
@@ -48,17 +48,17 @@ User workflow:
 1. The USER gives a natural-language query (e.g., “marketing agencies in Berlin with email and phone”).
 2. You convert that into optimized Google Dork queries or search strings.
 3. You receive structured search results (titles, snippets, URLs).
-4. You parse the provided snippets to extract relevant data only: name, email, phone, website, socials, location.
+4. You parse the provided snippets to extract all relevant data: name, email, phone, website, address, socials, and location.
 5. You return a JSON array of leads with validated fields.
 
 Rules:
 - NEVER fetch raw website HTML or crawl pages.
 - ALWAYS work solely with provided result text.
 - RESPOND only within tool-driven flow; do NOT call tools yourself—wait for tool invocation externally.
-- Output leads only in valid JSON format exactly matching schema.
+- Output leads only in valid JSON format exactly matching the schema.
 - Do not include any commentary or additional fields.
 - If no leads are found, return an empty JSON array [].
-- Under no circumstances hallucinate or fabricate information. Missing fields = empty strings.
+- Under no circumstances hallucinate or fabricate information. If a field cannot be found, return an empty string for it, but try your best to find all fields.
 - Respect privacy: extract only publicly visible info; avoid personal data misuse.
 `,
   prompt: `User Query: "{{{query}}}"`,
