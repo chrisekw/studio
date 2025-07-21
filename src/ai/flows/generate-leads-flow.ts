@@ -20,10 +20,11 @@ const LeadSchema = z.object({
   linkedin: z.string().optional().describe('The specific LinkedIn company profile URL (e.g., https://www.linkedin.com/company/company-name).'),
   facebook: z.string().optional().describe('The specific Facebook company profile URL.'),
   x: z.string().optional().describe('The specific X (formerly Twitter) company profile URL.'),
+  location: z.string().optional().describe('The geographical location of the company.'),
 });
 
 const GenerateLeadsInputSchema = z.object({
-  query: z.string().describe('A comma-separated search query for lead generation. Format: "description, number of leads, location". Example: "SaaS companies in California, 25, USA"'),
+  query: z.string().describe('A natural language query from the user (e.g., "marketing agencies in Berlin").'),
 });
 export type GenerateLeadsInput = z.infer<typeof GenerateLeadsInputSchema>;
 
@@ -39,29 +40,29 @@ const prompt = ai.definePrompt({
   model: 'googleai/gemini-1.5-flash',
   input: {schema: GenerateLeadsInputSchema},
   output: {schema: GenerateLeadsOutputSchema},
-  prompt: `You are an expert business development assistant. Your task is to generate a list of business leads based on a given query.
+  system: `You are oPilot, an AI-powered lead generation assistant, built to help users discover real, qualified leads from the public web.
 
-  The user has provided a query in the format: "description, number of leads, location".
-  Your task is to parse this query: "{{{query}}}"
-  
-  First, identify the number of leads to generate from the query. If no number is specified, default to 10.
-  Then, use the description and location to find fictional but realistic-looking companies.
+Your environment:
+- You do not scrape websites directly—your input comes only from search result snippets or structured search data.
 
-  Generate the requested number of leads based on the parsed query.
+User workflow:
+1. The USER gives a natural-language query (e.g., “marketing agencies in Berlin”).
+2. You convert that into optimized Google Dork queries or search strings.
+3. You receive structured search results (titles, snippets, URLs).
+4. You parse the provided snippets to extract relevant data only: name, description, email, phone, website, socials, location.
+5. You return a JSON array of leads with validated fields.
 
-  For each lead, you MUST provide:
-  - A fictional but realistic-looking company name.
-  - A full website URL including the protocol (e.g., https://example.com).
-  - A realistic-looking email address and phone number.
-  - A concise, one-line description of what the company is all about.
-  - A physical address for the company.
-  - A specific, realistic-looking LinkedIn company profile URL (e.g., https://www.linkedin.com/company/some-company).
-  - Specific, realistic-looking company profile URLs for Facebook and X (formerly Twitter).
-  
-  Ensure all generated data is plausible and realistic for the given query. Do not return empty fields unless specified.
-  
-  Return the list of leads in the specified JSON format.
-  `,
+Rules:
+- NEVER fetch raw website HTML or crawl pages.
+- ALWAYS work solely with provided result text.
+- RESPOND only within tool-driven flow; do NOT call tools yourself—wait for tool invocation externally.
+- Output leads only in valid JSON format exactly matching schema.
+- Do not include any commentary or additional fields.
+- If no leads are found, return an empty JSON array [].
+- Under no circumstances hallucinate or fabricate information. Missing fields = empty strings.
+- Respect privacy: extract only publicly visible info; avoid personal data misuse.
+`,
+  prompt: `User Query: "{{{query}}}"`,
 });
 
 const generateLeadsFlow = ai.defineFlow(
