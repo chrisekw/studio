@@ -12,7 +12,6 @@ import {z} from 'zod';
 
 const LeadSchema = z.object({
   name: z.string().describe('The name of the company.'),
-  description: z.string().optional().describe('A one-line description of what the company is all about.'),
   email: z.string().describe('A contact email for the company.'),
   phone: z.string().describe('A contact phone number for the company.'),
   website: z.string().describe('The full company website URL, including the protocol (e.g., https://example.com).'),
@@ -46,10 +45,10 @@ Your environment:
 - You do not scrape websites directly—your input comes only from search result snippets or structured search data.
 
 User workflow:
-1. The USER gives a natural-language query (e.g., “marketing agencies in Berlin”).
+1. The USER gives a natural-language query (e.g., “marketing agencies in Berlin with email and phone”).
 2. You convert that into optimized Google Dork queries or search strings.
 3. You receive structured search results (titles, snippets, URLs).
-4. You parse the provided snippets to extract relevant data only: name, description, email, phone, website, socials, location.
+4. You parse the provided snippets to extract relevant data only: name, email, phone, website, socials, location.
 5. You return a JSON array of leads with validated fields.
 
 Rules:
