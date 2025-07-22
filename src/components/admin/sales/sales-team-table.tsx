@@ -16,7 +16,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import type { UserProfile } from "@/lib/types";
+import type { UserPlan, UserProfile } from "@/lib/types";
 
 interface UserWithId extends UserProfile {
     id: string;
@@ -31,6 +31,21 @@ interface SalesTeamTableProps {
   allUsers: UserWithId[];
 }
 
+const PLAN_PRICES: Record<UserPlan, number> = {
+  'Free': 0,
+  'Starter': 19,
+  'Pro': 59,
+  'Agency': 199,
+};
+
+const COMMISSION_RATES: Record<UserPlan, number> = {
+  'Free': 0,
+  'Starter': 0.15, // 15%
+  'Pro': 0.20, // 20%
+  'Agency': 0.30, // 30%
+};
+
+
 export function SalesTeamTable({ members, allUsers }: SalesTeamTableProps) {
 
   if (members.length === 0) {
@@ -42,10 +57,17 @@ export function SalesTeamTable({ members, allUsers }: SalesTeamTableProps) {
   }
 
   const calculateEarnings = (member: SalesMember): number => {
-    // Placeholder for earning calculation logic
-    // Example: $10 for each referred user on a paid plan
-    const paidReferrals = member.referredUsers.filter(u => u.plan !== 'Free').length;
-    return paidReferrals * 10;
+    return member.referredUsers.reduce((total, user) => {
+        const planPrice = PLAN_PRICES[user.plan] || 0;
+        const commissionRate = COMMISSION_RATES[user.plan] || 0;
+        return total + (planPrice * commissionRate);
+    }, 0);
+  }
+
+  const getCommissionForUser = (user: UserWithId): number => {
+      const planPrice = PLAN_PRICES[user.plan] || 0;
+      const commissionRate = COMMISSION_RATES[user.plan] || 0;
+      return planPrice * commissionRate;
   }
 
   return (
@@ -69,7 +91,7 @@ export function SalesTeamTable({ members, allUsers }: SalesTeamTableProps) {
             </AccordionTrigger>
             <AccordionContent>
               <div className="bg-muted/50 p-4">
-                  <h4 className="font-semibold mb-2 text-sm">Referred Users:</h4>
+                  <h4 className="font-semibold mb-2 text-sm">Referred Users & Commissions:</h4>
                   {member.referredUsers.length > 0 ? (
                     <div className="rounded-md border bg-background">
                         <Table>
@@ -78,6 +100,7 @@ export function SalesTeamTable({ members, allUsers }: SalesTeamTableProps) {
                                   <TableHead>User</TableHead>
                                   <TableHead>Plan</TableHead>
                                   <TableHead>Status</TableHead>
+                                  <TableHead className="text-right">Commission</TableHead>
                               </TableRow>
                           </TableHeader>
                           <TableBody>
@@ -89,6 +112,9 @@ export function SalesTeamTable({ members, allUsers }: SalesTeamTableProps) {
                                           <Badge variant={referredUser.plan !== 'Free' ? 'accent' : 'outline'}>
                                               {referredUser.plan !== 'Free' ? 'Subscribed' : 'Trial'}
                                           </Badge>
+                                      </TableCell>
+                                      <TableCell className="text-right font-medium">
+                                        ${getCommissionForUser(referredUser).toFixed(2)}
                                       </TableCell>
                                   </TableRow>
                               ))}
