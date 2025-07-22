@@ -305,37 +305,34 @@ export function LeadsTable({ leads, isLoading, progress, progressMessage }: Lead
       <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3">
         {leads.map((lead) => (
           <Card key={lead.id} className="border-primary/10 bg-card/60 backdrop-blur-xl transition-all hover:border-primary/30 flex flex-col">
-            <CardHeader className="p-4 pb-2 flex-row items-start justify-between space-y-0">
-                <div className="flex items-center gap-4 flex-1">
-                    <Avatar className="h-12 w-12 border-2 border-primary/20">
-                        <AvatarImage
-                        src={`https://logo.clearbit.com/${getHostname(lead.website)}`}
-                        alt={`${lead.name} logo`}
-                        data-ai-hint="company logo"
-                        />
-                        <AvatarFallback>{lead.name.split(' ').map(n => n[0]).join('').substring(0,2)}</AvatarFallback>
-                    </Avatar>
-                    <CardTitle className="text-lg font-medium flex-1">{lead.name}</CardTitle>
-                </div>
-
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button aria-haspopup="true" size="icon" variant="ghost">
-                    <MoreHorizontal className="h-4 w-4" />
-                    <span className="sr-only">Toggle menu</span>
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end">
-                  <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                  <DropdownMenuItem onClick={() => handleSaveLead(lead)}>
-                    <Save className="mr-2 h-4 w-4" /> Save Lead
-                  </DropdownMenuItem>
-                  <DropdownMenuSeparator />
-                  <DropdownMenuItem className="text-destructive">
-                    <Trash2 className="mr-2 h-4 w-4" /> Delete
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
+            <CardHeader className="p-4 pb-2 flex items-start gap-4">
+                <Avatar className="h-12 w-12 border-2 border-primary/20 shrink-0">
+                    <AvatarImage
+                    src={`https://logo.clearbit.com/${getHostname(lead.website)}`}
+                    alt={`${lead.name} logo`}
+                    data-ai-hint="company logo"
+                    />
+                    <AvatarFallback>{lead.name.split(' ').map(n => n[0]).join('').substring(0,2)}</AvatarFallback>
+                </Avatar>
+                <CardTitle className="text-lg font-medium flex-1">{lead.name}</CardTitle>
+                <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                    <Button aria-haspopup="true" size="icon" variant="ghost" className="h-8 w-8 -mt-1 -mr-1">
+                        <MoreHorizontal className="h-4 w-4" />
+                        <span className="sr-only">Toggle menu</span>
+                    </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end">
+                    <DropdownMenuLabel>Actions</DropdownMenuLabel>
+                    <DropdownMenuItem onClick={() => handleSaveLead(lead)}>
+                        <Save className="mr-2 h-4 w-4" /> Save Lead
+                    </DropdownMenuItem>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem className="text-destructive">
+                        <Trash2 className="mr-2 h-4 w-4" /> Delete
+                    </DropdownMenuItem>
+                    </DropdownMenuContent>
+                </DropdownMenu>
             </CardHeader>
             <CardContent className="flex-grow space-y-3 p-4 pt-2">
               {lead.description && (
