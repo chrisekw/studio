@@ -115,7 +115,7 @@ const generateLeadsFlow = ai.defineFlow(
 
       if (errorMessage.includes('503 Service Unavailable')) {
           errorMessage = 'The AI model is currently overloaded. Please try again in a few moments.';
-      } else if (errorMessage.includes('429 Too Many Requests')) {
+      } else if (errorMessage.includes('429 Too many Requests')) {
           errorMessage = 'The daily free limit for the AI model has been reached. Please check your AI provider plan or try again tomorrow.';
       }
 
