@@ -4,10 +4,10 @@
 import { useState, useEffect, useMemo } from 'react';
 import { collection, onSnapshot, query } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
-import type { UserProfile, UserPlan } from '@/lib/types';
+import type { UserProfile, UserPlan, LeadGenerationEvent } from '@/lib/types';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, Legend } from 'recharts';
-import { Users, Ratio, Target, BarChart2 } from 'lucide-react';
+import { Users, Ratio, Target, ClipboardList } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
 
 const PLAN_PRICES: Record<UserPlan, number> = {
@@ -21,25 +21,42 @@ const COLORS = ['hsl(var(--chart-1))', 'hsl(var(--chart-2))', 'hsl(var(--chart-3
 
 export default function AdminAnalyticsPage() {
   const [users, setUsers] = useState<UserProfile[]>([]);
+  const [events, setEvents] = useState<LeadGenerationEvent[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
     const usersQuery = query(collection(db, 'users'));
-    const unsubscribe = onSnapshot(usersQuery, (querySnapshot) => {
+    const unsubscribeUsers = onSnapshot(usersQuery, (querySnapshot) => {
       const usersData = querySnapshot.docs.map(doc => doc.data() as UserProfile);
       setUsers(usersData);
-      setIsLoading(false);
     }, (error) => {
       console.error("Error fetching users: ", error);
-      setIsLoading(false);
     });
 
-    return () => unsubscribe();
+    const eventsQuery = query(collection(db, 'events'));
+    const unsubscribeEvents = onSnapshot(eventsQuery, (querySnapshot) => {
+        const eventsData = querySnapshot.docs.map(doc => doc.data() as LeadGenerationEvent);
+        setEvents(eventsData);
+    }, (error) => {
+        console.error("Error fetching events: ", error);
+    });
+
+    // We can set loading to false after the first snapshot of either,
+    // or wait for both. Let's consider it loaded when users are there.
+    const unsubscribe = onSnapshot(usersQuery, () => {
+        setIsLoading(false);
+    });
+
+    return () => {
+        unsubscribeUsers();
+        unsubscribeEvents();
+        unsubscribe();
+    };
   }, []);
 
-  const { planDistribution, conversionRate, arpu, totalUsers } = useMemo(() => {
-    if (isLoading || users.length === 0) {
-      return { planDistribution: [], conversionRate: 0, arpu: 0, totalUsers: 0 };
+  const { planDistribution, conversionRate, arpu, totalUsers, totalLeadsGenerated } = useMemo(() => {
+    if (users.length === 0) {
+      return { planDistribution: [], conversionRate: 0, arpu: 0, totalUsers: 0, totalLeadsGenerated: 0 };
     }
 
     const totalUsers = users.length;
@@ -55,9 +72,11 @@ export default function AdminAnalyticsPage() {
     }, {} as Record<UserPlan, number>);
     
     const planDistribution = Object.entries(distribution).map(([name, value]) => ({ name, value }));
+
+    const totalLeadsGenerated = events.reduce((sum, event) => sum + event.leadsGenerated, 0);
     
-    return { planDistribution, conversionRate, arpu, totalUsers };
-  }, [users, isLoading]);
+    return { planDistribution, conversionRate, arpu, totalUsers, totalLeadsGenerated };
+  }, [users, events]);
 
   const renderContent = () => {
     if (isLoading) {
@@ -113,11 +132,11 @@ export default function AdminAnalyticsPage() {
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">Total Leads Generated</CardTitle>
-              <BarChart2 className="h-4 w-4 text-muted-foreground" />
+              <ClipboardList className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">N/A</div>
-              <p className="text-xs text-muted-foreground">Requires event logging</p>
+              <div className="text-2xl font-bold">{totalLeadsGenerated.toLocaleString()}</div>
+              <p className="text-xs text-muted-foreground">Across the entire platform</p>
             </CardContent>
           </Card>
         </div>

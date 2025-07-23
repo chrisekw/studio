@@ -3,7 +3,7 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { LayoutDashboard, Users, BarChart3, DollarSign, Target } from 'lucide-react';
+import { LayoutDashboard, Users, BarChart3, DollarSign, Target, ClipboardList } from 'lucide-react';
 import { 
   SidebarMenu,
   SidebarMenuItem,
@@ -13,6 +13,7 @@ import {
 const navItems = [
   { href: '/admin', icon: LayoutDashboard, label: 'Dashboard', exact: true },
   { href: '/admin/users', icon: Users, label: 'Users' },
+  { href: '/admin/leads', icon: ClipboardList, label: 'Leads' },
   { href: '/admin/sales', icon: Target, label: 'Sales Teams' },
   { href: '/admin/payments', icon: DollarSign, label: 'Payments' },
   { href: '/admin/analytics', icon: BarChart3, label: 'Analytics' },

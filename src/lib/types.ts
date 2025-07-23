@@ -1,3 +1,6 @@
+
+import { Timestamp } from "firebase/firestore";
+
 export type UserPlan = 'Free' | 'Starter' | 'Pro' | 'Agency';
 
 export interface UserProfile {
@@ -14,10 +17,9 @@ export interface UserProfile {
   monthlyLeadsGenerated?: number; // New field for free plan monthly tracking
   addonCredits?: number;
   savedLeadsCount?: number;
-  // New referral fields
   referralCode?: string;
-  referredBy?: string; // UID of the referrer
-  referrals?: string[]; // Array of UIDs of referred users
+  referredBy?: string; 
+  referrals?: string[];
   leadPoints?: number;
 }
 
@@ -34,4 +36,13 @@ export interface Lead {
   x?: string;
   tags?: string[];
   mock?: boolean;
+}
+
+export interface LeadGenerationEvent {
+    id: string;
+    userId: string;
+    query: string;
+    leadsGenerated: number;
+    timestamp: Timestamp;
+    userPlan: UserPlan;
 }

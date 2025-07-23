@@ -6,7 +6,7 @@ import { useForm } from 'react-hook-form';
 import { z } from 'zod';
 import { useState, type Dispatch, type SetStateAction, useEffect } from 'react';
 import { Loader2, Send } from 'lucide-react';
-import { doc, updateDoc, increment } from 'firebase/firestore';
+import { doc, updateDoc, increment, collection, addDoc, serverTimestamp } from 'firebase/firestore';
 
 import { Form, FormControl, FormField, FormItem, FormMessage } from '@/components/ui/form';
 import { Textarea } from '@/components/ui/textarea';
@@ -49,9 +49,20 @@ export function SearchForm({
     },
   });
 
-  const updateQuotaInFirestore = async (leadsGeneratedCount: number) => {
+  const updateQuotaAndLogEvent = async (leadsGeneratedCount: number, query: string) => {
     if (!user || !userProfile || leadsGeneratedCount <= 0) return;
 
+    // Log the generation event
+    const eventsCollectionRef = collection(db, "events");
+    await addDoc(eventsCollectionRef, {
+      userId: user.uid,
+      query: query,
+      leadsGenerated: leadsGeneratedCount,
+      timestamp: serverTimestamp(),
+      userPlan: userProfile.plan,
+    });
+    
+    // Update user's personal quota
     const { remainingPlanLeads, leadPoints, addonCredits } = calculateRemainingLeads(userProfile);
     let leadsToDeduct = leadsGeneratedCount;
     const updatePayload: any = {};
@@ -62,7 +73,6 @@ export function SearchForm({
     const planLeadsToUse = Math.min(leadsToDeduct, Math.max(0, remainingPlanLeads));
     if (planLeadsToUse > 0) {
       if (userProfile.lastLeadGenerationMonth !== currentMonth) {
-        // Reset monthly count if it's a new month
         updatePayload.leadsGeneratedThisMonth = 0;
         updatePayload.monthlyLeadsGenerated = 0;
       }
@@ -110,7 +120,6 @@ export function SearchForm({
       return;
     }
     
-    // Quick check on the number of leads requested from the query string
     const parts = values.query.split(',');
     const numLeadsStr = parts.length > 1 ? parts[1].trim() : '10';
     const numLeads = parseInt(numLeadsStr, 10);
@@ -151,7 +160,7 @@ export function SearchForm({
         id: `${Date.now()}-${index}`,
       }));
 
-      await updateQuotaInFirestore(newLeads.length);
+      await updateQuotaAndLogEvent(newLeads.length, values.query);
 
       setLeads(newLeads);
 
