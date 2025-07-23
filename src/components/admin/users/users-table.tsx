@@ -70,6 +70,11 @@ export function UsersTable({ users }: UsersTableProps) {
     const isSuperAdmin = adminProfile?.email === 'ekwchristian@gmail.com';
 
     const handlePlanChange = async (userId: string, newPlan: UserPlan, userEmail: string | null | undefined) => {
+        if (!isSuperAdmin) {
+            toast({ variant: 'destructive', title: 'Permission Denied', description: 'Only the super admin can change user plans.' });
+            return;
+        }
+
         try {
             const userDocRef = doc(db, 'users', userId);
             await updateDoc(userDocRef, { 
@@ -176,27 +181,29 @@ export function UsersTable({ users }: UsersTableProps) {
                 <DropdownMenuLabel>Actions</DropdownMenuLabel>
                 <DropdownMenuItem>View Profile</DropdownMenuItem>
                 
-                <DropdownMenuSub>
-                    <DropdownMenuSubTrigger>
-                        <Edit className="mr-2 h-4 w-4" />
-                        <span>Edit Plan</span>
-                    </DropdownMenuSubTrigger>
-                    <DropdownMenuPortal>
-                        <DropdownMenuSubContent>
-                             <DropdownMenuLabel>Select a new plan</DropdownMenuLabel>
-                             <DropdownMenuSeparator />
-                             {PLANS.map(plan => (
-                                 <DropdownMenuItem 
-                                    key={plan} 
-                                    disabled={user.plan === plan}
-                                    onClick={() => handlePlanChange(user.id, plan, user.email)}
-                                >
-                                    {plan}
-                                 </DropdownMenuItem>
-                             ))}
-                        </DropdownMenuSubContent>
-                    </DropdownMenuPortal>
-                </DropdownMenuSub>
+                {isSuperAdmin && (
+                    <DropdownMenuSub>
+                        <DropdownMenuSubTrigger>
+                            <Edit className="mr-2 h-4 w-4" />
+                            <span>Edit Plan</span>
+                        </DropdownMenuSubTrigger>
+                        <DropdownMenuPortal>
+                            <DropdownMenuSubContent>
+                                <DropdownMenuLabel>Select a new plan</DropdownMenuLabel>
+                                <DropdownMenuSeparator />
+                                {PLANS.map(plan => (
+                                    <DropdownMenuItem 
+                                        key={plan} 
+                                        disabled={user.plan === plan}
+                                        onClick={() => handlePlanChange(user.id, plan, user.email)}
+                                    >
+                                        {plan}
+                                    </DropdownMenuItem>
+                                ))}
+                            </DropdownMenuSubContent>
+                        </DropdownMenuPortal>
+                    </DropdownMenuSub>
+                )}
                 
                 {isSuperAdmin && (
                     <>
@@ -295,4 +302,5 @@ export function UsersTable({ users }: UsersTableProps) {
     </div>
   );
 }
+
 

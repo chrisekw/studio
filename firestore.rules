@@ -1,29 +1,49 @@
+
 rules_version = '2';
+
 service cloud.firestore {
   match /databases/{database}/documents {
     
-    // Helper function to check if the requesting user has an admin role.
+    // Helper function to check if a user is an admin
     function isAdmin() {
-      return get(/databases/$(database)/documents/users/$(request.auth.uid)).data.isAdmin == true;
+      return exists(/databases/$(database)/documents/users/$(request.auth.uid)) && 
+             get(/databases/$(database)/documents/users/$(request.auth.uid)).data.isAdmin == true;
     }
 
+    // Helper function to check if a user is the Super Admin
+    function isSuperAdmin() {
+      return request.auth.token.email == 'ekwchristian@gmail.com';
+    }
+
+    // Rules for the 'users' collection
     match /users/{userId} {
-      // A user can read and write to their own profile document.
-      allow read, write: if request.auth.uid == userId;
-      
-      // An admin can get, update, or delete any user's profile document.
-      allow get, update, delete: if isAdmin();
-    }
+      // ANY authenticated user can CREATE their own user document.
+      allow create: if request.auth.uid == userId;
 
-    // Admins can list all users for the user management page.
-    match /users/{document=**} {
-      allow list: if isAdmin();
-    }
-    
-    // Rules for the 'savedLeads' subcollection.
-    match /users/{userId}/savedLeads/{leadId} {
-      // Users can manage their own saved leads.
-      allow read, write, delete: if request.auth.uid == userId;
+      // ANY authenticated user can READ their own document.
+      // Admins can read ANY user document.
+      allow read: if request.auth.uid == userId || isAdmin();
+
+      // Users can UPDATE their own non-critical settings.
+      // Admins can toggle the 'isSalesMember' flag.
+      // Super Admin can update ANY field.
+      allow update: if request.auth.uid == userId &&
+                       request.resource.data.diff(resource.data).affectedKeys()
+                         .hasOnly(['defaultIncludeAddress', 'defaultIncludeLinkedIn'])
+                    ||
+                    (isAdmin() && request.resource.data.diff(resource.data).affectedKeys()
+                         .hasOnly(['isSalesMember']))
+                    || 
+                    isSuperAdmin();
+      
+      // ONLY the Super Admin can delete a user document.
+      allow delete: if isSuperAdmin();
+
+      // Rules for the 'savedLeads' subcollection
+      match /savedLeads/{leadId} {
+        // A user can read, write, and delete their own saved leads.
+        allow read, write, delete: if request.auth.uid == userId;
+      }
     }
   }
 }
