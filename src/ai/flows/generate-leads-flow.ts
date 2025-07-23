@@ -8,6 +8,7 @@
  * - GenerateLeadsOutput - The return type for the generateLeads function.
  */
 import {ai} from '@/ai/genkit';
+import {googleAI} from '@genkit-ai/googleai';
 import {z} from 'zod';
 
 const LeadSchema = z.object({
@@ -33,7 +34,7 @@ export async function generateLeads(input: GenerateLeadsInput): Promise<Generate
 
 const prompt = ai.definePrompt({
   name: 'generateLeadsPrompt',
-  model: 'googleai/gemini-1.5-flash',
+  model: googleAI('gemini-1.5-flash', {apiKey: process.env.GEMINI_API_KEY}),
   input: {schema: GenerateLeadsInputSchema},
   output: {schema: GenerateLeadsOutputSchema},
   system: `You are oPilot, an AI-powered lead generation assistant designed to help users find real, qualified leads from the public web using search engine data.
