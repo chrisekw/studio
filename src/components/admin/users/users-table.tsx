@@ -16,6 +16,10 @@ import {
   DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
+  DropdownMenuSub,
+  DropdownMenuSubTrigger,
+  DropdownMenuSubContent,
+  DropdownMenuPortal
 } from "@/components/ui/dropdown-menu";
 import {
   AlertDialog,
@@ -30,12 +34,13 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
 import { Badge, type BadgeProps } from "@/components/ui/badge";
-import type { UserProfile } from "@/lib/types";
+import type { UserProfile, UserPlan } from "@/lib/types";
 import { MoreHorizontal, Edit, Trash2, ArrowUpDown } from "lucide-react";
 import { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
-import { doc, deleteDoc } from "firebase/firestore";
+import { doc, deleteDoc, updateDoc } from "firebase/firestore";
 import { db } from "@/lib/firebase";
+import { useAuth } from "@/context/auth-context";
 
 
 interface UserWithId extends UserProfile {
@@ -46,7 +51,9 @@ interface UsersTableProps {
   users: UserWithId[];
 }
 
-const PLAN_BADGE_VARIANTS: { [key: string]: BadgeProps['variant'] } = {
+const PLANS: UserPlan[] = ['Free', 'Starter', 'Pro', 'Agency'];
+
+const PLAN_BADGE_VARIANTS: { [key in UserPlan]: BadgeProps['variant'] } = {
     Free: 'secondary',
     Starter: 'default',
     Pro: 'accent',
@@ -57,9 +64,41 @@ type SortKey = 'email' | 'plan' | 'leadsGeneratedThisMonth';
 
 export function UsersTable({ users }: UsersTableProps) {
     const { toast } = useToast();
+    const { userProfile: adminProfile } = useAuth();
     const [sortConfig, setSortConfig] = useState<{ key: SortKey; direction: 'ascending' | 'descending' } | null>(null);
 
+    const isSuperAdmin = adminProfile?.email === 'ekwchristian@gmail.com';
+
+    const handlePlanChange = async (userId: string, newPlan: UserPlan, userEmail: string | null | undefined) => {
+        try {
+            const userDocRef = doc(db, 'users', userId);
+            await updateDoc(userDocRef, { 
+                plan: newPlan,
+                // Reset monthly usage when plan changes
+                leadsGeneratedThisMonth: 0,
+                lastLeadGenerationMonth: new Date().toISOString().slice(0, 7)
+            });
+            toast({
+                variant: 'success',
+                title: 'Plan Updated',
+                description: `${userEmail}'s plan has been changed to ${newPlan}.`,
+            });
+        } catch (error: any) {
+            console.error("Error updating user plan: ", error);
+            toast({
+                variant: 'destructive',
+                title: 'Update Failed',
+                description: `Could not update plan for ${userEmail}. Error: ${error.message}`,
+            });
+        }
+    };
+
     const handleDeleteUser = async (userId: string, userEmail: string | null | undefined) => {
+        if (!isSuperAdmin) {
+            toast({ variant: 'destructive', title: 'Permission Denied', description: 'You are not authorized to delete users.' });
+            return;
+        }
+
         try {
             const userDocRef = doc(db, 'users', userId);
             await deleteDoc(userDocRef);
@@ -124,6 +163,75 @@ export function UsersTable({ users }: UsersTableProps) {
         return sortConfig.direction === 'ascending' ? '▲' : '▼';
     };
 
+    const renderActions = (user: UserWithId) => (
+         <AlertDialog>
+            <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                <Button variant="ghost" className="h-8 w-8 p-0">
+                    <span className="sr-only">Open menu</span>
+                    <MoreHorizontal className="h-4 w-4" />
+                </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end">
+                <DropdownMenuLabel>Actions</DropdownMenuLabel>
+                <DropdownMenuItem>View Profile</DropdownMenuItem>
+                
+                <DropdownMenuSub>
+                    <DropdownMenuSubTrigger>
+                        <Edit className="mr-2 h-4 w-4" />
+                        <span>Edit Plan</span>
+                    </DropdownMenuSubTrigger>
+                    <DropdownMenuPortal>
+                        <DropdownMenuSubContent>
+                             <DropdownMenuLabel>Select a new plan</DropdownMenuLabel>
+                             <DropdownMenuSeparator />
+                             {PLANS.map(plan => (
+                                 <DropdownMenuItem 
+                                    key={plan} 
+                                    disabled={user.plan === plan}
+                                    onClick={() => handlePlanChange(user.id, plan, user.email)}
+                                >
+                                    {plan}
+                                 </DropdownMenuItem>
+                             ))}
+                        </DropdownMenuSubContent>
+                    </DropdownMenuPortal>
+                </DropdownMenuSub>
+                
+                {isSuperAdmin && (
+                    <>
+                        <DropdownMenuSeparator />
+                        <AlertDialogTrigger asChild>
+                            <DropdownMenuItem className="text-destructive focus:bg-destructive/10 focus:text-destructive">
+                            <Trash2 className="mr-2 h-4 w-4" />
+                            Delete User
+                            </DropdownMenuItem>
+                        </AlertDialogTrigger>
+                    </>
+                )}
+                </DropdownMenuContent>
+            </DropdownMenu>
+            <AlertDialogContent>
+                    <AlertDialogHeader>
+                        <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+                        <AlertDialogDescription>
+                            This action cannot be undone. This will permanently delete the user
+                            <span className="font-medium text-foreground"> {user.email}</span>'s profile from the database. This does not delete their authentication record.
+                        </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                        <AlertDialogCancel>Cancel</AlertDialogCancel>
+                        <AlertDialogAction 
+                            onClick={() => handleDeleteUser(user.id, user.email)}
+                            className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                        >
+                            Delete
+                        </AlertDialogAction>
+                    </AlertDialogFooter>
+                </AlertDialogContent>
+            </AlertDialog>
+    );
+
 
   return (
     <div className="rounded-lg border">
@@ -158,49 +266,7 @@ export function UsersTable({ users }: UsersTableProps) {
                     </TableCell>
                     <TableCell>{user.leadsGeneratedThisMonth ?? 0}</TableCell>
                     <TableCell>
-                        <AlertDialog>
-                        <DropdownMenu>
-                            <DropdownMenuTrigger asChild>
-                            <Button variant="ghost" className="h-8 w-8 p-0">
-                                <span className="sr-only">Open menu</span>
-                                <MoreHorizontal className="h-4 w-4" />
-                            </Button>
-                            </DropdownMenuTrigger>
-                            <DropdownMenuContent align="end">
-                            <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                            <DropdownMenuItem>View Profile</DropdownMenuItem>
-                            <DropdownMenuItem>
-                                <Edit className="mr-2 h-4 w-4" />
-                                Edit Plan
-                            </DropdownMenuItem>
-                            <DropdownMenuSeparator />
-                            <AlertDialogTrigger asChild>
-                                <DropdownMenuItem className="text-destructive focus:bg-destructive/10 focus:text-destructive">
-                                <Trash2 className="mr-2 h-4 w-4" />
-                                Delete User
-                                </DropdownMenuItem>
-                            </AlertDialogTrigger>
-                            </DropdownMenuContent>
-                        </DropdownMenu>
-                        <AlertDialogContent>
-                                <AlertDialogHeader>
-                                    <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
-                                    <AlertDialogDescription>
-                                        This action cannot be undone. This will permanently delete the user
-                                        <span className="font-medium text-foreground"> {user.email}</span>'s profile from the database. This does not delete their authentication record.
-                                    </AlertDialogDescription>
-                                </AlertDialogHeader>
-                                <AlertDialogFooter>
-                                    <AlertDialogCancel>Cancel</AlertDialogCancel>
-                                    <AlertDialogAction 
-                                        onClick={() => handleDeleteUser(user.id, user.email)}
-                                        className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-                                    >
-                                        Delete
-                                    </AlertDialogAction>
-                                </AlertDialogFooter>
-                            </AlertDialogContent>
-                        </AlertDialog>
+                        {renderActions(user)}
                     </TableCell>
                 </TableRow>
                 ))}
@@ -216,49 +282,7 @@ export function UsersTable({ users }: UsersTableProps) {
                                 <p className="font-medium text-sm truncate">{user.email}</p>
                                 <Badge variant={PLAN_BADGE_VARIANTS[user.plan]}>{user.plan}</Badge>
                             </div>
-                             <AlertDialog>
-                                <DropdownMenu>
-                                    <DropdownMenuTrigger asChild>
-                                    <Button variant="ghost" className="h-8 w-8 p-0">
-                                        <span className="sr-only">Open menu</span>
-                                        <MoreHorizontal className="h-4 w-4" />
-                                    </Button>
-                                    </DropdownMenuTrigger>
-                                    <DropdownMenuContent align="end">
-                                    <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                                    <DropdownMenuItem>View Profile</DropdownMenuItem>
-                                    <DropdownMenuItem>
-                                        <Edit className="mr-2 h-4 w-4" />
-                                        Edit Plan
-                                    </DropdownMenuItem>
-                                    <DropdownMenuSeparator />
-                                    <AlertDialogTrigger asChild>
-                                        <DropdownMenuItem className="text-destructive focus:bg-destructive/10 focus:text-destructive">
-                                        <Trash2 className="mr-2 h-4 w-4" />
-                                        Delete User
-                                        </DropdownMenuItem>
-                                    </AlertDialogTrigger>
-                                    </DropdownMenuContent>
-                                </DropdownMenu>
-                                <AlertDialogContent>
-                                        <AlertDialogHeader>
-                                            <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
-                                            <AlertDialogDescription>
-                                                This action cannot be undone. This will permanently delete the user
-                                                <span className="font-medium text-foreground"> {user.email}</span>'s profile from the database. This does not delete their authentication record.
-                                            </AlertDialogDescription>
-                                        </AlertDialogHeader>
-                                        <AlertDialogFooter>
-                                            <AlertDialogCancel>Cancel</AlertDialogCancel>
-                                            <AlertDialogAction 
-                                                onClick={() => handleDeleteUser(user.id, user.email)}
-                                                className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-                                            >
-                                                Delete
-                                            </AlertDialogAction>
-                                        </AlertDialogFooter>
-                                    </AlertDialogContent>
-                                </AlertDialog>
+                            {renderActions(user)}
                         </div>
                        
                         <div className="text-xs text-muted-foreground">
@@ -271,3 +295,4 @@ export function UsersTable({ users }: UsersTableProps) {
     </div>
   );
 }
+

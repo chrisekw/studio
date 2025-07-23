@@ -4,7 +4,7 @@ export interface UserProfile {
   plan: UserPlan;
   email?: string | null;
   isAdmin?: boolean;
-  isSalesMember?: boolean; // New field for sales team members
+  isSalesMember?: boolean;
   defaultIncludeAddress?: boolean;
   defaultIncludeLinkedIn?: boolean;
   leadsGeneratedToday?: number;
