@@ -8,6 +8,7 @@
  * - GenerateLeadsOutput - The return type for the generateLeads function.
  */
 import {ai} from '@/ai/genkit';
+import { googleAI } from '@genkit-ai/googleai';
 import {z} from 'zod';
 
 const LeadSchema = z.object({
@@ -33,7 +34,7 @@ export async function generateLeads(input: GenerateLeadsInput): Promise<Generate
 
 const prompt = ai.definePrompt({
   name: 'generateLeadsPrompt',
-  model: 'gemini-1.5-flash',
+  model: googleAI.model('gemini-1.5-flash'),
   input: {schema: GenerateLeadsInputSchema},
   output: {schema: GenerateLeadsOutputSchema},
   config: {

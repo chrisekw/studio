@@ -12,6 +12,7 @@
  * @returns {string[]} - An array of suggested alternative queries.
  */
 import {ai} from '@/ai/genkit';
+import { googleAI } from '@genkit-ai/googleai';
 import {z} from 'genkit';
 
 const SuggestAlternateQueriesInputSchema = z.object({
@@ -28,7 +29,7 @@ export async function suggestAlternateQueries(input: SuggestAlternateQueriesInpu
 
 const suggestAlternateQueriesPrompt = ai.definePrompt({
   name: 'suggestAlternateQueriesPrompt',
-  model: 'gemini-1.5-flash',
+  model: googleAI.model('gemini-1.5-flash'),
   input: {schema: SuggestAlternateQueriesInputSchema},
   output: {schema: SuggestAlternateQueriesOutputSchema},
   config: {

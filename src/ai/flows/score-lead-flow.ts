@@ -3,6 +3,7 @@
  * @fileOverview This flow is currently unused. It was previously used for scoring leads.
  */
 import { ai } from '@/ai/genkit';
+import { googleAI } from '@genkit-ai/googleai';
 import { z } from 'zod';
 
 const ScoreLeadInputSchema = z.object({
@@ -24,7 +25,7 @@ export async function scoreLead(input: ScoreLeadInput): Promise<ScoreLeadOutput>
 
 const prompt = ai.definePrompt({
   name: 'scoreLeadPrompt',
-  model: 'gemini-1.5-flash',
+  model: googleAI.model('gemini-1.5-flash'),
   input: { schema: ScoreLeadInputSchema },
   output: { schema: ScoreLeadOutputSchema },
   config: {
