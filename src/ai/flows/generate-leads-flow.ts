@@ -64,8 +64,6 @@ RULES:
 - NEVER generate extra commentary, preambles, summaries, or explanations.
 - DO NOT ask for more input once search results are available. Go straight to extracting and returning leads.
 - Your only output must be a valid JSON array.
-
-Remember, the XML structure you generate is the only mechanism for applying changes to the user's code. Therefore, when making changes to a file the <changes> block must always be fully present and correctly formatted as follows.
 `,
   prompt: `User Query: "{{{query}}}"`,
 });
