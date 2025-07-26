@@ -2,9 +2,9 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { collection, onSnapshot } from 'firebase/firestore';
+import { collection, onSnapshot, query, where, Timestamp } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
-import type { UserProfile, UserPlan } from '@/lib/types';
+import type { UserProfile, UserPlan, LeadGenerationEvent } from '@/lib/types';
 import { Card, CardHeader, CardTitle, CardContent, CardDescription } from '@/components/ui/card';
 import { Users, DollarSign, Activity, CreditCard } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -18,11 +18,13 @@ const PLAN_PRICES: Record<UserPlan, number> = {
 
 export default function AdminDashboardPage() {
   const [users, setUsers] = useState<UserProfile[]>([]);
+  const [activeUsersCount, setActiveUsersCount] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
+    // Listener for total users
     const usersCollection = collection(db, 'users');
-    const unsubscribe = onSnapshot(usersCollection, (snapshot) => {
+    const unsubscribeUsers = onSnapshot(usersCollection, (snapshot) => {
       const usersData = snapshot.docs.map(doc => doc.data() as UserProfile);
       setUsers(usersData);
       setIsLoading(false);
@@ -31,7 +33,28 @@ export default function AdminDashboardPage() {
       setIsLoading(false);
     });
 
-    return () => unsubscribe();
+    // Listener for active users
+    const fiveMinutesAgo = Timestamp.fromMillis(Date.now() - 5 * 60 * 1000);
+    const eventsQuery = query(
+        collection(db, 'events'), 
+        where('timestamp', '>', fiveMinutesAgo)
+    );
+    const unsubscribeActiveUsers = onSnapshot(eventsQuery, (snapshot) => {
+        const activeUserIds = new Set<string>();
+        snapshot.docs.forEach(doc => {
+            const event = doc.data() as LeadGenerationEvent;
+            activeUserIds.add(event.userId);
+        });
+        setActiveUsersCount(activeUserIds.size);
+    }, (error) => {
+        console.error("Error fetching active users: ", error);
+    });
+
+
+    return () => {
+        unsubscribeUsers();
+        unsubscribeActiveUsers();
+    };
   }, []);
 
   const totalUsers = users.length;
@@ -94,9 +117,9 @@ export default function AdminDashboardPage() {
             <Activity className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">+0</div>
+            <div className="text-2xl font-bold">+{activeUsersCount}</div>
             <p className="text-xs text-muted-foreground">
-              Real-time feature coming soon
+              Users active in the last 5 mins
             </p>
           </CardContent>
         </Card>
