@@ -24,9 +24,12 @@ export async function scoreLead(input: ScoreLeadInput): Promise<ScoreLeadOutput>
 
 const prompt = ai.definePrompt({
   name: 'scoreLeadPrompt',
-  model: 'googleai/gemini-1.5-flash-latest',
+  model: 'gemini-1.5-flash-latest',
   input: { schema: ScoreLeadInputSchema },
   output: { schema: ScoreLeadOutputSchema },
+  config: {
+    apiKey: process.env.GEMINI_API_KEY,
+  },
   prompt: `You are an expert B2B sales development representative. Your task is to score a business lead based on its potential value for outreach.
 
   Analyze the following lead details:

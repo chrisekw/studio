@@ -7,7 +7,8 @@
  * - GenerateLeadsInput - The input type for the generateLeads function.
  * - GenerateLeadsOutput - The return type for the generateLeads function.
  */
-import {ai, geminiModel} from '@/ai/genkit';
+import {ai} from '@/ai/genkit';
+import {geminiModel} from '@/ai/genkit';
 import {z} from 'zod';
 
 const LeadSchema = z.object({
@@ -36,6 +37,9 @@ const prompt = ai.definePrompt({
   model: geminiModel,
   input: {schema: GenerateLeadsInputSchema},
   output: {schema: GenerateLeadsOutputSchema},
+  config: {
+    apiKey: process.env.GEMINI_API_KEY,
+  },
   system: `You are oPilot, an AI-powered lead generation assistant designed to help users find real, qualified leads from the public web using search engine data.
 
 Your role is to:
@@ -109,7 +113,7 @@ const generateLeadsFlow = ai.defineFlow(
       console.error('Error in generateLeadsFlow:', error);
       let errorMessage = error.message || 'An unexpected error occurred while generating leads.';
 
-      if (errorMessage.includes('503 Service Unavailable')) {
+      if (errorMessage.includes('503 Service Unavailable') || (error.cause && (error.cause as any).status === 503)) {
           errorMessage = 'The AI model is currently overloaded. Please try again in a few moments.';
       } else if (errorMessage.includes('429 Too many Requests')) {
           errorMessage = 'The daily free limit for the AI model has been reached. Please check your AI provider plan or try again tomorrow.';

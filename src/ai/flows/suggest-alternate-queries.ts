@@ -28,9 +28,12 @@ export async function suggestAlternateQueries(input: SuggestAlternateQueriesInpu
 
 const suggestAlternateQueriesPrompt = ai.definePrompt({
   name: 'suggestAlternateQueriesPrompt',
-  model: 'googleai/gemini-1.5-flash-latest',
+  model: 'gemini-1.5-flash-latest',
   input: {schema: SuggestAlternateQueriesInputSchema},
   output: {schema: SuggestAlternateQueriesOutputSchema},
+  config: {
+    apiKey: process.env.GEMINI_API_KEY,
+  },
   prompt: `You are an expert in generating alternative search queries.
 
   Given the following search query, suggest a list of exactly 5 alternative queries that are semantically identical but use different keywords or phrasing. The goal is to broaden the search and explore different avenues for lead generation.
