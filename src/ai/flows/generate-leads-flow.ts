@@ -22,6 +22,7 @@ const LeadSchema = z.object({
 
 const GenerateLeadsInputSchema = z.object({
   query: z.string().describe('A natural language query from the user (e.g., "marketing agencies in Berlin").'),
+  numLeads: z.number().describe('The exact number of leads to generate.'),
 });
 export type GenerateLeadsInput = z.infer<typeof GenerateLeadsInputSchema>;
 
@@ -50,7 +51,7 @@ RULES:
 - You do not have access to private data or paid databases. All information must be sourced from what would be considered public knowledge on the web.
 - Your only output must be a valid JSON array of leads. Do not include any commentary, summaries, or explanations.
 `,
-  prompt: `User Query: "{{{query}}}"`,
+  prompt: `Generate exactly {{{numLeads}}} leads based on the following query: "{{{query}}}"`,
 });
 
 const generateLeadsFlow = ai.defineFlow(

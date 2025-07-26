@@ -121,11 +121,12 @@ export function SearchForm({
     }
     
     const parts = values.query.split(',');
+    const mainQuery = parts[0].trim();
     const numLeadsStr = parts.length > 1 ? parts[1].trim() : '10';
     const numLeads = parseInt(numLeadsStr, 10);
     
     if (isNaN(numLeads) || numLeads <= 0) {
-        toast({ variant: 'destructive', title: 'Invalid Query', description: 'Please specify a valid number of leads in your query. E.g., "SaaS companies, 25, USA"' });
+        toast({ variant: 'destructive', title: 'Invalid Query', description: 'Please specify a valid number of leads. E.g., "SaaS companies in California, 25"' });
         return;
     }
 
@@ -149,7 +150,8 @@ export function SearchForm({
       setProgressMessage('Analyzing your request...');
       
       const result = await generateLeads({
-        query: values.query,
+        query: mainQuery,
+        numLeads: numLeads,
       });
 
       setProgress(70);
@@ -200,7 +202,7 @@ export function SearchForm({
             <FormItem>
               <FormControl>
                 <Textarea
-                  placeholder="e.g., SaaS companies in California, 25, USA"
+                  placeholder="e.g., SaaS companies in California, 25"
                   {...field}
                   className="pr-20 min-h-[52px] shadow-lg"
                   onKeyDown={(e) => {
