@@ -13,6 +13,7 @@ import {z} from 'zod';
 
 const LeadSchema = z.object({
   name: z.string().describe('The name of the company.'),
+  description: z.string().optional().describe('A one-line description of what the company is all about.'),
   email: z.string().describe('A contact email for the company.'),
   phone: z.string().describe('A contact phone number for the company.'),
   website: z.string().describe('The full company website URL, including the protocol (e.g., https://example.com).'),
