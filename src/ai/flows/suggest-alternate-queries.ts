@@ -28,7 +28,7 @@ export async function suggestAlternateQueries(input: SuggestAlternateQueriesInpu
 
 const suggestAlternateQueriesPrompt = ai.definePrompt({
   name: 'suggestAlternateQueriesPrompt',
-  model: 'gemini-1.5-flash-latest',
+  model: 'gemini-1.5-flash',
   input: {schema: SuggestAlternateQueriesInputSchema},
   output: {schema: SuggestAlternateQueriesOutputSchema},
   config: {

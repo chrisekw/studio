@@ -24,7 +24,7 @@ export async function scoreLead(input: ScoreLeadInput): Promise<ScoreLeadOutput>
 
 const prompt = ai.definePrompt({
   name: 'scoreLeadPrompt',
-  model: 'gemini-1.5-flash-latest',
+  model: 'gemini-1.5-flash',
   input: { schema: ScoreLeadInputSchema },
   output: { schema: ScoreLeadOutputSchema },
   config: {
