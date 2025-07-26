@@ -110,6 +110,12 @@ export function SavedLeadsCards({ leads }: SavedLeadsCardsProps) {
                             <span className="truncate">{lead.phone}</span>
                         </div>
                     )}
+                    {lead.location && (
+                        <div className="flex items-start text-muted-foreground">
+                            <MapPin className="mr-3 mt-0.5 h-4 w-4 flex-shrink-0 text-primary" />
+                            <span>{lead.location}</span>
+                        </div>
+                    )}
                     {lead.address && (
                         <div className="flex items-start text-muted-foreground">
                             <MapPin className="mr-3 mt-0.5 h-4 w-4 flex-shrink-0 text-primary" />

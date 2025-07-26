@@ -1,4 +1,3 @@
-
 import { Timestamp } from "firebase/firestore";
 
 export type UserPlan = 'Free' | 'Starter' | 'Pro' | 'Agency';
@@ -36,6 +35,7 @@ export interface Lead {
   x?: string;
   tags?: string[];
   mock?: boolean;
+  location?: string;
 }
 
 export interface LeadGenerationEvent {
