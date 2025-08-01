@@ -15,10 +15,23 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { useToast } from '@/hooks/use-toast';
-import { composeEmail, ComposeEmailInputSchema, type ComposeEmailInput } from '@/ai/flows/compose-email-flow';
+import { composeEmail, type ComposeEmailInput } from '@/ai/flows/compose-email-flow';
 import { Loader2, Wand2, Send, Users, UserMinus, UserCheck } from 'lucide-react';
 
 type UserCategory = 'All Users' | 'Free Users' | 'Paid Subscribers';
+
+// Define the complete form schema on the client side
+const mailFormSchema = z.object({
+  audience: z.enum(['All Users', 'Free Users', 'Paid Subscribers'], {
+    required_error: 'You need to select an audience.',
+  }),
+  goal: z.string().min(10, { message: 'Please describe the goal in at least 10 characters.' }),
+  subject: z.string().min(1, 'Subject is required.'),
+  body: z.string().min(1, 'Email body is required.'),
+});
+
+type MailFormValues = z.infer<typeof mailFormSchema>;
+
 
 export default function AdminMailPage() {
   const [userCounts, setUserCounts] = useState({ 'All Users': 0, 'Free Users': 0, 'Paid Subscribers': 0 });
@@ -26,11 +39,8 @@ export default function AdminMailPage() {
   const [isGenerating, setIsGenerating] = useState(false);
   const { toast } = useToast();
 
-  const form = useForm<ComposeEmailInput & { subject: string; body: string }>({
-    resolver: zodResolver(ComposeEmailInputSchema.extend({
-      subject: z.string().min(1, 'Subject is required.'),
-      body: z.string().min(1, 'Email body is required.'),
-    })),
+  const form = useForm<MailFormValues>({
+    resolver: zodResolver(mailFormSchema),
     defaultValues: {
       audience: 'All Users',
       goal: '',
@@ -63,9 +73,10 @@ export default function AdminMailPage() {
     }
     setIsGenerating(true);
     try {
+      // The AI flow only needs the audience and goal
       const result = await composeEmail({ audience, goal });
-      form.setValue('subject', result.subject);
-      form.setValue('body', result.body);
+      form.setValue('subject', result.subject, { shouldValidate: true });
+      form.setValue('body', result.body, { shouldValidate: true });
       toast({
         variant: 'success',
         title: 'Email Content Generated!',
@@ -78,11 +89,11 @@ export default function AdminMailPage() {
     }
   };
 
-  const onSubmit = (data: any) => {
-    // This is where you would integrate your email sending service (e.g., SendGrid, Nodemailer)
+  const onSubmit = (data: MailFormValues) => {
+    // This is where you would integrate your email sending service (e.g., SendGrid, Mailgun)
     toast({
       title: 'Email "Sent"!',
-      description: `(Simulation) An email with the subject "${data.subject}" would be sent to ${userCounts[data.audience]} ${data.audience}.`,
+      description: `(Simulation) For bulk sending, an email API (SendGrid, Mailgun, etc.) would be used to deliver this to ${userCounts[data.audience]} ${data.audience}.`,
     });
   };
 
