@@ -3,43 +3,33 @@ rules_version = '2';
 
 service cloud.firestore {
   match /databases/{database}/documents {
-    
+
+    // Helper function to check if a user is an admin
     function isAdmin() {
-      return exists(/databases/$(database)/documents/users/$(request.auth.uid)) && 
+      return exists(/databases/$(database)/documents/users/$(request.auth.uid)) &&
              get(/databases/$(database)/documents/users/$(request.auth.uid)).data.isAdmin == true;
     }
 
-    function isSuperAdmin() {
-      return request.auth.token.email == 'ekwchristian@gmail.com';
-    }
-
+    // Users can only read/write their own profile
     match /users/{userId} {
-      allow create: if request.auth.uid == userId;
-      allow read: if request.auth.uid == userId || isAdmin();
-      allow update: if (request.auth.uid == userId &&
-                       request.resource.data.diff(resource.data).affectedKeys()
-                         .hasOnly(['defaultIncludeAddress', 'defaultIncludeLinkedIn', 'leadsGeneratedToday', 'lastLeadGenerationDate', 'leadsGeneratedThisMonth', 'lastLeadGenerationMonth', 'monthlyLeadsGenerated', 'addonCredits', 'leadPoints']))
-                    || 
-                    (isSuperAdmin() && request.resource.data.diff(resource.data).affectedKeys()
-                         .hasAny(['plan', 'isSalesMember', 'leadsGeneratedThisMonth', 'lastLeadGenerationMonth']));
-      
-      allow delete: if isSuperAdmin();
-
-      match /savedLeads/{leadId} {
-        allow read, write, delete: if request.auth.uid == userId;
-      }
+      allow read, update: if request.auth != null && request.auth.uid == userId || isAdmin();
+      allow create: if request.auth != null;
     }
 
-    // Rules for the new 'events' collection
+    // A user can only read/write their own saved leads
+    match /users/{userId}/savedLeads/{leadId} {
+        allow read, write, delete: if request.auth != null && request.auth.uid == userId;
+    }
+
+    // Events can be created by any authenticated user
     match /events/{eventId} {
-      // Any authenticated user can create an event (log their action)
-      allow create: if request.auth.uid != null;
-      
-      // Only admins can read the full event log
-      allow read: if isAdmin();
-      
-      // No one can update or delete events to ensure log integrity
-      allow update, delete: if false;
+        allow create: if request.auth != null;
+        allow read: if isAdmin();
+    }
+    
+    // Admins can write to the mail collection to trigger emails
+    match /mail/{docId} {
+        allow create: if isAdmin();
     }
   }
 }

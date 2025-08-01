@@ -5,7 +5,7 @@ import { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { collection, onSnapshot } from 'firebase/firestore';
+import { collection, onSnapshot, query, where, getDocs, writeBatch, addDoc } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import type { UserProfile } from '@/lib/types';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -44,6 +44,7 @@ export default function AdminMailPage() {
   const [userCounts, setUserCounts] = useState({ 'All Users': 0, 'Free Users': 0, 'Paid Subscribers': 0 });
   const [isLoadingCounts, setIsLoadingCounts] = useState(true);
   const [isGenerating, setIsGenerating] = useState(false);
+  const [isSending, setIsSending] = useState(false);
   const { toast } = useToast();
 
   const form = useForm<MailFormValues>({
@@ -96,12 +97,59 @@ export default function AdminMailPage() {
     }
   };
 
-  const onSubmit = (data: MailFormValues) => {
-    // This is where you would integrate your email sending service (e.g., SendGrid, Mailgun)
-    toast({
-      title: 'Email "Sent"!',
-      description: `(Simulation) For bulk sending, an email API (SendGrid, Mailgun, etc.) would be used to deliver this to ${userCounts[data.audience]} ${data.audience}.`,
-    });
+  const onSubmit = async (data: MailFormValues) => {
+    setIsSending(true);
+    try {
+        const usersRef = collection(db, 'users');
+        let usersQuery;
+
+        if (data.audience === 'Free Users') {
+            usersQuery = query(usersRef, where('plan', '==', 'Free'));
+        } else if (data.audience === 'Paid Subscribers') {
+            usersQuery = query(usersRef, where('plan', '!=', 'Free'));
+        } else {
+            usersQuery = query(usersRef);
+        }
+
+        const querySnapshot = await getDocs(usersQuery);
+        const recipients = querySnapshot.docs.map(doc => doc.data().email).filter(Boolean);
+
+        if (recipients.length === 0) {
+            toast({ variant: 'destructive', title: 'No Recipients Found', description: 'There are no users in the selected audience.' });
+            setIsSending(false);
+            return;
+        }
+
+        const mailCollectionRef = collection(db, 'mail');
+        const emailPromises = recipients.map(email => {
+            return addDoc(mailCollectionRef, {
+                to: email,
+                message: {
+                    subject: data.subject,
+                    html: data.body.replace(/\n/g, '<br>'), // Basic markdown to HTML
+                },
+            });
+        });
+
+        await Promise.all(emailPromises);
+
+        toast({
+            variant: 'success',
+            title: 'Emails Queued!',
+            description: `${recipients.length} emails have been queued for sending. Note: The Firebase "Trigger Email" extension must be installed for delivery.`,
+        });
+        form.reset();
+
+    } catch (error: any) {
+        console.error('Error queuing emails:', error);
+        toast({
+            variant: 'destructive',
+            title: 'Error Queuing Emails',
+            description: error.message || 'An unexpected error occurred.',
+        });
+    } finally {
+        setIsSending(false);
+    }
   };
 
   return (
@@ -188,7 +236,7 @@ export default function AdminMailPage() {
                         <FormControl>
                           <Input placeholder="e.g., Offer a 20% discount on Pro plan" {...field} />
                         </FormControl>
-                        <Button type="button" variant="outline" onClick={handleGenerateEmail} disabled={isGenerating}>
+                        <Button type="button" variant="outline" onClick={handleGenerateEmail} disabled={isGenerating || isSending}>
                           {isGenerating ? <Loader2 className="h-4 w-4 animate-spin" /> : <Wand2 className="h-4 w-4" />}
                           <span className="ml-2 hidden sm:inline">Generate</span>
                         </Button>
@@ -206,7 +254,7 @@ export default function AdminMailPage() {
                   <FormItem>
                     <FormLabel>Subject</FormLabel>
                     <FormControl>
-                      <Input placeholder="Your email subject line" {...field} />
+                      <Input placeholder="Your email subject line" {...field} disabled={isSending} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -224,6 +272,7 @@ export default function AdminMailPage() {
                         placeholder="Your email content will appear here. Use Markdown for formatting."
                         className="min-h-[300px]"
                         {...field}
+                        disabled={isSending}
                       />
                     </FormControl>
                     <FormMessage />
@@ -232,8 +281,8 @@ export default function AdminMailPage() {
               />
 
               <div className="flex justify-end">
-                <Button type="submit">
-                  <Send className="mr-2 h-4 w-4" />
+                <Button type="submit" disabled={isSending || isGenerating}>
+                  {isSending ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Send className="mr-2 h-4 w-4" />}
                   Send Email to {userCounts[form.watch('audience')]} users
                 </Button>
               </div>
