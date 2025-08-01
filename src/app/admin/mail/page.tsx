@@ -5,7 +5,7 @@ import { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { collection, onSnapshot, query, where } from 'firebase/firestore';
+import { collection, onSnapshot } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import type { UserProfile } from '@/lib/types';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -15,12 +15,12 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { useToast } from '@/hooks/use-toast';
-import { composeEmail, type ComposeEmailInput } from '@/ai/flows/compose-email-flow';
+import { composeEmail } from '@/ai/flows/compose-email-flow';
 import { Loader2, Wand2, Send, Users, UserMinus, UserCheck } from 'lucide-react';
 
 type UserCategory = 'All Users' | 'Free Users' | 'Paid Subscribers';
 
-// Define the complete form schema on the client side
+// Define the form schema directly on the client side
 const mailFormSchema = z.object({
   audience: z.enum(['All Users', 'Free Users', 'Paid Subscribers'], {
     required_error: 'You need to select an audience.',
@@ -31,6 +31,13 @@ const mailFormSchema = z.object({
 });
 
 type MailFormValues = z.infer<typeof mailFormSchema>;
+
+// Define the input type for the AI flow here as well to ensure type safety.
+// This should match the expected input of the `composeEmail` function.
+type ComposeEmailInput = {
+  audience: 'All Users' | 'Free Users' | 'Paid Subscribers';
+  goal: string;
+};
 
 
 export default function AdminMailPage() {

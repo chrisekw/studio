@@ -3,24 +3,24 @@
  * @fileOverview A Genkit flow for composing marketing and transactional emails.
  * 
  * - composeEmail - A function that handles email composition.
- * - ComposeEmailInput - The input type for the composeEmail function.
- * - ComposeEmailOutput - The return type for the composeEmail function.
  */
 import { ai } from '@/ai/genkit';
 import { googleAI } from '@genkit-ai/googleai';
 import { z } from 'zod';
 
-export const ComposeEmailInputSchema = z.object({
+// Input and Output schemas are defined here for the flow's internal use,
+// but they are not exported. The client will have its own validation.
+const ComposeEmailInputSchema = z.object({
   audience: z.enum(['All Users', 'Free Users', 'Paid Subscribers']).describe('The target audience for the email.'),
   goal: z.string().describe('The primary goal or topic of the email (e.g., "Announce a new feature", "Offer a discount", "Share a tip").'),
 });
-export type ComposeEmailInput = z.infer<typeof ComposeEmailInputSchema>;
+type ComposeEmailInput = z.infer<typeof ComposeEmailInputSchema>;
 
-export const ComposeEmailOutputSchema = z.object({
+const ComposeEmailOutputSchema = z.object({
   subject: z.string().describe('A compelling and relevant subject line for the email.'),
   body: z.string().describe('The full email body content, written in a friendly but professional tone. Use Markdown for formatting (e.g., headings, bold text, lists).'),
 });
-export type ComposeEmailOutput = z.infer<typeof ComposeEmailOutputSchema>;
+type ComposeEmailOutput = z.infer<typeof ComposeEmailOutputSchema>;
 
 export async function composeEmail(input: ComposeEmailInput): Promise<ComposeEmailOutput> {
   return composeEmailFlow(input);
