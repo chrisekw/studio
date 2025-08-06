@@ -27,8 +27,8 @@ export interface Lead {
   id: string;
   name: string;
   description?: string;
-  email: string;
-  phone: string;
+  email?: string;
+  phone?: string;
   website: string;
   address?: string;
   linkedin?: string;
