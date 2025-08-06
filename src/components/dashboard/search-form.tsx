@@ -65,7 +65,9 @@ export function SearchForm({
     // Update user's personal quota
     const { remainingPlanLeads, leadPoints, addonCredits } = calculateRemainingLeads(userProfile);
     let leadsToDeduct = leadsGeneratedCount;
-    const updatePayload: any = {};
+    const updatePayload: any = {
+        totalLeadsGenerated: increment(leadsGeneratedCount)
+    };
     const today = new Date().toISOString().split('T')[0];
     const currentMonth = new Date().toISOString().slice(0, 7);
     const isFreePlan = userProfile.plan === 'Free';

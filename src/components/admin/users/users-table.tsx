@@ -60,7 +60,7 @@ const PLAN_BADGE_VARIANTS: { [key in UserPlan]: BadgeProps['variant'] } = {
     Agency: 'destructive',
 };
 
-type SortKey = 'email' | 'plan' | 'leadsGeneratedThisMonth';
+type SortKey = 'email' | 'plan' | 'totalLeadsGenerated';
 
 export function UsersTable({ users }: UsersTableProps) {
     const { toast } = useToast();
@@ -135,9 +135,9 @@ export function UsersTable({ users }: UsersTableProps) {
         let bValue: any;
 
         switch (key) {
-            case 'leadsGeneratedThisMonth':
-                aValue = a.leadsGeneratedThisMonth ?? 0;
-                bValue = b.leadsGeneratedThisMonth ?? 0;
+            case 'totalLeadsGenerated':
+                aValue = a.totalLeadsGenerated ?? 0;
+                bValue = b.totalLeadsGenerated ?? 0;
                 break;
             default:
                 aValue = a[key] ?? '';
@@ -256,9 +256,9 @@ export function UsersTable({ users }: UsersTableProps) {
                         Plan {getSortIcon('plan')}
                     </div>
                 </TableHead>
-                <TableHead onClick={() => requestSort('leadsGeneratedThisMonth')}>
+                <TableHead onClick={() => requestSort('totalLeadsGenerated')}>
                     <div className="flex items-center cursor-pointer">
-                        Usage (Month) {getSortIcon('leadsGeneratedThisMonth')}
+                        Total Leads {getSortIcon('totalLeadsGenerated')}
                     </div>
                 </TableHead>
                 <TableHead>Actions</TableHead>
@@ -271,7 +271,7 @@ export function UsersTable({ users }: UsersTableProps) {
                     <TableCell>
                     <Badge variant={PLAN_BADGE_VARIANTS[user.plan]}>{user.plan}</Badge>
                     </TableCell>
-                    <TableCell>{user.leadsGeneratedThisMonth ?? 0}</TableCell>
+                    <TableCell>{(user.totalLeadsGenerated ?? 0).toLocaleString()}</TableCell>
                     <TableCell>
                         {renderActions(user)}
                     </TableCell>
@@ -293,7 +293,7 @@ export function UsersTable({ users }: UsersTableProps) {
                         </div>
                        
                         <div className="text-xs text-muted-foreground">
-                            Usage (Month): {user.leadsGeneratedThisMonth ?? 0}
+                            Total Leads: {(user.totalLeadsGenerated ?? 0).toLocaleString()}
                         </div>
                     </div>
                 ))}
@@ -302,5 +302,3 @@ export function UsersTable({ users }: UsersTableProps) {
     </div>
   );
 }
-
-

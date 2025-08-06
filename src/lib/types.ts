@@ -21,6 +21,7 @@ export interface UserProfile {
   referredBy?: string; 
   referrals?: string[];
   leadPoints?: number;
+  totalLeadsGenerated?: number;
 }
 
 export interface Lead {
