@@ -7,6 +7,7 @@ export interface UserProfile {
   email?: string | null;
   isAdmin?: boolean;
   isSalesMember?: boolean;
+  createdAt?: Timestamp;
   defaultIncludeAddress?: boolean;
   defaultIncludeLinkedIn?: boolean;
   leadsGeneratedToday?: number;
@@ -26,8 +27,8 @@ export interface Lead {
   id: string;
   name: string;
   description?: string;
-  email?: string;
-  phone?: string;
+  email: string;
+  phone: string;
   website: string;
   address?: string;
   linkedin?: string;

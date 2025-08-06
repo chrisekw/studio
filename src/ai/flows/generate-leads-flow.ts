@@ -14,8 +14,8 @@ import {z} from 'zod';
 const LeadSchema = z.object({
   name: z.string().describe('The name of the company.'),
   description: z.string().optional().describe('A one-line description of what the company is all about.'),
-  email: z.string().optional().describe('A contact email for the company.'),
-  phone: z.string().optional().describe('A contact phone number for the company.'),
+  email: z.string().describe('A contact email for the company.'),
+  phone: z.string().describe('A contact phone number for the company.'),
   website: z.string().describe('The full company website URL, including the protocol (e.g., https://example.com).'),
   linkedin: z.string().optional().describe('The specific LinkedIn company profile URL (e.g., https://www.linkedin.com/company/company-name).'),
   location: z.string().optional().describe('The geographical location of the company (e.g., "Berlin, Germany").'),
