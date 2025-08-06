@@ -1,3 +1,4 @@
+
 // This file instructs search engine crawlers which pages to index.
 import type { NextApiRequest, NextApiResponse } from 'next';
 

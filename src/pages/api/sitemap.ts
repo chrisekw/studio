@@ -1,9 +1,10 @@
+
 // This file generates a sitemap to help search engines understand your site structure.
 import type { NextApiRequest, NextApiResponse } from 'next';
 
 export default function handler(req: NextApiRequest, res: NextApiResponse) {
     // IMPORTANT: Replace this with your app's actual production domain.
-    const baseUrl = process.env.NEXT_PUBLIC_APP_URL || "https://your-domain.com";
+    const baseUrl = process.env.NEXT_PUBLIC_APP_URL || "https://your-domain.com"; 
 
     // Static pages
     const staticRoutes = [
