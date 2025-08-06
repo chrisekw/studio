@@ -16,6 +16,6 @@ headers:
         value: 'text/plain'
 rewrites:
   - source: /sitemap.xml
-    destination: /api/sitemap
+    destination: /sitemap.xml
   - source: /robots.txt
-    destination: /api/robots
+    destination: /robots.txt
