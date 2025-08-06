@@ -1,6 +1,13 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  /* config options here */
+  async rewrites() {
+    return [
+      {
+        source: '/googleb3d21e9511a05b5b.html',
+        destination: '/api/google-verification',
+      },
+    ];
+  },
   typescript: {
     ignoreBuildErrors: true,
   },
