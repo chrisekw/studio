@@ -1,10 +1,9 @@
-
 // This file instructs search engine crawlers which pages to index.
 import type { NextApiRequest, NextApiResponse } from 'next';
 
 export default function handler(req: NextApiRequest, res: NextApiResponse) {
     // IMPORTANT: Replace this with your app's actual production domain.
-    const baseUrl = process.env.NEXT_PUBLIC_APP_URL || "https://your-domain.com"; 
+    const baseUrl = "https://opilot.vercel.app"; 
 
     const robots = `
 User-Agent: *
