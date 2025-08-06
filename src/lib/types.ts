@@ -22,6 +22,7 @@ export interface UserProfile {
   referrals?: string[];
   leadPoints?: number;
   totalLeadsGenerated?: number;
+  generationEventsCount?: number; // New field for total generation events
 }
 
 export interface Lead {

@@ -60,7 +60,7 @@ const PLAN_BADGE_VARIANTS: { [key in UserPlan]: BadgeProps['variant'] } = {
     Agency: 'destructive',
 };
 
-type SortKey = 'email' | 'plan' | 'totalLeadsGenerated';
+type SortKey = 'email' | 'plan' | 'totalLeadsGenerated' | 'generationEventsCount';
 
 export function UsersTable({ users }: UsersTableProps) {
     const { toast } = useToast();
@@ -138,6 +138,10 @@ export function UsersTable({ users }: UsersTableProps) {
             case 'totalLeadsGenerated':
                 aValue = a.totalLeadsGenerated ?? 0;
                 bValue = b.totalLeadsGenerated ?? 0;
+                break;
+            case 'generationEventsCount':
+                aValue = a.generationEventsCount ?? 0;
+                bValue = b.generationEventsCount ?? 0;
                 break;
             default:
                 aValue = a[key] ?? '';
@@ -261,6 +265,11 @@ export function UsersTable({ users }: UsersTableProps) {
                         Total Leads {getSortIcon('totalLeadsGenerated')}
                     </div>
                 </TableHead>
+                 <TableHead onClick={() => requestSort('generationEventsCount')}>
+                    <div className="flex items-center cursor-pointer">
+                        Gen. Events {getSortIcon('generationEventsCount')}
+                    </div>
+                </TableHead>
                 <TableHead>Actions</TableHead>
                 </TableRow>
             </TableHeader>
@@ -272,6 +281,7 @@ export function UsersTable({ users }: UsersTableProps) {
                     <Badge variant={PLAN_BADGE_VARIANTS[user.plan]}>{user.plan}</Badge>
                     </TableCell>
                     <TableCell>{(user.totalLeadsGenerated ?? 0).toLocaleString()}</TableCell>
+                    <TableCell>{(user.generationEventsCount ?? 0).toLocaleString()}</TableCell>
                     <TableCell>
                         {renderActions(user)}
                     </TableCell>
@@ -292,8 +302,9 @@ export function UsersTable({ users }: UsersTableProps) {
                             {renderActions(user)}
                         </div>
                        
-                        <div className="text-xs text-muted-foreground">
-                            Total Leads: {(user.totalLeadsGenerated ?? 0).toLocaleString()}
+                        <div className="text-xs text-muted-foreground flex gap-4">
+                            <span>Total Leads: {(user.totalLeadsGenerated ?? 0).toLocaleString()}</span>
+                            <span>Events: {(user.generationEventsCount ?? 0).toLocaleString()}</span>
                         </div>
                     </div>
                 ))}
